@@ -32,9 +32,9 @@ class PlayerData:
             f"Возраст: {self.age}\n"
             f"Пол: {self.sex}\n"
             f"Уровень игры: {self.skills}\n"
-            f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
             # f"Наличие бана: {self.ban}\n"
-            f"История турниров: {self.tournaments_list}"
+            f"История турниров: {self.tournaments_list}\n"
+            f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
         )
     
     def get_data(self):
@@ -46,9 +46,9 @@ class PlayerData:
                 "Возраст": self.age,
                 "Пол": self.sex,
                 "Уровень игры": self.skills,
-                "Предпочтительное время игры": self.time,
                 "Наличие бана": self.ban,
-                "История турниров": self.tournaments_list
+                "История турниров": self.tournaments_list,
+                "Предпочтительное время игры": self.time
             }
         }
 

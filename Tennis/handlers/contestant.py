@@ -35,7 +35,15 @@ async def search_contestant(callback: CallbackQuery, state:FSMContext):
         # Если файл не существует, создаем пустой список
         users_data = []
 
-    if users_data:
+    count_users = 0
+
+    for user in users_data:
+        for key, data in user.items():
+            if int(key) == user_id: # Все кроме меня
+                continue
+            count_users += 1
+
+    if count_users > 0:
         await callback.message.answer(f"Список доступных соперников 👇", parse_mode=ParseMode.HTML)
     
         options = LinkPreviewOptions(

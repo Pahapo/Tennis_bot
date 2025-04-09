@@ -7,6 +7,10 @@ from aiogram.enums import ParseMode
 import handlers.keywords as kb
 import handlers.classes as cl
 
+from db import session
+from models.User import User
+from models.Contestant import Contestant
+
 router = Router()
 
 user_data = {}  # Ключ: username, значение: PlayerData
@@ -79,28 +83,23 @@ async def register_time(message: Message, state: FSMContext):
     # Сохраняем данные в словарь
     user_id = message.from_user.id
 
-    # Записываем словарь в список
-    try:
-        # Читаем существующие данные из файла
-        with open("players_data.json", "r", encoding="utf-8") as file:
-            users_data = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Если файл не существует, создаем пустой список
-        users_data = []
+    user = session.query(User).filter_by(tg_user_id = user_id).first()
+    user_free_time = session.query(Contestant).filter_by(id_tg_user = user_id).first()
+    if user:
+        user.name_user = data.get("name")
+        user.age = data.get("age")
+        user.sex = data.get("sex")
+        user_free_time.free_time_for_play = data.get("time")
+        session.commit()
+        print(f"Данные пользователя с ID {user_id} обновлены!")
+    else:
+        print(f"Пользователь {data.get("id")} отсутствует в базе.")
 
-    new_player_bool = True
-
-    for i, user in enumerate(users_data):
-        if str(user_id) in user:
-            users_data[i] = player_data.get_data()  # Обновляем данные
-            new_player_bool = False
-            break
-    
-    if new_player_bool:
-        users_data.append(player_data.get_data())
-
-    with open("players_data.json", "w", encoding="utf-8") as file:
-        json.dump(users_data, file, ensure_ascii=False, indent=4)
+        new_user = User(tg_user_id = data.get("id"), name_user = data.get("name"), link = data.get("link"), age=data.get("age"), sex = data.get("sex"))
+        session.add(new_user)  # Добавляем объект в сессию
+        new_contestant = Contestant(free_time_for_play = data.get("time"), id_tg_user = data.get("id"))
+        session.add(new_contestant)
+        session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
     await message.answer('✅ Карточка создана!')
     await message.answer(f'<b>Ваша карточка выглядит так</b> 👇\n\n{player_data}\n\n⚠️ Обратите внимание, чтобы игрок смог связаться с вами и предложить игру, в настройках конфедециальности телеграм должен быть включен поиск по номеру\n• <b>Настройки -> Конфеденциальность -> Номер телефона -> <u>Все</u></b>', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
@@ -124,32 +123,11 @@ async def get_data_player(callback: CallbackQuery):
 
     user_id = callback.from_user.id
 
-    try:
-        # Читаем существующие данные из файла
-        with open("players_data.json", "r", encoding="utf-8") as file:
-            users_data = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Если файл не существует, создаем пустой список
-        users_data = []
-
-    new_player_bool = True
-    data_player_text = []
-
-    for user in users_data:
-        for key, data in user.items():
-            if key == str(user_id):
-
-                for key, value in data.items():
-                    new_player_bool = False
-                    
-                    if key != 'Ссылка' and key != 'Уровень игры' and value != None:
-                        data_player_text.append(f'{key}: {value}')
-
-                user = '\n'.join(data_player_text)
-
-                await callback.message.answer(f'<b>Ваша карточка выглядит так</b> 👇\n\n{user}\n\n⚠️ Обратите внимание, чтобы игрок смог связаться с вами и предложить игру, в настройках конфедециальности телеграм должен быть включен поиск по номеру\n• <b>Настройки -> Конфеденциальность -> Номер телефона -> <u>Все</u></b>', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
-                break
-
-    # Проверяем, есть ли данные пользователя
-    if new_player_bool:
+    user = session.query(User).filter_by(tg_user_id = user_id).first()
+    user_free_time = session.query(Contestant).filter_by(id_tg_user = user_id).first()
+    if user:
+        print(f"Пользователь найден: ID={user.tg_user_id}, Name={user.name_user}")
+        await callback.message.answer(f'<b>Ваша карточка выглядит так</b> 👇\n\n{user}Предпочтительное время игры: {user_free_time.free_time_for_play}\n\n⚠️ Обратите внимание, чтобы игрок смог связаться с вами и предложить игру, в настройках конфедециальности телеграм должен быть включен поиск по номеру\n• <b>Настройки -> Конфеденциальность -> Номер телефона -> <u>Все</u></b>', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
+    else:
+        print("Пользователь не найден.")
         await callback.message.answer("<b>Карточка игрока ещё не создана!</b>\n\n• Создание карточки откроет доступ к поиску соперников", parse_mode=ParseMode.HTML, reply_markup=kb.create_card)
