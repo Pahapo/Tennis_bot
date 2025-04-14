@@ -8,7 +8,7 @@ router = Router()
 
 @router.callback_query(F.data == 'inventory')
 async def inventory(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     if await f.check_subscription(callback.from_user.id, bot):
         await callback.message.answer(f"inventory")

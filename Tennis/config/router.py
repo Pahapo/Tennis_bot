@@ -13,6 +13,7 @@ from handlers.tournament_table import router as tournament_table
 from handlers.create_tournament import router as create_tournament
 from handlers.output_tournaments import router as output_tournaments
 from handlers.btn_tournaments import router as btn_tournaments
+from handlers.set_ban import router as set_ban
 from handlers.set_division import router as set_division
 
 router = Router()
@@ -33,4 +34,5 @@ router.include_router(tournament_table)
 router.include_router(create_tournament)
 router.include_router(output_tournaments)
 router.include_router(btn_tournaments)
+router.include_router(set_ban)
 router.include_router(set_division)

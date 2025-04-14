@@ -1,36 +1,32 @@
-import json
 from aiogram.enums import ParseMode
+from datetime import datetime, timedelta
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, LinkPreviewOptions, InlineKeyboardButton
 from aiogram import F, Router
+from config.config import CHANNEL, CHANNEL_ID, CHANNEL, ADMINS, MAIN_EDITOR, EDITOR
 
-from config import CHANNEL, CHANNEL_ID, ADMINS, MAIN_EDITOR, EDITOR
+import keywords.kw_start as kb
 
-import handlers.keywords as kb
+from config.db import session
+from models.User import User
 
 router = Router()
 
 
 adm_start_t = "<b>Привет Хозяин!</b> 👋\n\nПротестируй весь мой функционал, чтобы я работал исправно! 👇"
-m_edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основные задачи:</b>\n\n✅ Распределение игроков по парам;\n✅ Установка рейтинга игрокам;\n✅ Выдача банов\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Мир – Новости</b>"
-edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основная задача:</b>\n\n✅ Создание и контроль турниров\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Минск Мир – Новости</b>"
-all_players_start_t = "<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\". Я помогу с 👇\n\n• Регистрирацией на турнир;\n• Поиском соперника;\n• Бронированием корта;\n• Приобретением инвентаря\n\n💎 Для начала <b><a href='https://t.me/minskmir_news'>подпишитесь на канал</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
+m_edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основные задачи:</b>\n\n✅ Распределение игроков по парам;\n✅ Установка рейтинга игрокам;\n✅ Выдача банов\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, <a href='https://t.me/minskmir_news'>Мир – Новости</a></b>"
+edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основная задача:</b>\n\n✅ Создание и контроль турниров\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, <a href='https://t.me/minskmir_news'>Минск Мир – Новости</a></b>"
+all_players_start_t = "<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперников;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Для начала <b><a href='https://t.me/minskmir_news'>подпишитесь на канал</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
-async def save_user(user_id): # Сохранение пользователей в список для рассылки
-    try:
-        # Читаем существующие данные из файла
-        with open("users.json", "r", encoding="utf-8") as file:
-            users = json.load(file)
-    except FileNotFoundError:
-        # Если файл не существует, создаем пустой список
-        users = []
+async def save_user(user_id, user_name, user_link): # Сохранение пользователей в список для рассылки
 
-    # Проверяем, есть ли пользователь уже в списке
-    if not any(user == user_id for user in users):
-        users.append(user_id)  # Добавляем нового пользователя
-        with open("users.json", "w", encoding="utf-8") as file:
-            json.dump(users, file, ensure_ascii=False, indent=4)
+    user = session.query(User).filter_by(tg_user_id = user_id).first()
+    if not user:
+        print(f"Новый пользователь нажал /start")
+        new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
+        session.add(new_user)  # Добавляем объект в сессию
+        session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
 
 
@@ -48,10 +44,20 @@ async def check_subscription_message(callback: CallbackQuery):
     await callback.message.answer(f"<b>{user_name}</b>, даю слово, я 🤖 буду помогать тебе до последнего вздоха, но для продолжения <b>подпишись на наш канал</b> 👇", parse_mode=ParseMode.HTML, reply_markup=kb.builder)
 
 
+async def check_ban_user(user_id):
+    user = session.query(User).filter_by(tg_user_id = user_id).first()
+    if user.ban_status:
+        end_date = datetime.strptime(user.end_date_ban, "%d.%m.%Y")
+
+        if datetime.today() > end_date:
+            user.end_date_ban = None
+            user.ban_status = None
+            session.commit() # Сохраняем изменения (фиксируем транзакцию)
+
 
 @router.callback_query(F.data == 'start_message')
 async def start_message(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     user_name = callback.from_user.full_name if callback.from_user.username else callback.from_user.username
     user_id = callback.from_user.id

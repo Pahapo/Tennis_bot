@@ -13,7 +13,7 @@ class RegPlayerStates(StatesGroup):
     skills = State()
     time = State()
 
-class PlayerData:
+class PlayerData:     # НЕ ТРОГАТЬ !!!
     def __init__(self, id=None, name=None, link=None, age=None, sex=None, skills=None, time=None, ban=None, tournaments_list=None):
         self.id = id
         self.name = name
@@ -25,7 +25,7 @@ class PlayerData:
         self.ban = ban
         self.tournaments_list = tournaments_list
 
-    def __str__(self):
+    def __str__(self):                   # НЕ ТРОГАТЬ !!!
         return (
             f"Имя: {self.name}\n"
             f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
@@ -60,18 +60,21 @@ class RegTournamentPlayerStates(StatesGroup):
     level = State()
     time1 = State()
     time2 = State()
+    selected_tournament = State()
 
 class TournamentPlayerData:
-    def __init__(self, id=None, name=None, link=None, level=None, time1=None, time2=None, tournament=None):
+    def __init__(self, id=None, name=None, link=None, level=None, time1=None, time2=None, selected_tournament=None):
         self.id = id
         self.name = name
         self.link = link
         self.level = level
         self.time1 = time1
         self.time2 = time2
+        self.selected_tournament = selected_tournament
 
     def __str__(self):
         return (
+            f"Название турнира: <b>{self.name}</b>\n"
             f"Имя: {self.name}\n"
             f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
             f"Уровень игры: {self.level}\n"
@@ -83,6 +86,7 @@ class TournamentPlayerData:
         return {
             self.id : 
             {
+                "Название турнира": self.name,
                 "Имя": self.name,
                 "Ссылка": self.link,
                 "Уровень игры": self.level,
@@ -140,4 +144,9 @@ class TournamentsData:
 
 
 class FindUser(StatesGroup):
+    tg_user_id = State()
     name = State()
+    link = State()
+    level = State()
+    period_ban = State()
+    reason_ban = State()

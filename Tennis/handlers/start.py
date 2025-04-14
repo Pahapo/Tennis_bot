@@ -3,9 +3,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 from aiogram import Router
-from config import CHANNEL, ADMINS, MAIN_EDITOR, EDITOR
+from config.config import CHANNEL, ADMINS, MAIN_EDITOR, EDITOR
 
-import handlers.keywords as kb
+import keywords.kw_start as kb
 import handlers.functions as f
 from handlers.functions import adm_start_t, m_edit_start_t, edit_start_t, all_players_start_t
 
@@ -26,7 +26,7 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.update_data(user_id = user_id)  # Сохраняем user_id в состояние
     await state.update_data(user_name = user_name)  # Сохраняем user_name в состояние
     await state.update_data(user_link = user_link)  # Сохраняем user_link в состояние
-    await f.save_user(user_id)
+    await f.save_user(user_id, user_name, user_link.lower())
 
     options = LinkPreviewOptions(
         url=CHANNEL,

@@ -1,0 +1,111 @@
+from datetime import datetime, timedelta
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
+from aiogram.enums import ParseMode
+from aiogram import F, Router
+from config.config import MAIN_EDITOR, ADMINS
+
+import keywords.kw_any as kb
+import handlers.classes as cl
+import handlers.start as st
+
+from config.db import session
+from models.User import User
+
+
+router = Router()
+
+# ВОЗМОЖНО БАН ЛУЧШЕ ВЫДАВАТЬ НЕ НА КОЛИЧЕСВО ДНЕЙ, А НА КОЛИЧЕСТВО ТУРНИРОВ
+
+@router.callback_query(F.data == 'set_ban')
+async def set_ban(callback: CallbackQuery, state:FSMContext):
+    await callback.answer('')
+    await callback.message.answer('<b>Тут вы можете выдать бан игрокам</b> 🚫\n\nИгрок не сможет участвовать в турнирах объявленное количество дней\n\nНайдите игрока по поиску 🔍', parse_mode=ParseMode.HTML, reply_markup=kb.set_ban)
+
+
+@router.callback_query(F.data == 'find_users_for_ban')
+async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):
+    await callback.answer('')
+    await state.set_state(cl.FindUser.name)
+    
+    user_id = callback.from_user.id
+    if user_id in MAIN_EDITOR or user_id in ADMINS:
+        await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
+    else:
+        await callback.message.answer('Функция недоступна! Вы не главный редактор! 🚫')
+        st.cmd_start()
+
+
+@router.message(cl.FindUser.name)
+async def find_name(message: Message, state:FSMContext):
+    await state.update_data(name = message.text)
+    name_finder_user = message.text.lower()
+
+    if '@' in name_finder_user:
+        name_finder_user = name_finder_user.replace('@', '', 1)
+
+    name_finder_user = 'https://t.me/' + name_finder_user
+
+    options = LinkPreviewOptions(
+        is_disabled=True
+    )
+
+    list_finder_user = [row[0] for row in session.query(User.link).all()]
+
+    if name_finder_user in list_finder_user:
+        user = session.query(User).filter_by(link = name_finder_user).first()
+        await state.update_data(tg_user_id = user.tg_user_id)
+        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nУровень игры: {user.division_level}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
+    else:
+        await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_ban)
+
+
+@router.callback_query(F.data == 'set_new_ban')
+async def set_new_ban(callback: CallbackQuery, state:FSMContext):
+    await callback.answer('')
+    await state.set_state(cl.FindUser.period_ban)
+    await callback.message.answer('Введите количество дней, на которое хотите забанить пользователя (только число) 👇')
+
+
+@router.message(cl.FindUser.period_ban)
+async def find_name(message: Message, state:FSMContext):
+    await state.update_data(period_ban = int(message.text))
+    await state.set_state(cl.FindUser.reason_ban)
+    await message.answer('Опишите причину бана. (Этот текст увидит пользователь) 👇')
+
+
+@router.message(cl.FindUser.reason_ban)
+async def find_name(message: Message, state:FSMContext, bot):
+    await state.update_data(reason_ban = message.text)
+
+    data = await state.get_data()
+    name_finder_user = data.get("tg_user_id")
+    period_ban = int(data.get("period_ban"))
+    reason_ban = message.text
+
+    # Работа с датами
+    end_date_ban = datetime.today() + timedelta(days = period_ban)
+
+    user = session.query(User).filter_by(tg_user_id = name_finder_user).first()
+    
+    if user:
+        user.ban_status = True
+        if user.end_date_ban != None:
+            end_date_ban = datetime.strptime(user.end_date_ban, "%d.%m.%Y") + timedelta(days = period_ban)
+            user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
+
+        user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
+
+        print(f"Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!")
+        await message.answer(f"✅ Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!", reply_markup=kb.back_ban)
+        session.commit() # Сохраняем изменения (фиксируем транзакцию)
+
+        message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вам выдан Бан!</b> 🚫\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
+
+        try:
+            await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        except Exception as e:
+            print(f"Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+    else:
+        print(f"ОШИБКА! Пользователя '{user.name_user}' не был забанен!")  
+    await state.clear()

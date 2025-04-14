@@ -90,7 +90,7 @@ async def cmd_start(message: Message):
 
 @router.callback_query(F.data == 'tournament_table')
 async def tournament_table(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     if await check_subscription(callback.from_user.id, bot):
         await callback.message.answer("⚠️ Перед выставлением счёта в таблице, пожалуйста, ознакомьтесь с <b>\"Инструкцией заполнения столбца (счёт)\"</b>, расположенной в <b>ячейке U1</b>", parse_mode=ParseMode.HTML, reply_markup=kb.tournament_table)
@@ -101,7 +101,7 @@ async def tournament_table(callback: CallbackQuery, bot):
 
 @router.callback_query(F.data == 'contestant')
 async def contestant(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     if await check_subscription(callback.from_user.id, bot):
         await callback.message.answer(f"Тут что-то должно быть написано", parse_mode=ParseMode.HTML, reply_markup=kb.players)
@@ -112,7 +112,7 @@ async def contestant(callback: CallbackQuery, bot):
 
 @router.callback_query(F.data == 'court_reservation')
 async def contestant(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     if await check_subscription(callback.from_user.id, bot):
         await callback.message.answer("Для бронирования корта перейдите по кнопке ниже👇\n\nВведите желаемую дату и время игры", parse_mode=ParseMode.HTML, reply_markup=kb.court_reservation)
@@ -123,7 +123,7 @@ async def contestant(callback: CallbackQuery, bot):
 
 @router.callback_query(F.data == 'inventory')
 async def inventory(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     if await check_subscription(callback.from_user.id, bot):
         await callback.message.answer(f"inventory")
@@ -164,7 +164,7 @@ async def start_message(callback: CallbackQuery, bot):
 # @router.message(Command('register'))  # Создали декоратор для обработки поступающих сообщений
 @router.callback_query(F.data == 'register_player')
 async def register(callback: CallbackQuery, state:FSMContext):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     await state.set_state(Reg_player.name)
     await callback.message.answer('Введите ваше имя 👇')
 
@@ -189,14 +189,14 @@ async def register_age(message: Message, state:FSMContext):
 
 @router.callback_query(F.data == 'men')
 async def register_sex(callback: CallbackQuery, state:FSMContext):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     await state.update_data(sex = 'Мужчина')
     await state.set_state(Reg_player.skills)
     await callback.message.answer('Напишите о своём уровне игры 👇')             
 
 @router.callback_query(F.data == 'women')
 async def register_sex(callback: CallbackQuery, state:FSMContext):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     await state.update_data(sex = 'Женщина')
     await state.set_state(Reg_player.skills)
     await callback.message.answer('Напишите о своём уровне игры 👇')
@@ -214,7 +214,7 @@ async def register_sex(message: Message, state:FSMContext):
 
 @router.callback_query(F.data == 'no_create_user_card')
 async def no_create_user_card(callback: CallbackQuery):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     await callback.message.answer(f'<b>Карточка игрока ещё не создана!</b>\n\n• Создание карточки откроет доступ к поиску соперников', parse_mode=ParseMode.HTML, reply_markup=kb.create_card)
 
 
@@ -223,13 +223,13 @@ async def get_data_player(callback: CallbackQuery):
     if data_player == '':
         await no_create_user_card(callback)
     else:
-        await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+        await callback.answer('')
         await callback.message.answer(f'<b>Ваша карточка выглядит так</b> 👇\n\nИмя: {data_player["name"]}\nСсылка: <tg-spoiler>{data_player["link"]}</tg-spoiler>\nВозраст: {data_player["age"]}\nПол: {data_player["sex"]}\nУровень игры: {data_player["skills"]}\n\n⚠️ Обратите внимание, чтобы игрок смог связаться с вами и предложить игру, в настройках конфедециальности телеграм должен быть включен поиск по номеру\n• <b>Настройки - Конфеденциальность - Номер телефона - <u>Все</u></b>', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
 
 
 @router.callback_query(F.data == 'search_contestant')
 async def search_contestant(callback: CallbackQuery):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     if data_player == '':
         await no_create_user_card(callback)
     else:

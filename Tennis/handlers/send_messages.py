@@ -3,11 +3,15 @@ from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
-from config import ADMINS
+from config.config import ADMINS
 
-import handlers.keywords as kb
+import keywords.kw_send_message as kb
+import keywords.kw_any as ka
 import handlers.classes as cl
 import handlers.start as st
+
+from config.db import session
+from models.User import User
 
 router = Router()
 
@@ -16,7 +20,7 @@ message_text_send = ''
 
 @router.callback_query(F.data == 'sending_messages')
 async def register(callback: CallbackQuery, state:FSMContext):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     user_id = callback.from_user.id
     if user_id in ADMINS:
@@ -41,48 +45,52 @@ async def sending_messages(message: Message, state:FSMContext):
 
 @router.callback_query(F.data == 'send_war')
 async def send(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     await callback.message.answer("<b>Подтверди</b>, чтобы начать рассылку 👇", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
 
 
 @router.callback_query(F.data == 'send')
 async def send(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     
     user_id = callback.from_user.id
     if user_id in ADMINS:
-        try:
-            # Читаем существующие данные из файла
-            with open("users.json", "r", encoding="utf-8") as file:
-                users = json.load(file)
-            
+
+        users = [row[0] for row in session.query(User.tg_user_id).all()]
+        count_send_message = 0
+
+        if users:            
             for user_id in users:
                 try:
                     await bot.send_message(chat_id=user_id, text=message_text_send, parse_mode=ParseMode.HTML)
+                    count_send_message +=1
+
                 except Exception as e:
                     print(f"Не удалось отправить сообщение пользователю с id: {user_id} из-за ошибки: {e}")
-        except FileNotFoundError:
-            await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного для теста!")
+            await callback.message.answer(f"✅ <b>Рассылка завершена!</b>\n\nСообщение получило {count_send_message} чел.", parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+        else:
+            await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного для теста!", reply_markup=ka.exit)
     else:
-        await callback.message.answer('Функция недоступна! Вы не админ! 🚫')
+        await callback.message.answer('Функция недоступна! Вы не админ! 🚫', reply_markup=ka.exit)
+        st.cmd_start()
 
 
 @router.callback_query(F.data == 'send_winners')
-async def send(callback: CallbackQuery, bot):
-    await callback.answer('') # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+async def send_winner(callback: CallbackQuery, bot):
+    await callback.answer('')
     
     user_id = callback.from_user.id
     if user_id in ADMINS:
         try:
             # Читаем существующие данные из файла
-            with open("users_winner.json", "r", encoding="utf-8") as file:        # ИЗМЕНИТЬ НАЗВАНИЕ ФАЙЛА
-                users_winner = json.load(file)
+            with open("users_winner.json", "r", encoding="utf-8") as file:        # ИЗМЕНИТЬ ПОД ЧТЕНИЕ ИЗ БД ПОБЕДИТЕЛЕЙ ТУРНИРОВ
+                users_winner = json.load(file)                                    # ДОБАВИТЬ В ТАБЛИЦУ В БД СТОЛБЕЦ С ПОБЕДИТЕЛЯМИ И ИХ МЕСТАМИ
 
 
             # достать: user_name, user_id, name_turnament, place_on_tumnaments
         
 
-            for user in users_winner:         # ИЗМЕНИТЬ ИЕРАРЗИЮ ПОИСКА ID И МЕСТА
+            for user in users_winner:         # ИЗМЕНИТЬ ИЕРАРХИЮ ПОИСКА ID И МЕСТА
                 try:
                     if user.place == 1:
                         message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>1-е место:</b>\n<b>Золото</b> - показатель блестящей победы! Ваше мастерство, упорство и страсть к игре вдохновляют. Пусть этот триумф станет началом новых высот! 🏆🎾' 

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from db import Base
+from config.db import Base
 
 class Tournament(Base):
     __tablename__ = "tournament"
@@ -27,5 +27,3 @@ class Tournament(Base):
 
     def __repr__(self):
         return f"Название: {self.name_tournament}\nАдрес: {self.address}\nУровень турнира: {self.division}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 
-        # "История турниров": self.end_date_ban,
-        # "Предпочтительное время игры": self.end_date_ban
