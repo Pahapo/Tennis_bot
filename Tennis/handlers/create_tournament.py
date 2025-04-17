@@ -11,6 +11,8 @@ import handlers.start as st
 from config.db import session
 from models.Tournament import Tournament
 
+import googleSheet.googleSheet as gs
+
 router = Router()
 
 user_data = {}  # Ключ: username, значение: PlayerData
@@ -163,29 +165,25 @@ async def register_age(message: Message, state:FSMContext):
             price=int(data.get("price"))
         )
 
-        tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
-        if tournament:
-            tournament.name_tournament = data.get("name")
-            tournament.address = data.get("address")
-            tournament.division = data.get("level")
-            tournament.quantity_person = int(data.get("count"))
-            tournament.start_tournament = data.get("time1")
-            tournament.end_tournament = data.get("time2")
-            tournament.price = int(data.get("price"))
-            session.commit()
-            print(f"Турнир - '{data.get("name")}' был обновлён редактором!")
-            await message.answer('✅ Турнир отредактирован!')
-
-        else:
-            print(f"Создан новый турнир - '{data.get("name")}'.")
-            new_tournament = Tournament(name_tournament = data.get("name"), address = data.get("address"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")))
-            session.add(new_tournament)  # Добавляем объект в сессию
-            session.commit() # Сохраняем изменения (фиксируем транзакцию)
-            await message.answer('✅ Турнир создан!')
-
-        await message.answer(f'<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
-        await state.clear()
+    tournament = session.query(Tournament).filter_by(name_tournament = data.get("name")).first()
+    if tournament:
+        tournament.name_tournament = data.get("name")
+        tournament.address = data.get("address")
+        tournament.division = data.get("level")
+        tournament.quantity_person = int(data.get("count"))
+        tournament.start_tournament = data.get("time1")
+        tournament.end_tournament = data.get("time2")
+        tournament.price = int(data.get("price"))
+        session.commit()
+        print(f"Турнир - '{data.get("name")}' был обновлён редактором!")
     else:
-        await message.answer('Функция недоступна! Вы не организатор! 🚫')
-        await state.clear()
-        st.cmd_start()
+        print(f"Создан новый турнир - '{data.get("name")}'.")
+        new_tournament = Tournament(name_tournament = data.get("name"), address = data.get("address"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")))
+        session.add(new_tournament)  # Добавляем объект в сессию
+        session.commit() # Сохраняем изменения (фиксируем транзакцию)
+
+        # gs.startDoingSheet(data.get("name"), data.get("level"))  # --- ЗДЕСЬ! ---
+
+    await message.answer('✅ Турнир создан!')
+    await message.answer(f'<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
+    await state.clear()
