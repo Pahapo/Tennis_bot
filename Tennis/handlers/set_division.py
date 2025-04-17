@@ -5,6 +5,7 @@ from aiogram import F, Router
 from config.config import MAIN_EDITOR
 
 import keywords.kw_any as kb
+import keywords.kw_start as ks
 import keywords.kw_user as kb_user
 import handlers.classes as cl
 import handlers.start as st
@@ -16,16 +17,22 @@ from models.User import User
 router = Router()
 
 
+@router.callback_query(F.data == 'main_edit_level_ban')
+async def main_edit_level_ban(callback: CallbackQuery, state:FSMContext):
+    await callback.answer('')
+    await callback.message.answer('<b>Тут вы можете изменить дивизион игрокам, а так же забанить тех, кто наруашет</b>\nВыберите нужный вариант 👇', parse_mode=ParseMode.HTML, reply_markup=ks.main_edit_level_ban)
+
+
 @router.callback_query(F.data == 'set_division')
 async def set_division(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await callback.message.answer('<b>Тут вы можете установить/изменить рейтинг игрокам</b>\nВыберите нужный вариант 👇', parse_mode=ParseMode.HTML, reply_markup=kb.set_division)
+    await callback.message.answer('<b>Тут вы можете установить/изменить дивизион игрокам</b>\nВыберите нужный вариант 👇', parse_mode=ParseMode.HTML, reply_markup=kb.set_division)
 
 
 @router.callback_query(F.data == 'find_users_for_division')
 async def find_users_for_division(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await state.set_state(cl.FindUser.name)
+    await state.set_state(cl.FindUser.name_division)
     
     user_id = callback.from_user.id
     if user_id in MAIN_EDITOR:
@@ -35,7 +42,7 @@ async def find_users_for_division(callback: CallbackQuery, state:FSMContext):
         st.cmd_start()
 
 
-@router.message(cl.FindUser.name)
+@router.message(cl.FindUser.name_division)
 async def find_name(message: Message, state:FSMContext):
     await state.update_data(name = message.text)
     name_finder_user = message.text
@@ -54,7 +61,7 @@ async def find_name(message: Message, state:FSMContext):
     if name_finder_user in list_finder_user:
         user = session.query(User).filter_by(link = name_finder_user).first()
         await state.update_data(tg_user_id = user.tg_user_id)
-        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nУровень игры: {user.division_level}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
+        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {user.division_level}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
     else:
         await message.answer('Пользователь с таким <b>username</b> не найден!',parse_mode=ParseMode.HTML, reply_markup=kb.back_division)
 
@@ -86,13 +93,9 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
     data = await state.get_data()
     name_finder_user = data.get("tg_user_id")
 
-    user = session.query(User).filter_by(tg_user_id = name_finder_user).first()
+    user = session.query(User).filter(User.tg_user_id == name_finder_user).first()
     if user:
-        user.division_level = level_user
-
-        print(f"Дивизион пользователя '{user.name_user}' был изменён на {level_user}!")
-        await call.message.answer(f"✅ Дивизион пользователя '{user.name_user}' был изменён на {level_user}!", reply_markup=kb.back_division)
-        session.commit() # Сохраняем изменения (фиксируем транзакцию)
+        user.division_level = level_user             # СРОЧНО ИСПРАВИТЬ ! ! !
 
         update_level = ''
         if level_user == 1: update_level = 'Золотой 🥇'
@@ -100,13 +103,17 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
         elif level_user == 3: update_level = 'Бронзовый 🥉'
         elif level_user == 4: update_level = 'Медный 🎾'
         elif level_user == 5: update_level = 'Железный 🏃‍♂️'
+
+        print(f"Дивизион пользователя \"{user.name_user}\" был изменён на {update_level}!")
+        await call.message.answer(f"✅ Дивизион пользователя \"{user.name_user}\" был изменён на {update_level}!", reply_markup=kb.back_division)
+        session.commit() # Сохраняем изменения (фиксируем транзакцию)
                    
-        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что ваш дивизион изменён!</b> 🏆\n\n<b>Новый дивизион:</b> {update_level}"
+        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{update_level}</b>\n\n<b>Поздравляем!</b> 🎉"
 
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
             print(f"Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
-        print(f"ОШИБКА! Дивизион пользователя '{user.name_user}' не был изменён на {level_user}!")  
+        print(f"ОШИБКА! Дивизион пользователя \"{user.name_user}\" не был изменён на {update_level}!")  
     await state.clear()

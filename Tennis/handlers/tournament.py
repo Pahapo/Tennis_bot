@@ -1,9 +1,10 @@
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from aiogram import F, Router
 from sqlalchemy import func
 
+import keywords.kw_start as ks
 import keywords.kw_tournament as kb
 import handlers.btn_tournaments as bt
 import handlers.functions as f
@@ -13,13 +14,26 @@ from models.TournamentPlayers import TournamentPlayers
 from models.Tournament import Tournament
 from models.User import User
 
+
 router = Router()
 
 
 @router.callback_query(F.data == 'edit_tournament')
-async def tournament_edit(callback: CallbackQuery):
+async def edit_tournament(callback: CallbackQuery):
     await callback.answer('')  # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
-    await callback.message.answer(f"<b>Тут происходит редактирование турниров</b>\n\n• Если необходимо изменить карточку уже существующего турнира, создай <b>новый с таким же названием</b>! Турнир отредактируется\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, reply_markup=kb.edit_tournament)
+    await callback.message.answer(f"<b>Тут происходит работа над турнирами</b>\n\n- Создание турнира\n- Просмотр участников (и удаление)\n- Редактировние турнира\n- Удаление турнира\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, reply_markup=ks.edit_tournament)
+    
+
+@router.callback_query(F.data == 'main_edit_tournament')
+async def tournament_main_edit(callback: CallbackQuery):
+    await callback.answer('')  # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+
+    options = LinkPreviewOptions(
+        is_disabled=True
+    )
+
+    editors_list = await f.output_edits_list()
+    await callback.message.answer(f"<b>Тут происходит просмотр турниров и участников</b>\n\n• Если необходимо внести какие-либо изменения в турнир, свяжитесь с редактором(-ами) {editors_list}\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ks.main_edit_tournament)
     
 
 @router.callback_query(F.data == 'tournament_info')
@@ -57,6 +71,18 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
     elif user.ban_status == True:
         await call.message.answer(f'<b>🚫 Вы не можете участвовать в турнире из-за бана</b> 🥲\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     else:
-        await call.message.answer(f"📋 <b>Регламент:</b>\n\n<b>1. ГРУППОВАЯ СТАДИЯ</b>\n<b><i>Количество групп:</i></b>\n- 4 группы по 4 игрока\n\n<b>Формирование групп:</b>\n- Распределение по группам производится посредством жеребьевки\n- Участники разбиваются на 4 корзины по 4 человека, исходя из уровня игры\n- В каждой группе оказывается по 4 игрока, каждый из которых из разных корзин\n\n<b><i>Формат матчей в группе:</i></b>\nСхема матчей: Каждый с каждым 🤺🎾\nФормат матча: Трехсетовый\n\nЕсли после двух сетов результат равный (1-1), третий сет играется в формате супертайбрейка:\nИгра до 10 очков (минимальный перевес для победы – 2 очка)\nЕсли потребуется считать геймы для определения лучшего по дополнительным показателям, супертайбрейк засчитывается как 1 гейм\n\n<b><i>Выход в плей-офф:</i></b>\nДва лучших игрока из каждой группы переходят в следующий этап\n\n<b>2. ПЛЕЙ-ОФФ</b>\n<b><i>Четвертьфиналы:</i></b>\nПосле завершения групповой стадии проводится жеребьевка четвертьфинала.Занявшие первые места в группах играют с занявшими вторые\n\n<b><i>Полуфиналы:</i></b>\nПроводится дополнительная жеребьевка полуфинала.\nУчастники из одной группы разводятся до финала\n\n<b><i>Формат матчей в плей-офф:</i></b>\nФинал и матч за третье место:\nПолноценные трехсетовые матчи 🥇🥈🥉\n\nЧетвертьфиналы и полуфиналы:\nФормат определяется по договоренности между соперниками:\n- Либо полноценные трехсетовики.\n- Либо замена 3-го сета супертайбрейком (до 10 с разницей в 2 очка).\n- Если договоренность не достигнута, применяется супертайбрейк\n\n<b>3.  ОГРАНИЧЕНИЕ ПО ВРЕМЕНИ</b> ⏰\nТурнир ограничен по времени – 3 недели с момента старта.\nИгры, не сыгранные в этот период, будут рассматриваться в индивидуальном порядке\n\n<b>4. ТУРНИРНЫЙ ВЗНОС</b> 💰\n {tournament_data.price} бел.руб.", parse_mode=ParseMode.HTML, reply_markup=kb.reglament)
+        if int(tournament_data.division) == 1:
+            tournament_lvl = 'Золотой 🥇'
+        elif int(tournament_data.division) == 2:
+            tournament_lvl = 'Серебряный 🥈'
+        elif int(tournament_data.division) == 3:
+            tournament_lvl = 'Бронзовый 🥉'
+        elif int(tournament_data.division) == 4:
+            tournament_lvl = 'Медный 🎾'
+        elif int(tournament_data.division) == 5:
+            tournament_lvl = 'Железный 🏃‍♂️'
+        else:
+            tournament_lvl = 'Все дивизионы'
+        await call.message.answer(f"📋 <b>Регламент:</b>\n\n<b>1. ГРУППОВАЯ СТАДИЯ</b>\n\n<b><i>Количество групп:</i></b>\n- 4 группы по 4 игрока\n\n<b>Формирование групп:</b>\n- Распределение по группам производится посредством жеребьевки\n- Участники разбиваются на 4 корзины по 4 человека, исходя из уровня игры\n- В каждой группе оказывается по 4 игрока, каждый из которых из разных корзин\n\n<b><i>Формат матчей в группе:</i></b>\nСхема матчей: Каждый с каждым 🤺🎾\nФормат матча: Трехсетовый\n\nЕсли после двух сетов результат равный (1-1), третий сет играется в формате супертайбрейка:\nИгра до 10 очков (минимальный перевес для победы – 2 очка)\nЕсли потребуется считать геймы для определения лучшего по дополнительным показателям, супертайбрейк засчитывается как 1 гейм\n\n<b><i>Выход в плей-офф:</i></b>\nДва лучших игрока из каждой группы переходят в следующий этап\n\n<b>2. ПЛЕЙ-ОФФ</b>\n\n<b><i>Четвертьфиналы:</i></b>\nПосле завершения групповой стадии проводится жеребьевка четвертьфинала.Занявшие первые места в группах играют с занявшими вторые\n\n<b><i>Полуфиналы:</i></b>\nПроводится дополнительная жеребьевка полуфинала.\nУчастники из одной группы разводятся до финала\n\n<b><i>Формат матчей в плей-офф:</i></b>\nФинал и матч за третье место:\nПолноценные трехсетовые матчи 🥇🥈🥉\n\nЧетвертьфиналы и полуфиналы:\nФормат определяется по договоренности между соперниками:\n- Либо полноценные трехсетовики.\n- Либо замена 3-го сета супертайбрейком (до 10 с разницей в 2 очка).\n- Если договоренность не достигнута, применяется супертайбрейк\n\n<b>3. ОГРАНИЧЕНИЕ ПО ВРЕМЕНИ</b> ⏰\n\nТурнир ограничен по времени – 3 недели с момента старта.\nИгры, не сыгранные в этот период, будут рассматриваться в индивидуальном порядке\n\n<b>4. АВТОБРОНИРОВАНИЕ КОРТОВ</b> 🎾\n\nДля участников турнира ежедневно выделяется корт с 17:00 до 20:00\n\n<b>5. ДЕТАЛИ ТУРНИРА</b> 🏆\n\n<b><i>Турнир \"{tournament_data.name_tournament.upper()}\"</i></b>\n📍 Адрес корта: {tournament_data.address}\n💪 Дивизион: {tournament_lvl}\n🙋‍♂️ Количество участников: {tournament_data.quantity_person} чел.\n📆 Начало: {tournament_data.start_tournament}\n📆 Окончание: {tournament_data.end_tournament}\n💰 Стоимость участия: {tournament_data.price} бел.руб.", parse_mode=ParseMode.HTML, reply_markup=kb.reglament)
 
 # После прохождения турнира добавлять в карточку игрока название турнира, как история (код выше)

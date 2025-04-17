@@ -1,6 +1,10 @@
 from sqlalchemy import Column, Integer, String, Boolean, BigInteger
 from config.db import Base
 
+from config.db import session
+from models.Tournament import Tournament
+from models.TournamentPlayers import TournamentPlayers
+
 class User(Base):
     __tablename__ = "users"
     tg_user_id = Column(BigInteger, primary_key=True, unique=True)
@@ -26,5 +30,19 @@ class User(Base):
 
 
     def __repr__(self):
-        return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nУровень игры: {self.division_level}\nНаличие бана: {self.ban_status} (До {self.end_date_ban})\n" 
-        #  История турниров: {self.tournaments_list}
+        user_in_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == self.tg_user_id).all()
+        tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
+        history_tournaments = session.query(Tournament).filter(Tournament.tournament_id.in_(tournament_ids)).all()
+
+        history = ''
+
+        for toutnament in history_tournaments:
+            if history == '':
+                history += f"\"{toutnament.name_tournament}\""
+            else:
+                history += f", \"{toutnament.name_tournament}\""
+
+        if history == '':
+            history = 'не участвовал 🥲'
+
+        return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {self.division_level}\nИстория турниров: {history}\nНаличие бана: {self.ban_status} (До {self.end_date_ban})\n" 

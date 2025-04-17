@@ -25,17 +25,29 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
         self.ban = ban
         self.tournaments_list = tournaments_list
 
-    def __str__(self):                   # НЕ ТРОГАТЬ !!!
-        return (
-            f"Имя: {self.name}\n"
-            f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
-            f"Возраст: {self.age}\n"
-            f"Пол: {self.sex}\n"
-            f"Уровень игры: {self.skills}\n"
-            # f"Наличие бана: {self.ban}\n"
-            f"История турниров: {self.tournaments_list}\n"
-            f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
-        )
+    def __str__(self):             # НЕ ТРОГАТЬ !!!
+        if self.tournaments_list == None:
+            return (
+                f"Имя: {self.name}\n"
+                f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
+                f"Возраст: {self.age}\n"
+                f"Пол: {self.sex}\n"
+                f"Дивизион: {self.skills}\n"
+                # f"Наличие бана: {self.ban}\n"
+                f"История турниров: не участвовал 🥲\n"
+                f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
+            )
+        else:
+            return (
+                f"Имя: {self.name}\n"
+                f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
+                f"Возраст: {self.age}\n"
+                f"Пол: {self.sex}\n"
+                f"Дивизион: {self.skills}\n"
+                # f"Наличие бана: {self.ban}\n"
+                f"История турниров: {self.tournaments_list}\n"
+                f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
+            )
     
     def get_data(self):
         return {
@@ -45,7 +57,7 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
                 "Ссылка": self.link,
                 "Возраст": self.age,
                 "Пол": self.sex,
-                "Уровень игры": self.skills,
+                "Дивизион": self.skills,
                 "Наличие бана": self.ban,
                 "История турниров": self.tournaments_list,
                 "Предпочтительное время игры": self.time
@@ -77,7 +89,7 @@ class TournamentPlayerData:
             f"Название турнира: <b>{self.name}</b>\n"
             f"Имя: {self.name}\n"
             f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
-            f"Уровень игры: {self.level}\n"
+            f"Дивизион: {self.level}\n"
             f"Время №1: {self.time1}\n"
             f"Время №2: {self.time2}\n"
         )
@@ -89,7 +101,7 @@ class TournamentPlayerData:
                 "Название турнира": self.name,
                 "Имя": self.name,
                 "Ссылка": self.link,
-                "Уровень игры": self.level,
+                "Дивизион": self.level,
                 "Время №1": self.time1,
                 "Время №2": self.time2
             }
@@ -116,12 +128,36 @@ class TournamentsData:
         self.time2 = time2
         self.price = price
 
-    def __str__(self):
+    def __str__(self):   # ИСПРАВИТЬ ! ! ! (в бд у нас список из цифр в текстовом виде)
+        if self.level != None:
+            division_lvl = ''
+            array_level = self.level
+            count_level = 0
+
+            for level in list(map(int, array_level.split(","))): # делаем массив из цифр
+                if count_level > 0:
+                    division_lvl += ', '
+
+                if int(self.level) == 1:
+                    division_lvl += 'Золотой 🥇'
+                elif int(self.level) == 2:
+                    division_lvl += 'Серебряный 🥈'
+                elif int(self.level) == 3:
+                    division_lvl += 'Бронзовый 🥉'
+                elif int(self.level) == 4:
+                    division_lvl += 'Медный 🎾'
+                elif int(self.level) == 5:
+                    division_lvl += 'Железный 🏃‍♂️'
+                else:
+                    division_lvl = 'Все дивизионы'
+                
+                count_level += 1
+
         return (
             f"Название турнира: {self.name}\n"
             f"Адрес корта: {self.address}\n"
-            f"Уровень турнира: {self.level}\n"
-            f"Максимальное кол-во участников: {self.count}\n"
+            f"Дивизион турнира: {division_lvl}\n"
+            f"Максимальное кол-во участников: {self.count} чел.\n"
             f"Начало: {self.time1}\n"
             f"Окончание: {self.time2}\n"
             f"Стоимость участия: {self.price} бел.руб.\n"
@@ -133,19 +169,21 @@ class TournamentsData:
             {
                 "Название турнира": self.name,
                 "Адрес корта": self.address,
-                "Уровень турнира": self.level,
+                "Дивизион турнира": self.level,
                 "Максимальное кол-во участников": self.count,
                 "Начало": self.time1,
                 "Окончание": self.time2,
                 "Стоимость участия": self.price
-                # После прохождения турнира добавлять в карточку игрока название турнира, как история
             }
         }
 
 
 class FindUser(StatesGroup):
     tg_user_id = State()
-    name = State()
+    name_ban = State()
+    name_division = State()
+    name_division_del_players = State()
+    players_delete = State()
     link = State()
     level = State()
     period_ban = State()

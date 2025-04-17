@@ -8,7 +8,7 @@ CHANNEL = os.getenv('CHANNEL')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 ADMINS = list(map(int, os.getenv('ADMINS').split(',')))                 # ID администраторов (можно хранить и в базе данных, но на старте так удобнее)
 MAIN_EDITOR = list(map(int, os.getenv('MAIN_EDITOR').split(',')))       # Распределяет игроков по парам
-                                                                        # Задают рейтинг игрокам
+                                                                        # Задают дивизион игрокам
                                                                         # Выдают бан
 EDITOR = list(map(int, os.getenv('EDITOR').split(',')))                 # Создаёт и контролирует турнир
 DATABASE_URL = os.getenv('DATABASE_URL')

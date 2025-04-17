@@ -16,7 +16,7 @@ router = Router()
 async def register(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
     await state.set_state(cl.RegTournamentPlayerStates.level)
-    await callback.message.answer('Выберите ваш уровень игры 👇', parse_mode=ParseMode.HTML, reply_markup=kb.reg_tournament_lvl)
+    await callback.message.answer('Выберите ваш дивизион 👇', parse_mode=ParseMode.HTML, reply_markup=kb.reg_tournament_lvl)
 
 
 @router.callback_query(F.data.in_(["lvl_p_1", "lvl_p_2", "lvl_p_3", "lvl_p_4", "lvl_p_5", "lvl_p_6"]))

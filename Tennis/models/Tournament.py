@@ -11,10 +11,11 @@ class Tournament(Base):
     start_tournament = Column(String(10), nullable=False)
     end_tournament = Column(String(10))
     price = Column(Integer)
+    link_table = Column(String(120))
 
 
     # Конструктор __init__
-    def __init__(self, name_tournament, address, division, quantity_person, start_tournament, end_tournament, price):
+    def __init__(self, name_tournament, address, division, quantity_person, start_tournament, end_tournament, price, link_table):
         # self.tournament_id = tournament_id
         self.name_tournament = name_tournament
         self.address = address
@@ -23,7 +24,8 @@ class Tournament(Base):
         self.start_tournament = start_tournament
         self.end_tournament = end_tournament
         self.price = price
+        self.link_table = link_table
 
 
     def __repr__(self):
-        return f"Название: {self.name_tournament}\nАдрес: {self.address}\nУровень турнира: {self.division}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 
+        return f"Название: {self.name_tournament}\nАдрес: {self.address}\nДивизион турнира: {self.division}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 

@@ -1,7 +1,7 @@
+from datetime import datetime
 from aiogram.enums import ParseMode
-from datetime import datetime, timedelta
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import CallbackQuery, LinkPreviewOptions, InlineKeyboardButton
+from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram import F, Router
 from config.config import CHANNEL, CHANNEL_ID, CHANNEL, ADMINS, MAIN_EDITOR, EDITOR
 
@@ -14,8 +14,8 @@ router = Router()
 
 
 adm_start_t = "<b>Привет Хозяин!</b> 👋\n\nПротестируй весь мой функционал, чтобы я работал исправно! 👇"
-m_edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основные задачи:</b>\n\n✅ Распределение игроков по парам;\n✅ Установка рейтинга игрокам;\n✅ Выдача банов\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, <a href='https://t.me/minskmir_news'>Мир – Новости</a></b>"
-edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основная задача:</b>\n\n✅ Создание и контроль турниров\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, <a href='https://t.me/minskmir_news'>Минск Мир – Новости</a></b>"
+m_edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основные задачи:</b>\n\n✅ Распределение игроков по парам;\n✅ Анализ дивизиона для игроков;\n✅ Выдача банов\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Мир – Новости</b>"
+edit_start_t = "Мы рады приветствовать тебя в команде администраторов нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основная задача:</b>\n\n✅ Создание и контроль турниров\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Минск Мир – Новости</b>"
 all_players_start_t = "<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперников;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Для начала <b><a href='https://t.me/minskmir_news'>подпишитесь на канал</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
@@ -75,3 +75,10 @@ async def start_message(callback: CallbackQuery, bot):
         await callback.message.edit_text(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
     else:
         await callback.message.edit_text(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, parse_mode=ParseMode.HTML, reply_markup=kb.main_btn)
+
+async def output_edits_list():
+    edits = session.query(User).filter(User.tg_user_id.in_(EDITOR)).all() # Получаем список User с указанным free_time
+    edit_list = ''
+    for edit in edits:
+        edit_list += f"\n🙋‍♂️ <a href='{edit.link}'>{edit.name_user}</a>"
+    return edit_list

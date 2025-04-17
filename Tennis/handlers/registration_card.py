@@ -21,6 +21,7 @@ async def register(callback: CallbackQuery, state:FSMContext):
     await state.set_state(cl.RegPlayerStates.name)
     await callback.message.answer('Введите ваше имя 👇')
 
+
 @router.message(cl.RegPlayerStates.name)
 async def register_name(message: Message, state:FSMContext):
     user_id = message.from_user.id
@@ -44,6 +45,7 @@ async def register_age(message: Message, state:FSMContext):
     await state.update_data(age = message.text)
     await message.answer('Выберите ваш пол 👇', reply_markup=kb.sex)
 
+
 @router.callback_query(F.data.in_(["men", "women"]))
 async def register_sex(call: CallbackQuery, state: FSMContext):
     await call.answer('')
@@ -54,11 +56,6 @@ async def register_sex(call: CallbackQuery, state: FSMContext):
     await state.set_state(cl.RegPlayerStates.time)
     await call.message.answer('Введите предпочтительное время игры 👇')           
 
-# @router.message(cl.RegPlayerStates.skills)
-# async def register_age(message: Message, state:FSMContext):
-#     await state.update_data(skills = message.text)
-#     await state.set_state(cl.RegPlayerStates.time)
-#     await message.answer('Введите предпочтительное время игры 👇')
 
 @router.message(cl.RegPlayerStates.time)
 async def register_time(message: Message, state: FSMContext):
@@ -102,23 +99,20 @@ async def register_time(message: Message, state: FSMContext):
     await state.clear()
 
 
-
-    
 @router.callback_query(F.data == 'no_create_user_card')
 async def no_create_user_card(callback: CallbackQuery):
     await callback.answer('')
     await callback.message.answer(f'<b>Карточка игрока ещё не создана!</b>\n\n• Создание карточки откроет доступ к поиску соперников', parse_mode=ParseMode.HTML, reply_markup=kb.create_card)
 
 
-
-# Находит данные пользователя по username
-# Когда нужно найти данные пользователя, просто обращайся к словарю по ключу (username).
 @router.callback_query(F.data == 'get_data_player')
 async def get_data_player(callback: CallbackQuery):
     await callback.answer('')
 
     user_id = callback.from_user.id
 
+# Находит данные пользователя по username
+# Когда нужно найти данные пользователя, просто обращайся к словарю по ключу (username).
     user = session.query(User).filter_by(tg_user_id = user_id).first()
     print("user = ", user)
     user_free_time = session.query(Contestant).filter_by(id_tg_user = user_id).first()

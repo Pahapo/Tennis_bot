@@ -26,7 +26,7 @@ async def set_ban(callback: CallbackQuery, state:FSMContext):
 @router.callback_query(F.data == 'find_users_for_ban')
 async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await state.set_state(cl.FindUser.name)
+    await state.set_state(cl.FindUser.name_ban)
     
     user_id = callback.from_user.id
     if user_id in MAIN_EDITOR or user_id in ADMINS:
@@ -36,7 +36,7 @@ async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):
         st.cmd_start()
 
 
-@router.message(cl.FindUser.name)
+@router.message(cl.FindUser.name_ban)
 async def find_name(message: Message, state:FSMContext):
     await state.update_data(name = message.text)
     name_finder_user = message.text.lower()
@@ -55,7 +55,7 @@ async def find_name(message: Message, state:FSMContext):
     if name_finder_user in list_finder_user:
         user = session.query(User).filter_by(link = name_finder_user).first()
         await state.update_data(tg_user_id = user.tg_user_id)
-        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nУровень игры: {user.division_level}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
+        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {user.division_level}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
     else:
         await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_ban)
 

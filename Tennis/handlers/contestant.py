@@ -9,6 +9,8 @@ import handlers.functions as f
 from config.db import session
 from models.User import User
 from models.Contestant import Contestant
+from models.Tournament import Tournament
+from models.TournamentPlayers import TournamentPlayers
 
 router = Router()
 
@@ -55,10 +57,40 @@ async def search_contestant(callback: CallbackQuery, state:FSMContext):
                     if user.tg_user_id == user_id:
                         continue
                     elif user.tg_user_id == user_free_time.id_tg_user:
+                        user_in_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user.tg_user_id).all()     # ИСПРАВИТЬ, ЧТОБЫ НЕ ОБРАЩАТЬСЯ К БД КАЖДЫЙ РАЗ
+                        tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
+                        history_tournaments = session.query(Tournament).filter(Tournament.tournament_id.in_(tournament_ids)).all()         # ИСПРАВИТЬ, ЧТОБЫ НЕ ОБРАЩАТЬСЯ К БД КАЖДЫЙ РАЗ
+
+                        history = ''
+                        division_lvl = ''
+
+                        for toutnament in history_tournaments:
+                            if history == '':
+                                history += f"\"{toutnament.name_tournament}\""
+                            else:
+                                history += f", \"{toutnament.name_tournament}\""
+
+                        if history == '':
+                            history = 'не участвовал 🥲'
+
+                        if user.division_level != None:
+                            if int(user.division_level) == 1:
+                                division_lvl = 'Золотой 🥇'
+                            elif int(user.division_level) == 2:
+                                division_lvl = 'Серебряный 🥈'
+                            elif int(user.division_level) == 3:
+                                division_lvl = 'Бронзовый 🥉'
+                            elif int(user.division_level) == 4:
+                                division_lvl = 'Медный 🎾'
+                            elif int(user.division_level) == 5:
+                                division_lvl = 'Железный 🏃‍♂️'
+                        else:
+                            division_lvl = 'Не определён'
+
                         # Добавить вывод рейтинга в скобках возле имени
-                        list_contestants += f'\n\n🙋‍♂️ <b>{user.name_user.upper()}</b>\n\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\nВозраст: {user.age}\nПол: {user.sex}\nПредпочтительное время игры: <blockquote>{user_free_time.free_time_for_play}</blockquote>'
-             
-        await callback.message.answer(list_contestants, parse_mode=ParseMode.HTML, link_preview_options=options, reply_markup=kb.players_data)
+                        list_contestants += f'\n\n🙋‍♂️ <b>{user.name_user.upper()}</b>\n\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\nИстория турниров: {history}\nДивизион: {division_lvl}\nВозраст: {user.age}\nПол: {user.sex}\nПредпочтительное время игры: <blockquote>{user_free_time.free_time_for_play}</blockquote>'
+            
+        await callback.message.answer(list_contestants, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.players_data)
     else:
         await callback.message.answer(f"Нам жаль, но список 📂 доступных соперников пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.players_data)
     
