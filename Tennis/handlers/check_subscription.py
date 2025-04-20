@@ -10,7 +10,7 @@ async def check_subscription_callback(callback: CallbackQuery, bot):
 
     # Повторная проверка подписки
     if await f.check_subscription(callback.from_user.id, bot):
-        await callback.answer("Спасибо за подписку!")
+        await callback.answer("✅ Спасибо за подписку!")
 
         await f.start_message(callback, bot)
     else:

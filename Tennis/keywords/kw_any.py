@@ -4,7 +4,7 @@ exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Гл�
 
 # division
 
-set_division = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Игроки без дивизиона 🙋‍♂️', callback_data='lvl_p_1')], # сделать!
+set_division = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Игроки без дивизиона 🙋‍♂️', callback_data='player_without_division')], # сделать!
                                                     [InlineKeyboardButton(text = 'Поиск игрока 🔍', callback_data='find_users_for_division')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                     ])
@@ -17,6 +17,15 @@ edit_division = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text
                                                     [InlineKeyboardButton(text = 'Найти другого игрока 🔍', callback_data='find_users_for_division')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='set_division')]
                                                     ])
+
+pl_without_div = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Золотой', callback_data='lvl_wd_1')],
+                                                        [InlineKeyboardButton(text = 'Серебряный', callback_data='lvl_wd_2')],
+                                                        [InlineKeyboardButton(text = 'Бронзовый', callback_data='lvl_wd_3')],
+                                                        [InlineKeyboardButton(text = 'Медный', callback_data='lvl_wd_4')],
+                                                        [InlineKeyboardButton(text = 'Железный', callback_data='lvl_wd_5')],
+                                                        [InlineKeyboardButton(text = 'Пропустить пользователя 👉', callback_data='player_without_division_next')], # сделать!
+                                                        [InlineKeyboardButton(text = 'Выйти', callback_data='set_division')]
+                                                        ])
 
 # ban
 

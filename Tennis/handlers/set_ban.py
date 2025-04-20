@@ -10,6 +10,7 @@ import handlers.classes as cl
 import handlers.start as st
 
 from config.db import session
+from models.Division import Division
 from models.User import User
 
 
@@ -55,7 +56,16 @@ async def find_name(message: Message, state:FSMContext):
     if name_finder_user in list_finder_user:
         user = session.query(User).filter_by(link = name_finder_user).first()
         await state.update_data(tg_user_id = user.tg_user_id)
-        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {user.division_level}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
+
+        division_lvl = ''
+
+        if user.division_level != None:
+            name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
+            division_lvl = name_division.name_division
+        else:
+            division_lvl = 'Не определён'
+
+        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
     else:
         await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_ban)
 
@@ -105,7 +115,7 @@ async def find_name(message: Message, state:FSMContext, bot):
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
-            print(f"Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+            print(f"Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
         print(f"ОШИБКА! Пользователя '{user.name_user}' не был забанен!")  
     await state.clear()

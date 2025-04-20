@@ -2,6 +2,10 @@ import gspread
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 
+from config.db import session
+from models.Division import Division
+from config.config import EMAILS
+
 
 # --- Авторизация через Google Sheets и Drive API -----
 SCOPES_SHEETS = ['https://www.googleapis.com/auth/spreadsheets']
@@ -28,15 +32,23 @@ def createNewSheet(source_spreadsheet_id, nameTournament):
 
     return new_spreadsheet_id
 
-# def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
-def copy_lists(new_spreadsheet_id, source_spreadsheet_id):
+def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
+# def copy_lists(new_spreadsheet_id, source_spreadsheet_id):
     # Получаем ID исходного листа
     source_sheets_info = service_sheets.spreadsheets().get(spreadsheetId=source_spreadsheet_id).execute()
     source_sheet_id = source_sheets_info['sheets'][0]['properties']['sheetId']  # Первый лист в таблице
 
+    levelTournament_list = list(map(int, levelTournament.split(",")))
+    name_division = session.query(Division).all()
+    # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+    division_dict = {div.division_id: div.name_division for div in name_division}
+    # Преобразуем список ID в список названий
+    levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+
+
     # --- Копирование листа -----
-    # for i in levelTournament:
-    for i in range(5):
+    for i in levelTournament_names:
+    # for i in range(5):
         # Копируем лист в новую таблицу
         response = service_sheets.spreadsheets().sheets().copyTo(
             spreadsheetId=source_spreadsheet_id,
@@ -56,7 +68,7 @@ def copy_lists(new_spreadsheet_id, source_spreadsheet_id):
                         "updateSheetProperties": {
                             "properties": {
                                 "sheetId": new_sheet_id,
-                                "title": f"Дивизион {i}"
+                                "title": f"{i}"
                             },
                             "fields": "title"
                         }
@@ -75,10 +87,9 @@ def accessToSheet(new_spreadsheet_id):
         'role': 'reader'
     }
     service_drive.permissions().create(fileId=new_spreadsheet_id, body=permission).execute()
-    print(f"Таблица теперь доступна всем по ссылке: https://docs.google.com/spreadsheets/d/{new_spreadsheet_id}")
+    link_sheet_tournament = f"https://docs.google.com/spreadsheets/d/{new_spreadsheet_id}"
+    print(link_sheet_tournament)
 
-    # Доступ на редактирование для определённых пользователей
-    EMAILS = ['goovelshop@gmail.com']
     for email in EMAILS:
         permission_editor = {
             'type': 'user',
@@ -87,6 +98,7 @@ def accessToSheet(new_spreadsheet_id):
         }
         service_drive.permissions().create(fileId=new_spreadsheet_id, body=permission_editor).execute()
         print(f"Доступ на редактирование предоставлен: {email}")
+    return link_sheet_tournament
 
 def delete_template_list(new_spreadsheet_id, source_sheet_id):
     # Запрос на удаление первого листа
@@ -102,8 +114,8 @@ def delete_template_list(new_spreadsheet_id, source_sheet_id):
     service_sheets.spreadsheets().batchUpdate(spreadsheetId=new_spreadsheet_id, body=delete_request).execute()
     print(f"Лист с ID {source_sheet_id} успешно удалён!")
 
-# def startDoingSheet(nameTournament, levelTournament):
-def startDoingSheet(nameTournament):
+def startDoingSheet(nameTournament, levelTournament):
+# def startDoingSheet(nameTournament):
     # ----- Открытие исходной таблицы -----
     gc = gspread.service_account(filename='credentials_tennisbot.json')
     spreadsheet = gc.open("Турнир")
@@ -113,11 +125,12 @@ def startDoingSheet(nameTournament):
     newSheetId = createNewSheet(source_spreadsheet_id, nameTournament)
 
     # ----- Копирование листов-дивизионов в новой таблице, удаление шаблон-листа из новой таблицы -----
-    # copy_lists(newSheetId, source_spreadsheet_id, levelTournament)
-    copy_lists(newSheetId, source_spreadsheet_id)
+    copy_lists(newSheetId, source_spreadsheet_id, levelTournament)
+    # copy_lists(newSheetId, source_spreadsheet_id)
 
     # ----- Предоставление доступа к таблице -----
-    accessToSheet(newSheetId)
+    link_sheet_tournament = accessToSheet(newSheetId)
+    return link_sheet_tournament
 
 
 

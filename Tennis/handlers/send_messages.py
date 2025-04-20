@@ -66,7 +66,7 @@ async def send(callback: CallbackQuery, bot):
                     count_send_message +=1
 
                 except Exception as e:
-                    print(f"Не удалось отправить сообщение пользователю с id: {user_id} из-за ошибки: {e}")
+                    print(f"Не удалось отправить сообщение при рассылке пользователю с id: {user_id} из-за ошибки: {e}")
             await callback.message.answer(f"✅ <b>Рассылка завершена!</b>\n\nСообщение получило {count_send_message} чел.", parse_mode=ParseMode.HTML, reply_markup=ka.exit)
         else:
             await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного для теста!", reply_markup=ka.exit)
@@ -79,34 +79,34 @@ async def send(callback: CallbackQuery, bot):
 async def send_winner(callback: CallbackQuery, bot):
     await callback.answer('')
     
-    user_id = callback.from_user.id
-    if user_id in ADMINS:
-        try:
-            # Читаем существующие данные из файла
-            with open("users_winner.json", "r", encoding="utf-8") as file:        # ИЗМЕНИТЬ ПОД ЧТЕНИЕ ИЗ БД ПОБЕДИТЕЛЕЙ ТУРНИРОВ
-                users_winner = json.load(file)                                    # ДОБАВИТЬ В ТАБЛИЦУ В БД СТОЛБЕЦ С ПОБЕДИТЕЛЯМИ И ИХ МЕСТАМИ
+    # user_id = callback.from_user.id
+    # if user_id in ADMINS:
+    #     try:
+    #         # Читаем существующие данные из файла
+    #         with open("users_winner.json", "r", encoding="utf-8") as file:        # ИЗМЕНИТЬ ПОД ЧТЕНИЕ ИЗ БД ПОБЕДИТЕЛЕЙ ТУРНИРОВ
+    #             users_winner = json.load(file)                                    # ДОБАВИТЬ В ТАБЛИЦУ В БД СТОЛБЕЦ С ПОБЕДИТЕЛЯМИ И ИХ МЕСТАМИ
 
 
-            # достать: user_name, user_id, name_turnament, place_on_tumnaments
+    #         # достать: user_name, user_id, name_turnament, place_on_tumnaments
         
 
-            for user in users_winner:         # ИЗМЕНИТЬ ИЕРАРХИЮ ПОИСКА ID И МЕСТА
-                try:
-                    if user.place == 1:
-                        message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>1-е место:</b>\n<b>Золото</b> - показатель блестящей победы! Ваше мастерство, упорство и страсть к игре вдохновляют. Пусть этот триумф станет началом новых высот! 🏆🎾' 
-                        await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
-                        await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
-                    elif user.place == 2:
-                        message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>2-е место:</b>\n<b>Серебро</b> - доказательство вашего таланта и силы духа! Гордитесь собой, ведь вы подарили нам незабываемый матч. Вперёд к новым вершинам! 💪🌟' 
-                        await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
-                        await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
-                    elif user.place == 3:
-                        message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>3-е место:</b>\n<b>Бронза</b> - это ступень к великим победам! Ваш труд и преданность не остались незамеченными. Продолжайте заряжать корт своей энергией! 🥉🔥'
-                        await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
-                        await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
-                except Exception as e:
-                    print(f"Не удалось отправить сообщение пользователю с name: {user_name} из-за ошибки: {e}")     # ИЗМЕНИТЬ user_name
-        except FileNotFoundError:
-            await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного!")
-    else:
-        await callback.message.answer('Функция недоступна! Вы не админ! 🚫')
+    #         for user in users_winner:         # ИЗМЕНИТЬ ИЕРАРХИЮ ПОИСКА ID И МЕСТА
+    #             try:
+    #                 if user.place == 1:
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>1-е место:</b>\n<b>Золото</b> - показатель блестящей победы! Ваше мастерство, упорство и страсть к игре вдохновляют. Пусть этот триумф станет началом новых высот! 🏆🎾' 
+    #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
+    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
+    #                 elif user.place == 2:
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>2-е место:</b>\n<b>Серебро</b> - доказательство вашего таланта и силы духа! Гордитесь собой, ведь вы подарили нам незабываемый матч. Вперёд к новым вершинам! 💪🌟' 
+    #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
+    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
+    #                 elif user.place == 3:
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>3-е место:</b>\n<b>Бронза</b> - это ступень к великим победам! Ваш труд и преданность не остались незамеченными. Продолжайте заряжать корт своей энергией! 🥉🔥'
+    #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
+    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
+    #             except Exception as e:
+    #                 print(f"Не удалось отправить сообщение пользователю с name: {user_name} из-за ошибки: {e}")     # ИЗМЕНИТЬ user_name
+    #     except FileNotFoundError:
+    #         await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного!")
+    # else:
+    #     await callback.message.answer('Функция недоступна! Вы не админ! 🚫')

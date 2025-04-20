@@ -22,7 +22,7 @@ router = Router()
 
 
 @router.callback_query(F.data == 'delete_players')
-async def main_edit_level_ban(callback: CallbackQuery, state:FSMContext):
+async def delete_players(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
     await callback.message.answer('<b>Тут вы можете удалить участника из турнира за нарушение или по веским причинам</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=kt.tournament_info_del_players)
 
@@ -75,7 +75,7 @@ async def find_name_del_players(message: Message, state:FSMContext):
 
     
 @router.callback_query(F.data == 'delete_players_tournaments')            # дописать автоматическое удаление из google таблицы пользователя
-async def main_edit_level_ban(callback: CallbackQuery, state:FSMContext, bot):
+async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
 
     user_id = callback.from_user.id

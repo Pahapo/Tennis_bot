@@ -11,6 +11,7 @@ import handlers.classes as cl
 import handlers.start as st
 
 from config.db import session
+from models.Division import Division
 from models.User import User
 
 
@@ -27,6 +28,7 @@ async def main_edit_level_ban(callback: CallbackQuery, state:FSMContext):
 async def set_division(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
     await callback.message.answer('<b>Тут вы можете установить/изменить дивизион игрокам</b>\nВыберите нужный вариант 👇', parse_mode=ParseMode.HTML, reply_markup=kb.set_division)
+    await state.update_data(next_user = 0)
 
 
 @router.callback_query(F.data == 'find_users_for_division')
@@ -61,7 +63,14 @@ async def find_name(message: Message, state:FSMContext):
     if name_finder_user in list_finder_user:
         user = session.query(User).filter_by(link = name_finder_user).first()
         await state.update_data(tg_user_id = user.tg_user_id)
-        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {user.division_level}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
+
+        if user.division_level != None:
+            name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
+            division_lvl = name_division.name_division
+        else:
+            division_lvl = 'Не определён'
+        
+        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
     else:
         await message.answer('Пользователь с таким <b>username</b> не найден!',parse_mode=ParseMode.HTML, reply_markup=kb.back_division)
 
@@ -95,25 +104,25 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
 
     user = session.query(User).filter(User.tg_user_id == name_finder_user).first()
     if user:
-        user.division_level = level_user             # СРОЧНО ИСПРАВИТЬ ! ! !
+        division_lvl = ''
+        user.division_level = level_user
 
-        update_level = ''
-        if level_user == 1: update_level = 'Золотой 🥇'
-        elif level_user == 2: update_level = 'Серебряный 🥈'
-        elif level_user == 3: update_level = 'Бронзовый 🥉'
-        elif level_user == 4: update_level = 'Медный 🎾'
-        elif level_user == 5: update_level = 'Железный 🏃‍♂️'
+        if user.division_level != None:
+            name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
+            division_lvl = name_division.name_division
+        else:
+            division_lvl = 'Не определён'
 
-        print(f"Дивизион пользователя \"{user.name_user}\" был изменён на {update_level}!")
-        await call.message.answer(f"✅ Дивизион пользователя \"{user.name_user}\" был изменён на {update_level}!", reply_markup=kb.back_division)
+        print(f"Дивизион пользователя \"{user.name_user}\" был изменён на {division_lvl}!")
+        await call.message.answer(f"✅ Дивизион пользователя \"{user.name_user}\" был изменён на {division_lvl}!", reply_markup=kb.back_division)
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
                    
-        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{update_level}</b>\n\n<b>Поздравляем!</b> 🎉"
+        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉"
 
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
-            print(f"Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+            print(f"Не удалось отправить сообщение о изменении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
-        print(f"ОШИБКА! Дивизион пользователя \"{user.name_user}\" не был изменён на {update_level}!")  
+        print(f"ОШИБКА! Дивизион пользователя \"{user.name_user}\" не был изменён!")  
     await state.clear()

@@ -1,6 +1,9 @@
 from sqlalchemy import Column, Integer, String
 from config.db import Base
 
+from config.db import session
+from models.Division import Division
+
 class Tournament(Base):
     __tablename__ = "tournament"
     tournament_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -28,4 +31,15 @@ class Tournament(Base):
 
 
     def __repr__(self):
-        return f"Название: {self.name_tournament}\nАдрес: {self.address}\nДивизион турнира: {self.division}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 
+        if self.division != None:
+            levelTournament_list = list(map(int, self.division.split(",")))
+            name_division = session.query(Division).all()
+            # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+            division_dict = {div.division_id: div.name_division for div in name_division}
+            # Преобразуем список ID в список названий
+            levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+            tournament_lvl = ", ".join(levelTournament_names)
+        else: 
+            tournament_lvl = 'Не определён'
+
+        return f"Название: {self.name_tournament}\nАдрес: {self.address}\nДивизион турнира: {tournament_lvl}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 

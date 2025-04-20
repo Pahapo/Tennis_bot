@@ -37,12 +37,11 @@ async def register_name(message: Message, state:FSMContext):
 
     tournament = session.query(Tournament).filter(Tournament.name_tournament == message.text).first()
     if tournament:
-        await message.answer('Турнир с таким именем уже существует! Придумайте другое имя')
-        create_tournament()
-
-
-    await state.set_state(cl.RegTournamentsStates.address)
-    await message.answer('Выберите адрес корта 👇', reply_markup=kb.address_court)
+        await state.set_state(cl.RegTournamentsStates.name)
+        await message.answer('Турнир с таким именем уже существует! Придумайте другое имя 👇')
+    else:
+        await state.set_state(cl.RegTournamentsStates.address)
+        await message.answer('Выберите адрес корта 👇', reply_markup=kb.address_court)
 
 
 @router.callback_query(F.data.in_(["court_1", "court_2", "court_3", "court_4", "court_5"]))
@@ -64,13 +63,17 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
     await call.message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
 
 
-@router.callback_query(F.data.in_(["lvl_t_1", "lvl_t_2", "lvl_t_3", "lvl_t_4", "lvl_t_5", "lvl_t_all"])) # СДЕЛАТЬ ПРОВЕРКУ! level теперь VARCHAR
+@router.callback_query(F.data.in_(["lvl_t_1", "lvl_t_2", "lvl_t_3", "lvl_t_4", "lvl_t_5", "lvl_t_all"]))
 async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
     await call.answer('')
 
     level = ''
+    count_level = 0
     
     data = await state.get_data()
+    if data.get("count_level") != None:
+        count_level = data.get("count_level")
+
     if data.get("level") == None:
 
         if call.data == "lvl_t_1":
@@ -101,8 +104,11 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
 
         level = data.get("level") + level   
         await state.update_data(level = level)
-    if level == '1,2,3,4,5':
-        await not_add_level_tournament()
+
+    count_level += 1
+    await state.update_data(count_level = count_level)
+    if level == '1,2,3,4,5' or count_level == 5:
+        await not_add_level_tournament(call, state)
     else:
         await call.message.answer('Хотите добавить ещё 1 дивизион?', parse_mode=ParseMode.HTML, reply_markup=kb.add_level_tournament)
 
@@ -165,7 +171,7 @@ async def register_age(message: Message, state:FSMContext):
             price=int(data.get("price"))
         )
 
-    tournament = session.query(Tournament).filter_by(name_tournament = data.get("name")).first()
+    tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
     if tournament:
         tournament.name_tournament = data.get("name")
         tournament.address = data.get("address")
@@ -175,15 +181,23 @@ async def register_age(message: Message, state:FSMContext):
         tournament.end_tournament = data.get("time2")
         tournament.price = int(data.get("price"))
         session.commit()
+
+        link_sheet_tournament = tournament.link_table
+
         print(f"Турнир - '{data.get("name")}' был обновлён редактором!")
+        await message.answer('✅ Турнир обновлён!\n\n• Если вы изменили название турнира, оно не будет изменено в названии exel таблицы.\n\nИсправьте самостоятельно или обратитесь в поддержку\n🙋‍♂️ Поддержка @sup_MM')
+
     else:
         print(f"Создан новый турнир - '{data.get("name")}'.")
-        new_tournament = Tournament(name_tournament = data.get("name"), address = data.get("address"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")))
+        await message.answer('⏰ Начинаем создавать турнир и excel таблицу...')
+
+        link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"))
+        
+        new_tournament = Tournament(name_tournament = data.get("name"), address = data.get("address"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament)
         session.add(new_tournament)  # Добавляем объект в сессию
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
-        # gs.startDoingSheet(data.get("name"), data.get("level"))  # --- ЗДЕСЬ! ---
+        await message.answer('✅ Турнир создан!')
 
-    await message.answer('✅ Турнир создан!')
-    await message.answer(f'<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
+    await message.answer(f"<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}Ссылка на турнир: {link_sheet_tournament}\n\n• Ссылки на турниры находятся в разделе \"Турнирные таблицы 📋\"", parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
     await state.clear()

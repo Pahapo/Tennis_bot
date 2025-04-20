@@ -1,14 +1,15 @@
+from datetime import datetime, timedelta
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from config.config import ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_tournament as kb
-import handlers.functions as f
 import handlers.start as st
 
 from config.db import session
 from models.User import User
+from models.Division import Division
 from models.Tournament import Tournament
 from models.TournamentPlayers import TournamentPlayers
 
@@ -39,27 +40,26 @@ async def search_contestant(callback: CallbackQuery):
                 user_ids = [player.id_tg_user for player in users_in_tournament_without_name]  # Получаем список ID игроков
                 users_in_tournament = session.query(User).filter(User.tg_user_id.in_(user_ids)).all()
 
+                levelTournament_list = list(map(int, tournament.division.split(",")))
+                name_division = session.query(Division).all()
+                # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+                division_dict = {div.division_id: div.name_division for div in name_division}
+                # Преобразуем список ID в список названий
+                levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+
                 list_players = ''
+                tournament_lvl = ", ".join(levelTournament_names)
+
                 count_users_tournament = 0
-
-                if int(tournament.division) == 1:
-                    tournament_lvl = 'Золотой 🥇'
-                elif int(tournament.division) == 2:
-                    tournament_lvl = 'Серебряный 🥈'
-                elif int(tournament.division) == 3:
-                    tournament_lvl = 'Бронзовый 🥉'
-                elif int(tournament.division) == 4:
-                    tournament_lvl = 'Медный 🎾'
-                elif int(tournament.division) == 5:
-                    tournament_lvl = 'Железный 🏃‍♂️'
-                else:
-                    tournament_lvl = 'Все дивизионы'
-
                 for user_in_tournament in users_in_tournament:
                     count_users_tournament += 1
                     list_players += f"{count_users_tournament}. <a href='{user_in_tournament.link}'>{user_in_tournament.name_user}</a>\n"
-
-                list_tournaments += f"\n\n🏆 <b>Турнир {tournament.name_tournament.upper()}</b>\n\nАдрес корта: {tournament.address}\nДивизион турнира: {tournament_lvl}\nМаксимальное кол-во участников: {tournament.quantity_person} чел.\nНачало: {tournament.start_tournament}\nОкончание: {tournament.end_tournament}\nСтоимость участия: {tournament.price} бел.руб.\n\n🙋‍♂️ <b>Список участников ({count_users_tournament} чел.):</b>\n\n{list_players}"
+                
+                # проверка на актуальность турнира по времени
+                end_date = datetime.today() - timedelta(days = 3)
+                end_tournament = datetime.strptime(tournament.end_tournament, "%d.%m.%Y")
+                if end_tournament >= end_date:
+                    list_tournaments += f"\n\n🏆 <b>Турнир {tournament.name_tournament.upper()}</b>\n\nАдрес корта: {tournament.address}\nДивизион турнира: {tournament_lvl}\nМаксимальное кол-во участников: {tournament.quantity_person} чел.\nНачало: {tournament.start_tournament}\nОкончание: {tournament.end_tournament}\nСтоимость участия: {tournament.price} бел.руб.\n\n🙋‍♂️ <b>Список участников ({count_users_tournament} чел.):</b>\n\n{list_players}"
                 
             await callback.message.answer(list_tournaments, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.tournaments_data)
         else:

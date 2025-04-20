@@ -34,7 +34,6 @@ async def register_name(message: Message, state:FSMContext):
         
     await state.update_data(link = user_link)
     await state.update_data(id = user_id)
-    # await state.update_data(skills = "")
 
     await state.update_data(name = message.text)
     await state.set_state(cl.RegPlayerStates.age)
@@ -70,12 +69,10 @@ async def register_time(message: Message, state: FSMContext):
         link=data.get("link"),
         age=data.get("age"),
         sex=data.get("sex"),
-        skills=data.get("skills"),
         time=data.get("time")
     )
 
     user_id = message.from_user.id
-    print("user_id", user_id)
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
     user_free_time = session.query(Contestant).filter(Contestant.id_tg_user == user_id).first()
@@ -88,7 +85,6 @@ async def register_time(message: Message, state: FSMContext):
         user_free_time.free_time_for_play = data.get("time")
         print(f"Карточка пользователя с ID {user_id} обновлена!")
     else:
-        print(f"У пользователя {data.get("id")} отсутствует карточка.")
         new_contestant = Contestant(free_time_for_play = data.get("time"), id_tg_user = data.get("id"))
         session.add(new_contestant)
         print(f"Карточка пользователя с ID {user_id} создана!")
@@ -114,12 +110,8 @@ async def get_data_player(callback: CallbackQuery):
 # Находит данные пользователя по username
 # Когда нужно найти данные пользователя, просто обращайся к словарю по ключу (username).
     user = session.query(User).filter_by(tg_user_id = user_id).first()
-    print("user = ", user)
     user_free_time = session.query(Contestant).filter_by(id_tg_user = user_id).first()
-    print("user_free_time = ", user_free_time)
     if user and user_free_time:
-        print(f"Пользователь найден: ID={user.tg_user_id}, Name={user.name_user}")
         await callback.message.answer(f'<b>Ваша карточка выглядит так</b> 👇\n\n{user}Предпочтительное время игры: <blockquote>{user_free_time.free_time_for_play}</blockquote>\n\n⚠️ Обратите внимание, чтобы игрок смог связаться с вами и предложить игру, в настройках конфедециальности телеграм должен быть включен поиск по номеру\n• <b>Настройки -> Конфеденциальность -> Номер телефона -> <u>Все</u></b>', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
     else:
-        print("Пользователь не найден.")
         await callback.message.answer("<b>Карточка игрока ещё не создана!</b>\n\n• Создание карточки откроет доступ к поиску соперников", parse_mode=ParseMode.HTML, reply_markup=kb.create_card)

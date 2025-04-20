@@ -1,7 +1,9 @@
 from sqlalchemy import Column, Integer, String, Boolean, BigInteger
 from config.db import Base
+import handlers.functions as f
 
 from config.db import session
+from models.Division import Division
 from models.Tournament import Tournament
 from models.TournamentPlayers import TournamentPlayers
 
@@ -45,4 +47,22 @@ class User(Base):
         if history == '':
             history = 'не участвовал 🥲'
 
-        return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {self.division_level}\nИстория турниров: {history}\nНаличие бана: {self.ban_status} (До {self.end_date_ban})\n" 
+        if self.division_level != None:
+            levelTournament_list = list(map(int, self.division_level.split(",")))
+            name_division = session.query(Division).all()
+            # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+            division_dict = {div.division_id: div.name_division for div in name_division}
+            # Преобразуем список ID в список названий
+            levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+            tournament_lvl = ", ".join(levelTournament_names)
+        else: 
+            tournament_lvl = 'Не определён'
+
+        f.check_ban_user(self.tg_user_id)
+
+        user = session.query(User).filter(User.tg_user_id == self.tg_user_id).first()
+
+        if user.ban_status == True:
+            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {tournament_lvl}\nИстория турниров: {history}\nНаличие бана: До {user.end_date_ban}\n" 
+        else:
+            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {tournament_lvl}\nИстория турниров: {history}\n" 

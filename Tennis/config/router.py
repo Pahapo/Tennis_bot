@@ -18,6 +18,7 @@ from handlers.set_division import router as set_division
 from handlers.delete_players import router as delete_players
 from handlers.delete_tournament import router as delete_tournament
 from handlers.edit_tournament import router as edit_tournament
+from handlers.output_player_without_division import router as output_player_without_division
 
 router = Router()
 
@@ -42,3 +43,4 @@ router.include_router(set_division)
 router.include_router(delete_players)
 router.include_router(delete_tournament)
 router.include_router(edit_tournament)
+router.include_router(output_player_without_division)

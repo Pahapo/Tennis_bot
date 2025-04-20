@@ -3,8 +3,8 @@ from aiogram.types import CallbackQuery
 from aiogram.enums import ParseMode
 
 import handlers.btn_tournaments as bt
-import keywords.kw_tournament as kb
 import handlers.functions as f
+import keywords.kw_tournament as kb
 
 router = Router()
 

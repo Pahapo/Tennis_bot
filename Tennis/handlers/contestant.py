@@ -8,6 +8,7 @@ import handlers.functions as f
 
 from config.db import session
 from models.User import User
+from models.Division import Division
 from models.Contestant import Contestant
 from models.Tournament import Tournament
 from models.TournamentPlayers import TournamentPlayers
@@ -71,19 +72,11 @@ async def search_contestant(callback: CallbackQuery, state:FSMContext):
                                 history += f", \"{toutnament.name_tournament}\""
 
                         if history == '':
-                            history = 'не участвовал 🥲'
+                            history = 'Не участвовал(-а) 🥲'
 
                         if user.division_level != None:
-                            if int(user.division_level) == 1:
-                                division_lvl = 'Золотой 🥇'
-                            elif int(user.division_level) == 2:
-                                division_lvl = 'Серебряный 🥈'
-                            elif int(user.division_level) == 3:
-                                division_lvl = 'Бронзовый 🥉'
-                            elif int(user.division_level) == 4:
-                                division_lvl = 'Медный 🎾'
-                            elif int(user.division_level) == 5:
-                                division_lvl = 'Железный 🏃‍♂️'
+                            name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
+                            division_lvl = name_division.name_division
                         else:
                             division_lvl = 'Не определён'
 
