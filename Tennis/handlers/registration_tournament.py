@@ -5,10 +5,14 @@ from aiogram import F, Router, types
 
 import keywords.kw_tournament as kb
 import handlers.classes as cl
+import googleSheet.googleSheet as gs
 
 from config.db import session
 from models.TournamentPlayers import TournamentPlayers
 from models.Tournament import Tournament
+from models.User import User
+from models.Division import Division
+
 
 router = Router()
 
@@ -70,6 +74,10 @@ async def handle_time2_buttons(call: types.CallbackQuery, state:FSMContext):
         session.add(user)
         session.commit()
         print(f"Игрок зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
+
+    selected_user = session.query(User).filter(User.tg_user_id == data.get("user_id")).first()
+    user_division = session.query(Division).filter(Division.division_id == selected_user.division_level).first()
+    await gs.addPlayerInList(selected_user.name_user, selected_tournament.name_tournament, user_division)
 
     await call.message.answer('✅ <b>Регистрация завершена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     await state.clear()

@@ -133,5 +133,15 @@ def startDoingSheet(nameTournament, levelTournament):
     return link_sheet_tournament
 
 
+def addPlayerInList(username, name_tournament, user_division):
+    gc = gspread.service_account(filename='credentials_tennisbot.json')
+    spreadsheet = gc.open(name_tournament)
+    sheet = spreadsheet.worksheet(user_division)
+
+    column_letter = "B"
+    values = sheet.col_values(1)  # Получаем все значения из столбца A
+    first_empty_row = len(values) + 1  # Находим первую пустую строку
+
+    sheet.update(f"{column_letter}{first_empty_row}", username) # Записываем значение в первую свободную ячейку
 
 

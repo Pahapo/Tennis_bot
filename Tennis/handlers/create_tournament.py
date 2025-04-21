@@ -188,7 +188,6 @@ async def register_age(message: Message, state:FSMContext):
         await message.answer('✅ Турнир обновлён!\n\n• Если вы изменили название турнира, оно не будет изменено в названии exel таблицы.\n\nИсправьте самостоятельно или обратитесь в поддержку\n🙋‍♂️ Поддержка @sup_MM')
 
     else:
-        print(f"Создан новый турнир - '{data.get("name")}'.")
         await message.answer('⏰ Начинаем создавать турнир и excel таблицу...')
 
         link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"))
@@ -198,6 +197,7 @@ async def register_age(message: Message, state:FSMContext):
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
         await message.answer('✅ Турнир создан!')
+        print(f"Создан новый турнир - '{data.get("name")}'.")
 
     await message.answer(f"<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}Ссылка на турнир: {link_sheet_tournament}\n\n• Ссылки на турниры находятся в разделе \"Турнирные таблицы 📋\"", parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
     await state.clear()
