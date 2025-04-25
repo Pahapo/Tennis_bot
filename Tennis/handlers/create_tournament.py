@@ -155,6 +155,14 @@ async def register_age(message: Message, state:FSMContext):
 async def register_age(message: Message, state:FSMContext):
     
     await state.update_data(price = message.text)
+    await state.set_state(cl.RegTournamentsStates.regulations)
+    await message.answer('Введите текст регламента 👇')
+
+
+@router.message(cl.RegTournamentsStates.regulations)
+async def register_age(message: Message, state:FSMContext):
+    
+    await state.update_data(regulations = message.html_text)
     
     data = await state.get_data()
     
@@ -168,7 +176,8 @@ async def register_age(message: Message, state:FSMContext):
             count=int(data.get("count")),
             time1=data.get("time1"),
             time2=data.get("time2"),
-            price=int(data.get("price"))
+            price=int(data.get("price")),
+            regulations=data.get("regulations")
         )
 
     tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
@@ -180,6 +189,7 @@ async def register_age(message: Message, state:FSMContext):
         tournament.start_tournament = data.get("time1")
         tournament.end_tournament = data.get("time2")
         tournament.price = int(data.get("price"))
+        tournament.regulations = data.get("regulations")
         session.commit()
 
         link_sheet_tournament = tournament.link_table
@@ -192,7 +202,7 @@ async def register_age(message: Message, state:FSMContext):
 
         link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"))
         
-        new_tournament = Tournament(name_tournament = data.get("name"), address = data.get("address"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament)
+        new_tournament = Tournament(name_tournament = data.get("name"), address = data.get("address"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
         session.add(new_tournament)  # Добавляем объект в сессию
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 

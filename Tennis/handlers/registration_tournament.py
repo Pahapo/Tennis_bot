@@ -5,6 +5,7 @@ from aiogram import F, Router, types
 
 import keywords.kw_tournament as kb
 import handlers.classes as cl
+import handlers.functions as f
 import googleSheet.googleSheet as gs
 
 from config.db import session
@@ -20,25 +21,7 @@ router = Router()
 async def register(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
     await state.set_state(cl.RegTournamentPlayerStates.level)
-    await callback.message.answer('Выберите ваш дивизион 👇', parse_mode=ParseMode.HTML, reply_markup=kb.reg_tournament_lvl)
-
-
-@router.callback_query(F.data.in_(["lvl_p_1", "lvl_p_2", "lvl_p_3", "lvl_p_4", "lvl_p_5", "lvl_p_6"]))
-async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
-    await call.answer('')
-
-    if call.data == "lvl_p_1":
-        await state.update_data(level = 1)
-    elif call.data == "lvl_p_2":
-        await state.update_data(level = 2)
-    elif call.data == "lvl_p_3":
-        await state.update_data(level = 3)
-    elif call.data == "lvl_p_4":
-        await state.update_data(level = 4)
-    elif call.data == "lvl_p_5":
-        await state.update_data(level = 5)
-
-    await call.message.answer('Комфортно ли играть групповой этап в будние дни в диапазоне с 18:00 до 21:00? 👇', parse_mode=ParseMode.HTML, reply_markup=kb.reg_tournament_time1)
+    await callback.message.answer('Комфортно ли играть групповой этап в будние дни в диапазоне с 18:00 до 21:00? 👇', parse_mode=ParseMode.HTML, reply_markup=kb.reg_tournament_time1)
 
 
 @router.callback_query(F.data.in_(["time1_yes", "time1_no"]))
@@ -77,7 +60,9 @@ async def handle_time2_buttons(call: types.CallbackQuery, state:FSMContext):
 
     selected_user = session.query(User).filter(User.tg_user_id == data.get("user_id")).first()
     user_division = session.query(Division).filter(Division.division_id == selected_user.division_level).first()
-    await gs.addPlayerInList(selected_user.name_user, selected_tournament.name_tournament, user_division)
 
     await call.message.answer('✅ <b>Регистрация завершена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    
+    gs.addPlayerInList(selected_user.name_user, selected_user.link, selected_tournament.name_tournament, user_division.name_division)
+    print(f"Добавление игрока в Excel для регистрации на турнир - '{selected_tournament.name_tournament}' произошло успешно!")
     await state.clear()

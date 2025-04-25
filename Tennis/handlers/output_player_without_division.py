@@ -17,8 +17,6 @@ from models.TournamentPlayers import TournamentPlayers
 
 router = Router()
 
-message_text_send = ''
-
 @router.callback_query(F.data == 'player_without_division')
 async def player_without_division(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')
@@ -43,7 +41,10 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext):
                 user = users_without_division[count]
                 await state.update_data(pl_id_without_div = user.tg_user_id)
 
-                await callback.message.edit_text(f'<b>Игрок 🙋‍♂️ {user.name_user} ожидает выбора дивизиона</b>\n\nСсылка: {user.link}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ka.pl_without_div)
+                if len(users_without_division) == count + 1:
+                    await callback.message.edit_text(f'<b>Игрок 🙋‍♂️ {user.name_user} ожидает выбора дивизиона</b>\n\nСсылка: {user.link}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ka.pl_without_div_end)
+                else:
+                    await callback.message.edit_text(f'<b>Игрок 🙋‍♂️ {user.name_user} ожидает выбора дивизиона</b>\n\nСсылка: {user.link}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ka.pl_without_div)
             else:
                 await callback.message.edit_text(f'<b>Все игроки теперь имеют дивизион!</b>\nОтличная работа! 👍🏻', parse_mode=ParseMode.HTML, reply_markup=ka.exit)
         else:
@@ -51,8 +52,7 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.in_(["lvl_wd_1", "lvl_wd_2", "lvl_wd_3", "lvl_wd_4", "lvl_wd_5"]))
-async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
-    await call.answer('')
+async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
 
     level = ''
     
@@ -73,8 +73,21 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
     user = session.query(User).filter(User.tg_user_id == user_id).first()
     user.division_level = level
     session.commit() # Сохраняем изменения (фиксируем транзакцию)
+
     print(f"Установлен дивизион для пользователя \"{user.name_user}\"!")
-    await call.answer(f"Дивизион установлен! ✅", show_alert=True)
+    await call.answer(f"Дивизион установлен! ✅", show_alert=False)
+
+    name_division = session.query(Division).filter(Division.division_id == int(level)).first()
+    division_lvl = name_division.name_division
+ 
+    message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что Вам установлен дивизион!</b> 🏆\n\nДивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉 Теперь вы можете принять участие в турнирах!"
+
+    try:
+        await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    except Exception as e:
+        print(f"Не удалось отправить сообщение о изменении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+
+
     await player_without_division(call, state)
 
 

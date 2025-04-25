@@ -21,17 +21,17 @@ async def cmd_start(message: Message, state: FSMContext):
     if user.username:
         user_link = f"https://t.me/{user.username}"
     else:
-        user_link = f"tg://user?id={user.id}"
-
-    await state.update_data(user_id = user_id)  # Сохраняем user_id в состояние
-    await state.update_data(user_name = user_name)  # Сохраняем user_name в состояние
-    await state.update_data(user_link = user_link)  # Сохраняем user_link в состояние
-    await f.save_user(user_id, user_name, user_link.lower())
+        user_link = ""
 
     options = LinkPreviewOptions(
         url=CHANNEL,
         prefer_small_media=True
     )
+
+    await state.update_data(user_id = user_id)  # Сохраняем user_id в состояние
+    await state.update_data(user_name = user_name)  # Сохраняем user_name в состояние
+    await state.update_data(user_link = user_link)  # Сохраняем user_link в состояние
+    await f.save_user(user_id, user_name, user_link.lower())
 
     if user_id in ADMINS:
         await message.answer(adm_start_t, parse_mode=ParseMode.HTML, reply_markup=kb.main_admin_btn)
@@ -40,4 +40,4 @@ async def cmd_start(message: Message, state: FSMContext):
     elif user_id in EDITOR:
         await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
     else:
-        await message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, parse_mode=ParseMode.HTML, reply_markup=kb.main_btn)
+        await message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", parse_mode=ParseMode.HTML, link_preview_options=options, reply_markup=f.create_tournament_table_keyboard(user_id))

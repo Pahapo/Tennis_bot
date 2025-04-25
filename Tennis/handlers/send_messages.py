@@ -1,6 +1,5 @@
-import json
 from aiogram import F, Router
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 from config.config import ADMINS
@@ -25,7 +24,7 @@ async def register(callback: CallbackQuery, state:FSMContext):
     user_id = callback.from_user.id
     if user_id in ADMINS:
         await state.set_state(cl.SendMessage.message)
-        await callback.message.answer('Хозяин, введи пост, который хочешь разослать (только текст) 👇')
+        await callback.message.answer('Введи сообщение, которое хочешь разослать (только текст) 👇')
     else:
         await callback.message.answer('Функция недоступна! Вы не админ! 🚫')
         st.cmd_start()
@@ -33,13 +32,17 @@ async def register(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.SendMessage.message)
 async def sending_messages(message: Message, state:FSMContext):    
-    await state.update_data(message = message.text)
+    await state.update_data(message = message.html_text)
+
+    options = LinkPreviewOptions(
+        is_disabled=True
+    )
 
     data = await state.get_data()
     global message_text_send
     message_text_send = data.get("message")
 
-    await message.answer(f"<b>Текст для рассылки:</b>\n\n{message_text_send}", parse_mode=ParseMode.HTML, reply_markup=kb.send_message_war)
+    await message.answer(f"<b>Текст для рассылки:</b>\n\n{message_text_send}", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.send_message_war)
     await state.clear()
 
 
@@ -52,6 +55,10 @@ async def send(callback: CallbackQuery, bot):
 @router.callback_query(F.data == 'send')
 async def send(callback: CallbackQuery, bot):
     await callback.answer('')
+
+    options = LinkPreviewOptions(
+        is_disabled=True
+    )
     
     user_id = callback.from_user.id
     if user_id in ADMINS:
@@ -62,7 +69,7 @@ async def send(callback: CallbackQuery, bot):
         if users:            
             for user_id in users:
                 try:
-                    await bot.send_message(chat_id=user_id, text=message_text_send, parse_mode=ParseMode.HTML)
+                    await bot.send_message(chat_id=user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
                     count_send_message +=1
 
                 except Exception as e:

@@ -22,7 +22,7 @@ router = Router()
 @router.callback_query(F.data == 'edit_tournament')
 async def edit_tournament(callback: CallbackQuery):
     await callback.answer('')  # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
-    await callback.message.answer(f"<b>Тут происходит работа над турнирами</b>\n\n- Создание турнира\n- Просмотр участников (и удаление)\n- Редактировние турнира\n- Удаление турнира\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, reply_markup=ks.edit_tournament)
+    await callback.message.answer(f"<b>Тут происходит работа над турнирами начиная с их создания</b>\n\n- Создание турнира\n- Просмотр турниров\n- Просмотр/удаление участников\n- Редактировние турнира\n- Удаление турнира\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, reply_markup=ks.edit_tournament)
     
 
 @router.callback_query(F.data == 'main_edit_tournament')
@@ -49,7 +49,7 @@ async def tournament_info(callback: CallbackQuery, state:FSMContext):
     
 
 @router.callback_query(F.data.in_(bt.get_list_tournaments())) 
-async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
+async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
     await call.answer('')      
 
     user_id = call.from_user.id
@@ -57,7 +57,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
     await state.update_data(selected_tournament = selected_tournament)  # Сохраняем user_id в состояние
 
     # Получаем турнир
-    tournament_data = session.query(Tournament).filter(Tournament.name_tournament==selected_tournament).first()
+    tournament_data = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
     # Запрос "зареган ли юзер на выбранный им турнир?"
     user_in_tournament = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id, TournamentPlayers.id_tournament == tournament_data.tournament_id).all()
     # Запрос для подсчёта количества игроков
@@ -65,19 +65,24 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
 
     user = session.query(User).filter_by(tg_user_id = user_id).first()
 
+    levelTournament_list = list(map(int, tournament_data.division.split(",")))
+    name_division = session.query(Division).all()
+    # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+    division_dict = {div.division_id: div.name_division for div in name_division}
+    # Преобразуем список ID в список названий
+    levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+
+    tournament_lvl = ", ".join(levelTournament_names)
+
     if int(player_count) >= int(tournament_data.quantity_person):            
         await call.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user_in_tournament:
         await call.message.answer(f'<b>Вы уже участвуете в турнире!</b> ✅\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.ban_status == True:
-        await call.message.answer(f'<b>🚫 Вы не можете участвовать в турнире из-за бана</b> 🥲\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        await call.message.answer(f'<b>🚫 Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    elif user.division_level not in levelTournament_list:
+        await call.message.answer(f'<b>⚠️ Вы не можете участвовать в турнире</b>\n\nК сожалению, этот турнир доступен только для дивизиона(-ов):\n{tournament_lvl}', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    elif user.division_level in levelTournament_list:
+        await call.message.answer(f"{tournament_data.regulations}\n\n<b>ДЕТАЛИ ТУРНИРА</b> 🏆\n\n<b><i>Турнир \"{tournament_data.name_tournament.upper()}\"</i></b>\n📍 Адрес корта: {tournament_data.address}\n💪 Дивизион: {tournament_lvl}\n🙋‍♂️ Количество участников: {tournament_data.quantity_person} чел.\n📆 Начало: {tournament_data.start_tournament}\n📆 Окончание: {tournament_data.end_tournament}\n💰 Стоимость участия: {tournament_data.price} бел.руб.", parse_mode=ParseMode.HTML, reply_markup=kb.reglament)
     else:
-        levelTournament_list = list(map(int, tournament_data.division.split(",")))
-        name_division = session.query(Division).all()
-        # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-        division_dict = {div.division_id: div.name_division for div in name_division}
-        # Преобразуем список ID в список названий
-        levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-        tournament_lvl = ", ".join(levelTournament_names)
-
-        await call.message.answer(f"📋 <b>Регламент:</b>\n\n<b>1. ГРУППОВАЯ СТАДИЯ</b>\n\n<b><i>Количество групп:</i></b>\n- 4 группы по 4 игрока\n\n<b>Формирование групп:</b>\n- Распределение по группам производится посредством жеребьевки\n- Участники разбиваются на 4 корзины по 4 человека, исходя из уровня игры\n- В каждой группе оказывается по 4 игрока, каждый из которых из разных корзин\n\n<b><i>Формат матчей в группе:</i></b>\nСхема матчей: Каждый с каждым 🤺🎾\nФормат матча: Трехсетовый\n\nЕсли после двух сетов результат равный (1-1), третий сет играется в формате супертайбрейка:\nИгра до 10 очков (минимальный перевес для победы – 2 очка)\nЕсли потребуется считать геймы для определения лучшего по дополнительным показателям, супертайбрейк засчитывается как 1 гейм\n\n<b><i>Выход в плей-офф:</i></b>\nДва лучших игрока из каждой группы переходят в следующий этап\n\n<b>2. ПЛЕЙ-ОФФ</b>\n\n<b><i>Четвертьфиналы:</i></b>\nПосле завершения групповой стадии проводится жеребьевка четвертьфинала.Занявшие первые места в группах играют с занявшими вторые\n\n<b><i>Полуфиналы:</i></b>\nПроводится дополнительная жеребьевка полуфинала.\nУчастники из одной группы разводятся до финала\n\n<b><i>Формат матчей в плей-офф:</i></b>\nФинал и матч за третье место:\nПолноценные трехсетовые матчи 🥇🥈🥉\n\nЧетвертьфиналы и полуфиналы:\nФормат определяется по договоренности между соперниками:\n- Либо полноценные трехсетовики.\n- Либо замена 3-го сета супертайбрейком (до 10 с разницей в 2 очка).\n- Если договоренность не достигнута, применяется супертайбрейк\n\n<b>3. ОГРАНИЧЕНИЕ ПО ВРЕМЕНИ</b> ⏰\n\nТурнир ограничен по времени – 3 недели с момента старта.\nИгры, не сыгранные в этот период, будут рассматриваться в индивидуальном порядке\n\n<b>4. АВТОБРОНИРОВАНИЕ КОРТОВ</b> 🎾\n\nДля участников турнира ежедневно выделяется корт с 17:00 до 20:00\n\n<b>5. ДЕТАЛИ ТУРНИРА</b> 🏆\n\n<b><i>Турнир \"{tournament_data.name_tournament.upper()}\"</i></b>\n📍 Адрес корта: {tournament_data.address}\n💪 Дивизион: {tournament_lvl}\n🙋‍♂️ Количество участников: {tournament_data.quantity_person} чел.\n📆 Начало: {tournament_data.start_tournament}\n📆 Окончание: {tournament_data.end_tournament}\n💰 Стоимость участия: {tournament_data.price} бел.руб.", parse_mode=ParseMode.HTML, reply_markup=kb.reglament)
+        await call.message.answer(f"📋 <b>Какая-то ошибка</b>\n\nПожалуйста, если вы видите это сообщение, свяжитесь с нами 🙋‍♂️ @sup_MM", parse_mode=ParseMode.HTML, reply_markup=kb.exit)

@@ -1,6 +1,7 @@
 import gspread
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
+from aiogram.enums import ParseMode
 
 from config.db import session
 from models.Division import Division
@@ -133,15 +134,17 @@ def startDoingSheet(nameTournament, levelTournament):
     return link_sheet_tournament
 
 
-def addPlayerInList(username, name_tournament, user_division):
+def addPlayerInList(name, user_link, name_tournament, user_division):
+
     gc = gspread.service_account(filename='credentials_tennisbot.json')
     spreadsheet = gc.open(name_tournament)
     sheet = spreadsheet.worksheet(user_division)
 
+    user_name = '@' + user_link.replace("https://t.me/", "")
+
     column_letter = "B"
-    values = sheet.col_values(1)  # Получаем все значения из столбца A
+    values = sheet.col_values(2)  # Получаем все значения из столбца B
     first_empty_row = len(values) + 1  # Находим первую пустую строку
 
-    sheet.update(f"{column_letter}{first_empty_row}", username) # Записываем значение в первую свободную ячейку
-
-
+    sheet.update(f"{column_letter}{first_empty_row}", [[f"{name} ({user_name})"]]) # Записываем значение в первую свободную ячейку
+    

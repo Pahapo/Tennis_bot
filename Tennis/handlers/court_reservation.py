@@ -13,6 +13,6 @@ async def contestant(callback: CallbackQuery, bot):
     await callback.answer('')
 
     if await f.check_subscription(callback.from_user.id, bot):
-        await callback.message.answer("Для бронирования корта перейдите по кнопке ниже 👇\n\nВведите желаемую дату и время игры", parse_mode=ParseMode.HTML, reply_markup=kb.court_reservation)
+        await callback.message.answer("\"<b>Быстрое бронирование 🎾</b>\"\n• Бронь любого корта на месяц вперёд\n• Автоматическое бронирования выбранного времени\n• До 5 броней в неделю\n\n\"<b>Обычное бронирование</b>\"\n• Бронь любого корта на 5 дней вперёд\n• Бронирование зависит от вашей скорости\n• До 2 броней в неделю\n\n⚠️ Во время открытия бронирования люди часто ставят отложенные сообщения или ждут начала, чтобы в ручном режиме успеть забронировать. Часто даже отложенные сообщения не спасают, и уже через 10 минут всё вечернее время занято.\n\n<b>Не хотите рисковать? Используйте \"Быстрое бронирование🎾\"!</b>", parse_mode=ParseMode.HTML, reply_markup=kb.court_reservation)
     else:
         await f.check_subscription_message(callback)

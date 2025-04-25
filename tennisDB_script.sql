@@ -23,6 +23,7 @@ CREATE TABLE `tournament` (
   `end_tournament` varchar(10) DEFAULT NULL,
   `price` int DEFAULT NULL,
   `link_table` varchar(120) DEFAULT NULL,
+  `regulations` text(2500) DEFAULT NULL,
   PRIMARY KEY (`tournament_id`)
 );
 
@@ -52,4 +53,11 @@ CREATE TABLE `users` (
   UNIQUE KEY `tg_user_id` (`tg_user_id`),
   KEY `users_division_fk` (`division_level`),
   CONSTRAINT `users_division_fk` FOREIGN KEY (`division_level`) REFERENCES `division` (`division_id`)
+);
+
+CREATE TABLE `inventory` (
+  `inventory_id` int NOT NULL AUTO_INCREMENT,
+  `photo` varchar(30) DEFAULT NULL,
+  `description` varchar(250) DEFAULT NULL,
+  PRIMARY KEY (`inventory_id`)
 );

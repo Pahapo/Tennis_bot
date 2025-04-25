@@ -5,6 +5,7 @@ from aiogram.enums import ParseMode
 
 import keywords.kw_user as kb
 import handlers.classes as cl
+import handlers.functions as f
 
 from config.db import session
 from models.User import User
@@ -30,7 +31,7 @@ async def register_name(message: Message, state:FSMContext):
     if user.username:
         user_link = f"https://t.me/{user.username}"
     else:
-        user_link = f"tg://user?id={user.id}"
+        user_link = ""
         
     await state.update_data(link = user_link)
     await state.update_data(id = user_id)
@@ -90,6 +91,8 @@ async def register_time(message: Message, state: FSMContext):
         print(f"Карточка пользователя с ID {user_id} создана!")
     session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
+    await f.check_ban_user(user_id)
+
     await message.answer('✅ Карточка создана!')
     await message.answer(f'<b>Ваша карточка выглядит так</b> 👇\n\n{player_data}\n\n⚠️ Обратите внимание, чтобы игрок смог связаться с вами и предложить игру, в настройках конфедециальности телеграм должен быть включен поиск по номеру\n• <b>Настройки -> Конфеденциальность -> Номер телефона -> <u>Все</u></b>', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
     await state.clear()
@@ -106,6 +109,8 @@ async def get_data_player(callback: CallbackQuery):
     await callback.answer('')
 
     user_id = callback.from_user.id
+
+    await f.check_ban_user(user_id)
 
 # Находит данные пользователя по username
 # Когда нужно найти данные пользователя, просто обращайся к словарю по ключу (username).

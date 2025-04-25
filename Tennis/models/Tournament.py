@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Text
 from config.db import Base
 
 from config.db import session
@@ -15,10 +15,11 @@ class Tournament(Base):
     end_tournament = Column(String(10))
     price = Column(Integer)
     link_table = Column(String(120))
+    regulations = Column(Text())
 
 
     # Конструктор __init__
-    def __init__(self, name_tournament, address, division, quantity_person, start_tournament, end_tournament, price, link_table):
+    def __init__(self, name_tournament, address, division, quantity_person, start_tournament, end_tournament, price, link_table, regulations):
         # self.tournament_id = tournament_id
         self.name_tournament = name_tournament
         self.address = address
@@ -28,6 +29,7 @@ class Tournament(Base):
         self.end_tournament = end_tournament
         self.price = price
         self.link_table = link_table
+        self.regulations = regulations
 
 
     def __repr__(self):

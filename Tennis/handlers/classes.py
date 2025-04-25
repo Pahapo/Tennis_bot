@@ -42,7 +42,7 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
                     f"Пол: {self.sex}\n"
                     f"Дивизион: {name_division.name_division}\n" # Не определён
                     # f"Наличие бана: {self.ban}\n"
-                    f"История турниров: Не участвовал 🥲\n"
+                    f"История турниров: Не участвовал(-а) 🥲\n"
                     f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
                 )
             else:
@@ -65,7 +65,7 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
                     f"Пол: {self.sex}\n"
                     f"Дивизион: Не определён\n"
                     # f"Наличие бана: {self.ban}\n"
-                    f"История турниров: Не участвовал 🥲\n"
+                    f"История турниров: Не участвовал(-а) 🥲\n"
                     f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
                 )
             else:
@@ -172,10 +172,11 @@ class RegTournamentsStates(StatesGroup):
     time1 = State()
     time2 = State()
     price = State()
+    regulations = State()
 
 
 class TournamentsData:
-    def __init__(self, name=None, address=None, level=None, count=None, time1=None, time2=None, price=None):
+    def __init__(self, name=None, address=None, level=None, count=None, time1=None, time2=None, price=None, regulations=None):
         self.name = name
         self.address = address
         self.level = level
@@ -183,6 +184,7 @@ class TournamentsData:
         self.time1 = time1
         self.time2 = time2
         self.price = price
+        self.regulations = regulations
 
     def __str__(self):
         if self.level != None:
@@ -238,3 +240,30 @@ class FindUser(StatesGroup):
     level = State()
     period_ban = State()
     reason_ban = State()
+
+
+# class RegInventoryStates(StatesGroup):
+#     id = State()
+#     name = State()
+#     link = State()
+#     description = State()
+#     price = State()
+
+
+# class InventoryData:     # НЕ ТРОГАТЬ !!!
+#     def __init__(self, id=None, link=None, name=None, description=None, price=None):
+#         self.id = id
+#         self.link = link
+#         self.name = name
+#         self.description = description
+#         self.price = price
+
+    # def __str__(self):             # НЕ ТРОГАТЬ !!!
+    #     list_inventory = session.query(Inventory).filter(Inventory.tg_user_id == self.id).all()
+    #     if list_inventory != []:
+    #         text_inventory = ''
+
+    #         for inventory in list_inventory:
+    #             text_inventory += f"Имя: {self.name}\nСсылка: <tg-spoiler>{self.link}</tg-spoiler>\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {name_division.name_division}\n"
+
+    #         return text_inventory

@@ -117,12 +117,12 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
         await call.message.answer(f"✅ Дивизион пользователя \"{user.name_user}\" был изменён на {division_lvl}!", reply_markup=kb.back_division)
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
                    
-        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉"
+        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что Ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉"
 
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
             print(f"Не удалось отправить сообщение о изменении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
-        print(f"ОШИБКА! Дивизион пользователя \"{user.name_user}\" не был изменён!")  
+        print(f"ОШИБКА! Дивизион пользователя \"{user.name_user}\" не был изменён. Пользователь не найден в БД!")  
     await state.clear()

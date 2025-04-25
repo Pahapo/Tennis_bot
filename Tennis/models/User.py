@@ -45,24 +45,24 @@ class User(Base):
                 history += f", \"{toutnament.name_tournament}\""
 
         if history == '':
-            history = 'не участвовал 🥲'
+            history = 'не участвовал(-а) 🥲'
 
         if self.division_level != None:
-            levelTournament_list = list(map(int, self.division_level.split(",")))
-            name_division = session.query(Division).all()
-            # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-            division_dict = {div.division_id: div.name_division for div in name_division}
-            # Преобразуем список ID в список названий
-            levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-            tournament_lvl = ", ".join(levelTournament_names)
+            # levelTournament_list = list(map(int, self.division_level.split(",")))
+            # name_division = session.query(Division).all()
+            # # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+            # division_dict = {div.division_id: div.name_division for div in name_division}
+            # # Преобразуем список ID в список названий
+            # levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+            # division_lvl = ", ".join(levelTournament_names)
+            division = session.query(Division).filter(Division.division_id == self.division_level).first()
+            division_lvl = division.name_division
         else: 
-            tournament_lvl = 'Не определён'
-
-        f.check_ban_user(self.tg_user_id)
+            division_lvl = 'Не определён'
 
         user = session.query(User).filter(User.tg_user_id == self.tg_user_id).first()
 
         if user.ban_status == True:
-            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {tournament_lvl}\nИстория турниров: {history}\nНаличие бана: До {user.end_date_ban}\n" 
+            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {division_lvl}\nИстория турниров: {history}\nНаличие бана: До {user.end_date_ban}\n" 
         else:
-            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {tournament_lvl}\nИстория турниров: {history}\n" 
+            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {division_lvl}\nИстория турниров: {history}\n" 
