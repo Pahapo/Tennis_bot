@@ -110,18 +110,14 @@ class RegTournamentPlayerStates(StatesGroup):
     name = State()
     link = State()
     level = State()
-    time1 = State()
-    time2 = State()
     selected_tournament = State()
 
 class TournamentPlayerData:
-    def __init__(self, id=None, name=None, link=None, level=None, time1=None, time2=None, selected_tournament=None):
+    def __init__(self, id=None, name=None, link=None, level=None, selected_tournament=None):
         self.id = id
         self.name = name
         self.link = link
         self.level = level
-        self.time1 = time1
-        self.time2 = time2
         self.selected_tournament = selected_tournament
 
     def __str__(self):
@@ -138,8 +134,6 @@ class TournamentPlayerData:
             f"Имя: {self.name}\n"
             f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
             f"Дивизион: {tournament_lvl}\n"
-            f"Время №1: {self.time1}\n"
-            f"Время №2: {self.time2}\n"
         )
     
     def get_data(self):
@@ -157,9 +151,7 @@ class TournamentPlayerData:
                 "Название турнира": self.name,
                 "Имя": self.name,
                 "Ссылка": self.link,
-                "Дивизион": tournament_lvl,
-                "Время №1": self.time1,
-                "Время №2": self.time2
+                "Дивизион": tournament_lvl
             }
         }
     

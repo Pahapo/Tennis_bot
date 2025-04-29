@@ -22,7 +22,7 @@ router = Router()
 @router.callback_query(F.data == 'edit_tournament')
 async def edit_tournament(callback: CallbackQuery):
     await callback.answer('')  # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
-    await callback.message.answer(f"<b>Тут происходит работа над турнирами начиная с их создания</b>\n\n- Создание турнира\n- Просмотр турниров\n- Просмотр/удаление участников\n- Редактировние турнира\n- Удаление турнира\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, reply_markup=ks.edit_tournament)
+    await callback.message.answer(f"<b>Тут происходит работа над турнирами начиная с их создания</b>\n\n• Создание турнира\n• Просмотр турниров\n• Просмотр/удаление участников\n• Редактировние турнира\n• Удаление турнира\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, reply_markup=ks.edit_tournament)
     
 
 @router.callback_query(F.data == 'main_edit_tournament')
@@ -54,7 +54,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
 
     user_id = call.from_user.id
     selected_tournament = call.data  # Получаем название выбранного турнира
-    await state.update_data(selected_tournament = selected_tournament)  # Сохраняем user_id в состояние
+    await state.update_data(selected_tournament = selected_tournament)  # Сохраняем выбранный турнир в состояние
 
     # Получаем турнир
     tournament_data = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()

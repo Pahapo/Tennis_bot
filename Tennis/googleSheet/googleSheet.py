@@ -1,3 +1,4 @@
+import time
 import gspread
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
@@ -97,6 +98,7 @@ def accessToSheet(new_spreadsheet_id):
             'role': 'writer',
             'emailAddress': email
         }
+        time.sleep(1)  # ✅ Пауза в 1 секунду перед отправкой запроса
         service_drive.permissions().create(fileId=new_spreadsheet_id, body=permission_editor).execute()
         print(f"Доступ на редактирование предоставлен: {email}")
     return link_sheet_tournament
@@ -136,6 +138,7 @@ def startDoingSheet(nameTournament, levelTournament):
 
 def addPlayerInList(name, user_link, name_tournament, user_division):
 
+    print(name, user_link, name_tournament, user_division)
     gc = gspread.service_account(filename='credentials_tennisbot.json')
     spreadsheet = gc.open(name_tournament)
     sheet = spreadsheet.worksheet(user_division)

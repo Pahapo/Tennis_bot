@@ -69,7 +69,7 @@ async def send(callback: CallbackQuery, bot):
         if users:            
             for user_id in users:
                 try:
-                    await bot.send_message(chat_id=user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML)
+                    await bot.send_message(chat_id=user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
                     count_send_message +=1
 
                 except Exception as e:
@@ -85,7 +85,8 @@ async def send(callback: CallbackQuery, bot):
 @router.callback_query(F.data == 'send_winners')
 async def send_winner(callback: CallbackQuery, bot):
     await callback.answer('')
-    
+
+
     # user_id = callback.from_user.id
     # if user_id in ADMINS:
     #     try:
@@ -100,17 +101,17 @@ async def send_winner(callback: CallbackQuery, bot):
     #         for user in users_winner:         # ИЗМЕНИТЬ ИЕРАРХИЮ ПОИСКА ID И МЕСТА
     #             try:
     #                 if user.place == 1:
-    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>1-е место:</b>\n<b>Золото</b> - показатель блестящей победы! Ваше мастерство, упорство и страсть к игре вдохновляют. Пусть этот триумф станет началом новых высот! 🏆🎾' 
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "1-е место" место🏆!</b>\n\n<b>Золото</b> - показатель блестящей победы! Ваше мастерство, упорство и страсть к игре вдохновляют. Пусть этот триумф станет началом новых высот! 🏆🎾' 
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
-    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
+    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #                 elif user.place == 2:
-    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>2-е место:</b>\n<b>Серебро</b> - доказательство вашего таланта и силы духа! Гордитесь собой, ведь вы подарили нам незабываемый матч. Вперёд к новым вершинам! 💪🌟' 
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "2-е место" место🏆!</b>\n\n<b>Серебро</b> - доказательство вашего таланта и силы духа! Гордитесь собой, ведь вы подарили нам незабываемый матч. Вперёд к новым вершинам! 💪🌟' 
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
-    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
+    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #                 elif user.place == 3:
-    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "НОМЕР" место🏆!</b>\n\n<b>3-е место:</b>\n<b>Бронза</b> - это ступень к великим победам! Ваш труд и преданность не остались незамеченными. Продолжайте заряжать корт своей энергией! 🥉🔥'
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "3-е место" место🏆!</b>\n\n<b>Бронза</b> - это ступень к великим победам! Ваш труд и преданность не остались незамеченными. Продолжайте заряжать корт своей энергией! 🥉🔥'
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
-    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML)
+    #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #             except Exception as e:
     #                 print(f"Не удалось отправить сообщение пользователю с name: {user_name} из-за ошибки: {e}")     # ИЗМЕНИТЬ user_name
     #     except FileNotFoundError:

@@ -61,23 +61,26 @@ edit_delete_players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButto
 
 # Бронирование корта
 
-court_reservation = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Быстрое бронирование 🎾', callback_data='booking_court')],
-                                                          [InlineKeyboardButton(text = 'Забронировать корт', url='https://t.me/mw_tennis_bot')],
+court_reservation = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Забронировать корт', url='https://t.me/mw_tennis_bot')],
                                                           [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                           ])
 
-booking_court = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Протестировать БЕСПЛАТНО ⚡️', callback_data='ttttt')], # сделать
-                                                          [InlineKeyboardButton(text = 'Подробнее о Tennis PRO ⚡️', url='ttttt')], # сделать
+court_reservation_fast = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Забронировать корт', url='https://t.me/mw_tennis_bot')],
+                                                          [InlineKeyboardButton(text = 'Быстрое бронирование 🎾', callback_data='fast_booking_court')],
+                                                          [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
+                                                          ])
+
+fast_booking_court = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Подробнее о Tennis PRO ⚡️', callback_data='ttttt')], # сделать с оплатой # далее добавить кнопку для тех, у кого уже есть подписка для отправки другу
                                                           [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                           ])
 
 # inventory
 
 inventory = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Открыть Барахолку 🛒', url='https://t.me/tennis_mm_market')],
-                                                [InlineKeyboardButton(text = 'Теннисные мячи 🎾', callback_data='get_inventory1')],# сделать!
-                                                [InlineKeyboardButton(text = 'Виброгаситель ⚡️', callback_data='get_inventory2')],# сделать!
-                                                [InlineKeyboardButton(text = 'Намотка 💫', callback_data='get_inventory3')],# сделать!
+                                                [InlineKeyboardButton(text = 'Теннисные мячи 🎾', callback_data='get_inventory1')],
+                                                [InlineKeyboardButton(text = 'Виброгаситель ⚡️', callback_data='get_inventory2')],
+                                                [InlineKeyboardButton(text = 'Намотка 💫', callback_data='get_inventory3')],
                                                 [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                 ])
 
-inventory_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='start_message')]])
+inventory_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='inventory')]])

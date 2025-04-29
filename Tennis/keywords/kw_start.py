@@ -34,6 +34,7 @@ main_edit_level_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButto
 # Редакторы
 
 edit_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнир 🏆', callback_data='edit_tournament')],
+                                                [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')], # временно
                                                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='contestant')],
                                                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                                                 [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]

@@ -44,15 +44,8 @@ confirm_delete_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboar
                                                                 ])
 
 reglament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='tournament_info'),
-                                                    InlineKeyboardButton(text = 'Согласиться', callback_data='reglament_confirm')]
-                                                    ])
-
-address_court = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Северная Америка - Кижеватова 3Б', callback_data='court_1')],
-                                                    [InlineKeyboardButton(text = 'Африка - Теслы 6', callback_data='court_2')],
-                                                    [InlineKeyboardButton(text = 'Центральная Европа - Теслы 16', callback_data='court_3')],
-                                                    [InlineKeyboardButton(text = 'Средиземноморский - Теслы 24', callback_data='court_4')],
-                                                    [InlineKeyboardButton(text = 'Тропические острова - Лученка 24', callback_data='court_5')]
-                                                    ])
+                                                 InlineKeyboardButton(text = '✅ Согласиться', callback_data='reglament_confirm')]
+                                                 ])
 
 level_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Золотой', callback_data='lvl_t_1')],
                                                         [InlineKeyboardButton(text = 'Серебряный', callback_data='lvl_t_2')],
@@ -74,10 +67,8 @@ reg_tournament_lvl = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
                                                             [InlineKeyboardButton(text = 'Не знаю свой дивизион', callback_data='lvl_p_6')]
                                                             ])
 
-reg_tournament_time1 = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Да', callback_data='time1_yes')],
-                                                            [InlineKeyboardButton(text = 'Нет', callback_data='time1_no')]
-                                                            ])
+payment_address = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '✅ Я оплатил(-а)', callback_data='confirm_payment')],
+                                                      [InlineKeyboardButton(text = 'Отменить и выйти', callback_data='start_message')]
+                                                      ])
 
-reg_tournament_time2 = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Да', callback_data='time2_yes')],
-                                                            [InlineKeyboardButton(text = 'Нет', callback_data='time2_no')]
-                                                            ])
+confirm_payment_pl = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '❌ Отменить и выйти', callback_data='start_message')]])

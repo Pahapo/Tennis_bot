@@ -2,7 +2,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from aiogram import F, Router
-from config.config import MAIN_EDITOR
+from config.config import MAIN_EDITOR, EDITOR
 
 import keywords.kw_any as kb
 import keywords.kw_start as ks
@@ -37,7 +37,7 @@ async def find_users_for_division(callback: CallbackQuery, state:FSMContext):
     await state.set_state(cl.FindUser.name_division)
     
     user_id = callback.from_user.id
-    if user_id in MAIN_EDITOR:
+    if user_id in MAIN_EDITOR or user_id in EDITOR:
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
         await callback.message.answer('Функция недоступна! Вы не главный редактор! 🚫')
@@ -47,7 +47,7 @@ async def find_users_for_division(callback: CallbackQuery, state:FSMContext):
 @router.message(cl.FindUser.name_division)
 async def find_name(message: Message, state:FSMContext):
     await state.update_data(name = message.text)
-    name_finder_user = message.text
+    name_finder_user = message.text.lower()
 
     if '@' in name_finder_user:
         name_finder_user = name_finder_user.replace('@', '', 1)
@@ -113,16 +113,16 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
         else:
             division_lvl = 'Не определён'
 
-        print(f"Дивизион пользователя \"{user.name_user}\" был изменён на {division_lvl}!")
+        print(f"Дивизион пользователя \"{user.tg_user_id}\" был изменён на {division_lvl}!")
         await call.message.answer(f"✅ Дивизион пользователя \"{user.name_user}\" был изменён на {division_lvl}!", reply_markup=kb.back_division)
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
                    
-        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что Ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉"
+        message_text_send = f"<b>Дорогой игрок, сообщаем Вам о том, что Ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉"
 
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
             print(f"Не удалось отправить сообщение о изменении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
-        print(f"ОШИБКА! Дивизион пользователя \"{user.name_user}\" не был изменён. Пользователь не найден в БД!")  
+        print(f"ОШИБКА! Дивизион пользователя \"{user.tg_user_id}\" не был изменён. Пользователь не найден в БД!")  
     await state.clear()

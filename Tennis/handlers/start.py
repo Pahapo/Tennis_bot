@@ -1,9 +1,10 @@
-from aiogram.types import Message, LinkPreviewOptions
+from aiogram.types import Message, LinkPreviewOptions, FSInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 from aiogram import Router
 from config.config import CHANNEL, ADMINS, MAIN_EDITOR, EDITOR
+import os
 
 import keywords.kw_start as kb
 import handlers.functions as f

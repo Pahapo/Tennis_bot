@@ -31,8 +31,6 @@ CREATE TABLE `tournament_players` (
   `id_tournament_players` int NOT NULL AUTO_INCREMENT,
   `id_tournament` int DEFAULT NULL,
   `id_tg_user` bigint DEFAULT NULL,
-  `time_workdays` tinyint(1) DEFAULT NULL,
-  `time_weekends` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`id_tournament_players`),
   KEY `tournament_players_tournament_fk` (`id_tournament`),
   KEY `tournament_players_users_fk` (`id_tg_user`),
@@ -60,4 +58,24 @@ CREATE TABLE `inventory` (
   `photo` varchar(30) DEFAULT NULL,
   `description` varchar(250) DEFAULT NULL,
   PRIMARY KEY (`inventory_id`)
+);
+
+CREATE TABLE `fast_booking_players` (
+  `user_id` int NOT NULL AUTO_INCREMENT,
+  `tg_id_user` bigint DEFAULT NULL,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `tg_id_user` (`tg_id_user`)
+);
+
+CREATE TABLE `payment` (
+  `id_player` int NOT NULL AUTO_INCREMENT,
+  `id_tournament` int DEFAULT NULL,
+  `id_tg_user` bigint DEFAULT NULL,
+  `price` int DEFAULT NULL,
+  `photo` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id_player`),
+  KEY `payment_players_tournament_fk` (`id_tournament`),
+  KEY `payment_players_users_fk` (`id_tg_user`),
+  CONSTRAINT `payment_players_tournament_fk` FOREIGN KEY (`id_tournament`) REFERENCES `tournament` (`tournament_id`),
+  CONSTRAINT `payment_players_users_fk` FOREIGN KEY (`id_tg_user`) REFERENCES `users` (`tg_user_id`)
 );

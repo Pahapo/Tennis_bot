@@ -8,7 +8,7 @@ from handlers.registration_card import router as registration_card
 from handlers.send_messages import router as send_messages
 from handlers.start import router as start
 from handlers.tournament import router as tournament
-from handlers.registration_tournament import router as registration_tournament
+from handlers.payment import router as payment
 from handlers.tournament_table import router as tournament_table
 from handlers.create_tournament import router as create_tournament
 from handlers.output_tournaments import router as output_tournaments
@@ -34,7 +34,7 @@ router.include_router(registration_card)
 router.include_router(send_messages)
 router.include_router(start)
 router.include_router(tournament)
-router.include_router(registration_tournament)
+router.include_router(payment)
 router.include_router(tournament_table)
 router.include_router(create_tournament)
 router.include_router(output_tournaments)

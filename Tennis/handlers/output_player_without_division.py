@@ -1,19 +1,16 @@
-from datetime import datetime, timedelta
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
-from config.config import ADMINS, MAIN_EDITOR
+from config.config import ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_tournament as kb
 import keywords.kw_any as ka
-import handlers.start as st
 
 from config.db import session
 from models.User import User
 from models.Division import Division
-from models.Tournament import Tournament
-from models.TournamentPlayers import TournamentPlayers
+
 
 router = Router()
 
@@ -29,7 +26,7 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext):
     )
 
     user_id = callback.from_user.id
-    if user_id in ADMINS or user_id in MAIN_EDITOR:
+    if user_id in ADMINS or user_id in MAIN_EDITOR or user_id in EDITOR:
                         
         users_without_division = session.query(User).filter(User.division_level == None).all()
         count_users = len(users_without_division)

@@ -6,24 +6,23 @@ from aiogram import F, Router
 from config.config import MAIN_EDITOR, ADMINS
 
 import keywords.kw_any as kb
-import handlers.classes as cl
+import handlers.functions as f
 import handlers.start as st
-
-from config.db import session
-from models.Division import Division
-from models.User import User
 
 
 router = Router()
 
-# ДАВАТЬ ТЕСТИРОВАТЬ ТОЛЬКО 1 РАЗ
 
-@router.callback_query(F.data == 'booking_court')
-async def booking_court(callback: CallbackQuery, state:FSMContext):
+@router.callback_query(F.data == 'fast_booking_court')
+async def fast_booking_court(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    # await callback.message.answer('<b>Быстрое бронирование 🎾</b> находится в разработке', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-    # await callback.message.answer('<b>Быстрое бронирование 🎾</b>\n\nЕсли вы новичок, используйте \"Обычное бронирование\"\nЕсли Вы часто или профессионально играете, Вам подойдёт этот вариант\n\n<b>Автоматическое бронирование обеспечит Вас кортом в любое время</b>. Вы не столкнётесь с проблемой занятого корта, ведь бронирование мы берём на себя!\n\n<b>3 ПРОСТЫХ ШАГА:</b>\n• Выбери дату\n• Выбери корт\n• Выбери время\n\n⚡️ Чтобы использовать \"<b>Быстрое бронирование 🎾</b>\" необходима подписка \"<b>Tennis PRO</b>\"\n\n⚡️ Воспользуйтесь бесплатной версией, чтобы протестировать возможности (доступна 1 раз)', parse_mode=ParseMode.HTML, reply_markup=kb.booking_court)
+    data = await state.get_data()
+    user_id = data.get("user_id") # взяли из состояния, которое записалось при /start
 
+    if await f.check_fast_user(user_id):
+        await callback.message.answer('<b>Быстрое бронирование 🎾</b>\n\nЕсли вы новичок, используйте \"Обычное бронирование\"\nЕсли Вы часто или профессионально играете, Вам подойдёт этот вариант\n\n<b>Автоматическое бронирование обеспечит Вас кортом в любое время</b>. Вы не столкнётесь с проблемой занятого корта, ведь бронирование мы берём на себя!\n\n<b>3 ПРОСТЫХ ШАГА:</b>\n• Выбери дату\n• Выбери корт\n• Выбери время\n\n⚡️ Чтобы использовать \"<b>Быстрое бронирование 🎾</b>\" необходима подписка \"<b>Tennis PRO</b>\"\n\n⚡️ Воспользуйтесь бесплатной версией, чтобы протестировать возможности (доступна 1 раз)', parse_mode=ParseMode.HTML, reply_markup=kb.fast_booking_court)
+    else:
+        st.cmd_start()
 
 # @router.callback_query(F.data == 'find_users_for_ban')
 # async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):

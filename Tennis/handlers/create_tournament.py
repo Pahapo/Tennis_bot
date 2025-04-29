@@ -40,27 +40,8 @@ async def register_name(message: Message, state:FSMContext):
         await state.set_state(cl.RegTournamentsStates.name)
         await message.answer('Турнир с таким именем уже существует! Придумайте другое имя 👇')
     else:
-        await state.set_state(cl.RegTournamentsStates.address)
-        await message.answer('Выберите адрес корта 👇', reply_markup=kb.address_court)
-
-
-@router.callback_query(F.data.in_(["court_1", "court_2", "court_3", "court_4", "court_5"]))
-async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
-    await call.answer('')
-    
-    if call.data == "court_1":
-        await state.update_data(address = "Северная Америка - Кижеватова 3Б")
-    elif call.data == "court_2":
-        await state.update_data(address = "Африка - Теслы 6")
-    elif call.data == "court_3":
-        await state.update_data(address = "Центральная Европа - Теслы 16")
-    elif call.data == "court_4":
-        await state.update_data(address = "Средиземноморский - Теслы 24")
-    elif call.data == "court_5":
-        await state.update_data(address = "Тропические острова - Лученка 24")
-
-    await state.set_state(cl.RegTournamentsStates.level)
-    await call.message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
+        await state.set_state(cl.RegTournamentsStates.level)
+        await message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
 
 
 @router.callback_query(F.data.in_(["lvl_t_1", "lvl_t_2", "lvl_t_3", "lvl_t_4", "lvl_t_5", "lvl_t_all"]))
