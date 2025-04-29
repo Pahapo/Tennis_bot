@@ -83,4 +83,4 @@ inventory = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '
                                                 [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                 ])
 
-inventory_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='inventory')]])
+inventory_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='start_message')]])
