@@ -1,4 +1,5 @@
 import re
+import asyncio
 from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
@@ -54,13 +55,18 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
         session.delete(match)
     session.commit()
 
-    tg_users_id = [row[0] for row in session.query(Match.id_tg_user).all()]
+    tg_users_id = [row[0] for row in session.query(Match.id_tg_user).filter((Match.player_1 == None) & (Match.player_2 == None)).all()]
     count_users = len(tg_users_id)
-    if user_id in tg_users_id:
-        count_users -= 1
+    
+    for user_tg in tg_users_id:
+        if user_id == user_tg:
+            print("user_id = ", user_id)
+            count_users -= 1
+
+    print("count_users = ", count_users)
 
     if count_users >= 1:
-        await callback.message.answer(f"Список доступных матчей 👇", parse_mode=ParseMode.HTML) # сделать список отфильтрованным по уровню вашего дивизиона (если None у человека дивизион, то пусть видит все карточки матчей)
+        await callback.message.answer(f"<b>Список доступных матчей</b> 👇", parse_mode=ParseMode.HTML) # сделать список отфильтрованным по уровню вашего дивизиона (если None у человека дивизион, то пусть видит все карточки матчей)
     
         options = LinkPreviewOptions(
             is_disabled=True
@@ -68,17 +74,17 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
 
         users = session.query(User).all()  # Получаем список объектов User
         users_matches = session.query(Match).filter((Match.player_1 == None) & (Match.player_2 == None)).all()
-        filtered_matches = list(filter(
-            lambda match: (
-                (match.date_booking is not None and datetime.strptime(match.date_booking, "%H:%M %d.%m.%Y") > datetime.today()) or
-                (match.date_without_booking is not None and datetime.strptime(match.date_without_booking, "%H:%M %d.%m.%Y") > datetime.today())
-            ),
-            users_matches
-        ))
+        sorted_matches = sorted(
+            users_matches,
+            key=lambda x: datetime.strptime(
+                x.date_booking or x.date_without_booking,
+                "%H:%M %d.%m.%Y"
+            )
+        )
 
         list_matches = ''
        
-        for users_match in filtered_matches:
+        for users_match in sorted_matches:
                 for user in users:
                     if user.tg_user_id == user_id:
                         continue
@@ -105,9 +111,14 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
                         else:
                             division_lvl = 'Не определён'
 
+                        if users_match.date_booking:
+                            date = users_match.date_booking.split(" ")[1][:-5]
+                        else:
+                            date = users_match.date_without_booking.split(" ")[1][:-5]
+
                         # Добавить вывод рейтинга в скобках возле имени
                         # НЕ ИЗМЕНЯТЬ СООБЩЕНИЕ ! ! ! (это повлияет на функцию apply_match)
-                        list_matches += f'\n\n🙋‍♂️ <b>{user.name_user.upper()}</b>\n\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\nИстория турниров: {history}\nДивизион: {division_lvl}\nПол: {user.sex}\nВозраст: {user.age}\n'
+                        list_matches += f'\n\n🙋‍♂️ <b>{user.name_user.upper()}</b> ({date})\n\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\nИстория турниров: {history}\nДивизион: {division_lvl}\nПол: {user.sex}\nВозраст: {user.age}\n'
             
                         if users_match.date_booking:
                             list_matches += f'Бронь корта: {users_match.date_booking}\n'
@@ -163,11 +174,6 @@ async def apply_match(callback: CallbackQuery, state:FSMContext, bot):
 
 
 
-    # Добавить напоминание и фильтр при выводе
-
-    # Добавить фото пользователя и отображать его в матчах
-
-
 @router.callback_query(F.data == 'accept_match')
 async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
 
@@ -195,10 +201,9 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
             )
 
             print(f"✅ Матч подтверждён пользователем с id {user_id}!")
+            await callback.answer(f"✅ Матч объявлен!", show_alert=False)
             message_text_send2 = f"✅ <b>Матч подтверждён пользователем 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a>!</b>\n\n<b>ДЕТАЛИ МАТЧА:</b>\n⏰ Дата матча: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}\n\n<blockquote>Ваш матч теперь доступен в разделе \"Мои подтверждённые матчи 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре</blockquote>\n\nГотовьтесь к встрече на корте! 🎾"
-            
             try:
-                await callback.answer(f"✅ Матч объявлен!!", show_alert=False)
 
                 await bot.send_message(chat_id=contestant.tg_user_id, text="🏆")
                 await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send2, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
@@ -214,9 +219,25 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
                 user_match.player_2 = contestant.tg_user_id
                 session.commit()
 
-            # if user_match:          # удалить
-            #     session.delete(user_match)
-            #     session.commit()
+            # напоминание о матче
+            time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
+            time_before_match = time_before_match.total_seconds()
+
+            if time_before_match > 0:  # Проверяем, чтобы время было положительным
+                await asyncio.sleep(time_before_match - 7200) # напоминание за 2 часа до начала
+
+                options = LinkPreviewOptions(
+                    is_disabled=True
+                )
+
+                text_notification = f"<b>Напоминание!</b>\n⚡️До матча с <a href='{user.link}'><b>{user.name_user}</b></a> осталось 2 часа"
+                try:
+                    await bot.send_message(chat_id=contestant.tg_user_id, text=text_notification, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                    print("Отправлено напоминания пользователям о матче")
+                except Exception as e:
+                    print(f"Не удалось отправить напоминания пользователям о матче из-за ошибки: {e}")
+
+                await callback.message.answer(f"<b>Напоминание!</b>\n⚡️До матча с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
         
         else:
             print("❌ При попытке отправки подтверждения матча произошла ошибка! Ссылка игрока некорректная или игрока с такой ссылкой не существует!")
@@ -246,10 +267,17 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
     user_id = data.get("user_id")
 
     matches = session.query(Match).filter((Match.player_1 == user_id) | (Match.player_2 == user_id)).all()
+    sorted_matches = sorted(
+            matches,
+            key=lambda x: datetime.strptime(
+                x.date_booking or x.date_without_booking,
+                "%H:%M %d.%m.%Y"
+            )
+        )
 
-    if matches:
-        for match in matches:
-            if len(matches) > 0:
+    if sorted_matches:
+        for match in sorted_matches:
+            if len(sorted_matches) > 0:
                 user_id_player = ''
 
                 if match.player_1 != user_id:

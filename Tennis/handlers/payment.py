@@ -116,7 +116,6 @@ async def check_payment(callback: CallbackQuery, state:FSMContext):
 
     for i in range(280):
         await asyncio.sleep(30)
-        print("Время: ", i)
         # Поиск id выбранного турнира
         selected_tournament = session.query(Tournament).filter(Tournament.name_tournament == data.get("selected_tournament")).first()
         # Запрос "оплатил ли пользователь выбранный турнир?"

@@ -143,7 +143,7 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
     user_id = data.get("user_id")
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
-    user_match = session.query(Match).filter(Match.id_tg_user == user_id, Match.date_booking == data.get("date_booking")).first()
+    user_match = session.query(Match).filter((Match.id_tg_user == user_id) & ((Match.date_booking == data.get("date_booking")) | (Match.date_without_booking == data.get("date_booking")))).first()
 
     if user:
         if not user.age:
@@ -180,15 +180,15 @@ async def match_requests(callback: CallbackQuery):
 
     await f.check_ban_user(user_id)
 
-    user = session.query(User).filter_by(tg_user_id = user_id).first()
-    user_matches = session.query(Match).filter_by(id_tg_user = user_id).all()
-
-    if len(user_matches) > 1:
-        await callback.message.answer(f'<b>Ваши запросы на матчи выглядят так</b> 👇', parse_mode=ParseMode.HTML)
-    elif len(user_matches) == 1:
-        await callback.message.answer(f'<b>Ваш запрос на матч выглядит так</b> 👇', parse_mode=ParseMode.HTML)
+    user = session.query(User).filter(User.tg_user_id == user_id).first()
+    user_matches = session.query(Match).filter((Match.id_tg_user == user_id) & ((Match.player_1 == None) & (Match.player_2 == None))).all()
 
     if user_matches:
+        if len(user_matches) == 1:
+            await callback.message.answer(f'<b>Ваш запрос на матч выглядит так</b> 👇', parse_mode=ParseMode.HTML)
+        else:
+            await callback.message.answer(f'<b>Ваши запросы на матчи выглядят так</b> 👇', parse_mode=ParseMode.HTML)
+
         for user_match in user_matches:
             if user and user_match:
                 text = ''
