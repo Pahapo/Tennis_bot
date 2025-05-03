@@ -8,7 +8,7 @@ tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 
                                                     InlineKeyboardButton(text = 'Изменить данные', callback_data='create_tournament')]
                                                     ])
 
-tournaments_data = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Удалить участника 🚫', callback_data='delete_players')],
+tournaments_data = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Удалить участника ❌', callback_data='delete_players')],
                                                         [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
                                                         ])
 

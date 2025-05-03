@@ -11,7 +11,7 @@ router = Router()
 
 
 @router.callback_query(F.data == 'court_reservation')
-async def contestant(callback: CallbackQuery, state: FSMContext, bot):
+async def match(callback: CallbackQuery, state: FSMContext, bot):
     await callback.answer('')
 
     if await f.check_subscription(callback.from_user.id, bot):

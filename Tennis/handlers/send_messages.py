@@ -26,7 +26,7 @@ async def register(callback: CallbackQuery, state:FSMContext):
         await state.set_state(cl.SendMessage.message)
         await callback.message.answer('Введи сообщение, которое хочешь разослать (только текст) 👇')
     else:
-        await callback.message.answer('Функция недоступна! Вы не админ! 🚫')
+        await callback.message.answer('Функция недоступна! Вы не админ! ❌')
         st.cmd_start()
     
 
@@ -78,7 +78,7 @@ async def send(callback: CallbackQuery, bot):
         else:
             await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного для теста!", reply_markup=ka.exit)
     else:
-        await callback.message.answer('Функция недоступна! Вы не админ! 🚫', reply_markup=ka.exit)
+        await callback.message.answer('Функция недоступна! Вы не админ! ❌', reply_markup=ka.exit)
         st.cmd_start()
 
 
@@ -117,4 +117,4 @@ async def send_winner(callback: CallbackQuery, bot):
     #     except FileNotFoundError:
     #         await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного!")
     # else:
-    #     await callback.message.answer('Функция недоступна! Вы не админ! 🚫')
+    #     await callback.message.answer('Функция недоступна! Вы не админ! ❌')

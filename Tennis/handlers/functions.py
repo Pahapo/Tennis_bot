@@ -27,7 +27,7 @@ MOSCOW_TZ = pytz.timezone("Europe/Moscow")
 adm_start_t = "<b>Привет Хозяин!</b> 👋\n\nКак день?\nКак настроение?\n\nПротестируй весь мой функционал, чтобы я работал идеально! 👇"
 m_edit_start_t = "Мы рады приветствовать тебя в команде нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основные задачи:</b>\n\n✅ Распределение игроков по парам;\n✅ Анализ дивизиона для игроков;\n✅ Выдача банов\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Мир – Новости</b>"
 edit_start_t = "Мы рады приветствовать тебя в команде нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основная задача:</b>\n\n✅ Создание и контроль турниров\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Минск Мир – Новости</b>"
-all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперников;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Для начала <b><a href='{CHANNEL}'>подпишитесь на канал</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
+all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск матчей;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Для начала <b><a href='{CHANNEL}'>подпишитесь на канал</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
 async def save_user(user_id, user_name, user_link): # Сохранение пользователей в список для рассылки
@@ -105,7 +105,7 @@ def create_tournament_table_keyboard(user_id):
     if last_toutnament_id is None:
         buttons = [
             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
-            [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='contestant')],
+            [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
             [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
             [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]
         ]
@@ -115,7 +115,7 @@ def create_tournament_table_keyboard(user_id):
         buttons = [
             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
             [InlineKeyboardButton(text = 'Турнирная таблица 📋', url=last_toutnament.link_table)],
-            [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='contestant')],
+            [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
             [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
             [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]
         ]
@@ -151,9 +151,9 @@ async def check_players(bot):
                 message_text_send = f"<b>⚠️ {len(users_without_division)} игрока(-ов) ожидают получения дивизиона!</b>"
                 try:
                     await bot.send_message(chat_id=edit, text=message_text_send, parse_mode="HTML", reply_markup=ka.exit)
-                    print("✅ Уведомление о игроках, ожидающих получение дивизиона, отправлено редактору!")
+                    print(f"✅ Уведомление о {len(users_without_division)} игроках, ожидающих получение дивизиона, отправлено главному редактору ({edit})!")
                 except Exception as e:
-                    print(f"❌ ОШИБКА: уведомление о игроках, ожидающих получение дивизиона, не было отправлено редактору ({edit}). Подробнее: {e}")
+                    print(f"❌ ОШИБКА: уведомление о игроках, ожидающих получение дивизиона, не было отправлено главному редактору ({edit}). Подробнее: {e}")
 
         # Ждём ровно 7 ДНЕЙ перед повторной проверкой
         await asyncio.sleep(604800)

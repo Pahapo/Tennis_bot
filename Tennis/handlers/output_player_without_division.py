@@ -82,7 +82,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
     try:
         await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     except Exception as e:
-        print(f"Не удалось отправить сообщение о изменении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+        print(f"Не удалось отправить сообщение об установлении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
 
 
     await player_without_division(call, state)

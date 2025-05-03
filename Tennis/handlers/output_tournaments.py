@@ -18,7 +18,7 @@ router = Router()
 message_text_send = ''
 
 @router.callback_query(F.data == 'tournament_lists')
-async def search_contestant(callback: CallbackQuery):
+async def search_match(callback: CallbackQuery):
     await callback.answer('')
 
     user_id = callback.from_user.id
@@ -65,7 +65,7 @@ async def search_contestant(callback: CallbackQuery):
         else:
             await callback.message.answer(f"Нам жаль, но список 📂 турниров пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.tournaments_data)
     else:
-        await callback.message.answer('Функция недоступна! Вы не являетесь организатором! 🚫')
+        await callback.message.answer('Функция недоступна! Вы не являетесь организатором! ❌')
         st.cmd_start()
     
 

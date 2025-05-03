@@ -1,7 +1,9 @@
+import pytz
 from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
+from datetime import datetime, timedelta
 from config.config import EDITOR
 
 import keywords.kw_tournament as kb
@@ -16,6 +18,7 @@ import googleSheet.googleSheet as gs
 router = Router()
 
 user_data = {}  # Ключ: username, значение: PlayerData
+MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 
 
 # РЕГИСТРАЦИЯ ТУРНИРА
@@ -105,23 +108,27 @@ async def add_level_tournament(callback: CallbackQuery, state:FSMContext):
 async def not_add_level_tournament(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
     await state.set_state(cl.RegTournamentsStates.count)
-    await callback.message.answer('Введите максимальное количество участников 👇')
+    await callback.message.answer('Введите количество участников в 1 дивизионе 👇')
 
 
 @router.message(cl.RegTournamentsStates.count)
 async def register_age(message: Message, state:FSMContext):
     
     await state.update_data(count = message.text)
+    form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=7)).strftime('%d.%m.%Y')
+    
     await state.set_state(cl.RegTournamentsStates.time1)
-    await message.answer('Введите дату начала турнира\n\nФормат: 01.01.2025 👇')
+    await message.answer(f'Введите дату начала турнира 👇\n\nФормат: <code>{form_date}</code>', parse_mode=ParseMode.HTML)
 
 
 @router.message(cl.RegTournamentsStates.time1)
 async def register_age(message: Message, state:FSMContext):
     
     await state.update_data(time1 = message.text)
+    form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=37)).strftime('%d.%m.%Y')
+
     await state.set_state(cl.RegTournamentsStates.time2)
-    await message.answer('Введите дату окончания турнира\n\nФормат: 01.01.2025 👇')
+    await message.answer(f'Введите дату окончания турнира 👇\n\nФормат: <code>{form_date}</code>', parse_mode=ParseMode.HTML)
 
 
 @router.message(cl.RegTournamentsStates.time2)

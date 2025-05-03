@@ -3,6 +3,8 @@ from aiogram.fsm.state import State, StatesGroup
 from config.db import session
 from models.User import User
 from models.Division import Division
+from models.Tournament import Tournament
+from models.TournamentPlayers import TournamentPlayers
 
 
 class SendMessage(StatesGroup):
@@ -10,22 +12,25 @@ class SendMessage(StatesGroup):
 
 class RegPlayerStates(StatesGroup):
     id = State()
-    name = State()
     link = State()
     age = State()
     sex = State()
+    booking = State()
+    date_booking = State()
+    date_without_booking = State()
     skills = State()
-    time = State()
+    comment = State()
 
 class PlayerData:     # НЕ ТРОГАТЬ !!!
-    def __init__(self, id=None, name=None, link=None, age=None, sex=None, skills=None, time=None, ban=None, tournaments_list=None):
+    def __init__(self, id=None, link=None, age=None, sex=None, date_booking=None, date_without_booking=None, skills=None, comment=None, ban=None, tournaments_list=None):
         self.id = id
-        self.name = name
         self.link = link
         self.age = age
         self.sex = sex
+        self.date_booking = date_booking
+        self.date_without_booking = date_without_booking
         self.skills = skills
-        self.time = time
+        self.comment = comment
         self.ban = ban
         self.tournaments_list = tournaments_list
 
@@ -33,55 +38,52 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
         user = session.query(User).filter(User.tg_user_id == self.id).first()
         if user.division_level != None:
             name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
-    
-            if self.tournaments_list == None:            # исправить return под человеческий вид. Не должно быть 4 return. Предусмотреть проверку на self.tournaments_list == None и user.division_level != None
-                return (
-                    f"Имя: {self.name}\n"
-                    f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
-                    f"Возраст: {self.age}\n"
-                    f"Пол: {self.sex}\n"
-                    f"Дивизион: {name_division.name_division}\n" # Не определён
-                    # f"Наличие бана: {self.ban}\n"
-                    f"История турниров: Не участвовал(-а) 🥲\n"
-                    f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
-                )
-            else:
-                return (
-                    f"Имя: {self.name}\n"
-                    f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
-                    f"Возраст: {self.age}\n"
-                    f"Пол: {self.sex}\n"
-                    f"Дивизион: {name_division.name_division}\n"
-                    # f"Наличие бана: {self.ban}\n"
-                    f"История турниров: {self.tournaments_list}\n"
-                    f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
-                )
-        else:
-            if self.tournaments_list == None:
-                return (
-                    f"Имя: {self.name}\n"
-                    f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
-                    f"Возраст: {self.age}\n"
-                    f"Пол: {self.sex}\n"
-                    f"Дивизион: Не определён\n"
-                    # f"Наличие бана: {self.ban}\n"
-                    f"История турниров: Не участвовал(-а) 🥲\n"
-                    f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
-                )
-            else:
-                return (
-                    f"Имя: {self.name}\n"
-                    f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
-                    f"Возраст: {self.age}\n"
-                    f"Пол: {self.sex}\n"
-                    f"Дивизион: Не определён\n"
-                    # f"Наличие бана: {self.ban}\n"
-                    f"История турниров: {self.tournaments_list}\n"
-                    f"Предпочтительное время игры: <blockquote>{self.time}</blockquote>\n"
-                )
+            user_in_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == self.id).all()
+            tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
+            history_tournaments = session.query(Tournament).filter(Tournament.tournament_id.in_(tournament_ids)).all()
 
+            text_card =  f"Имя: {user.name_user}\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\n"
+
+            history = ''
+
+            for toutnament in history_tournaments:
+                if history == '':
+                    history += f"\"{toutnament.name_tournament}\""
+                else:
+                    history += f", \"{toutnament.name_tournament}\""
+
+            if history == '':
+                history += 'не участвовал(-а) 🥲'
+
+            text_card += f"История турниров: {history}\n"
+
+            if self.sex:
+                text_card += f"Пол: {self.sex}\n"
+            else:
+                text_card += f"Пол: {user.sex}\n"
+
+            if self.age:
+                text_card += f"Возраст: {self.age}\n"
+            else:
+                text_card += f"Возраст: {user.age}\n"
+            
+            if name_division.name_division:
+                text_card += f"Дивизион: {name_division.name_division}\n"
+            else:
+                text_card += f"Дивизион: Не определён\n" # Добавить выбор дивизиона
+            
+            if self.date_booking:
+                text_card += f"Бронь корта: на {self.date_booking} 🎾\n"
+            else:
+                text_card += f"Брони нет! Предлагаю поиграть: {self.date_without_booking}\n"
+
+            if self.comment:
+                text_card += f"Комментарий: <blockquote>{self.comment}</blockquote>\n"
+            return text_card
+            
     
     def get_data(self):
+        user = session.query(User).filter(User.tg_user_id == self.id).first()
         levelTournament_list = list(map(int, self.level.split(",")))
         name_division = session.query(Division).all()
         # Создаём словарь {division_id: name}, чтобы быстрее искать названия
@@ -93,14 +95,15 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
         return {
             self.id : 
             {
-                "Имя": self.name,
+                "Имя": user.name_user,
                 "Ссылка": self.link,
-                "Возраст": self.age,
-                "Пол": self.sex,
-                "Дивизион": tournament_lvl,
-                "Наличие бана": self.ban,
                 "История турниров": self.tournaments_list,
-                "Предпочтительное время игры": self.time
+                "Пол": self.sex,
+                "Возраст": self.age,
+                "Дивизион": tournament_lvl,
+                "Бронь корта": self.date_booking,
+                "Предложение о дате игры": self.date_without_booking,
+                "Комментарий": self.comment
             }
         }
 
@@ -232,30 +235,3 @@ class FindUser(StatesGroup):
     level = State()
     period_ban = State()
     reason_ban = State()
-
-
-# class RegInventoryStates(StatesGroup):
-#     id = State()
-#     name = State()
-#     link = State()
-#     description = State()
-#     price = State()
-
-
-# class InventoryData:     # НЕ ТРОГАТЬ !!!
-#     def __init__(self, id=None, link=None, name=None, description=None, price=None):
-#         self.id = id
-#         self.link = link
-#         self.name = name
-#         self.description = description
-#         self.price = price
-
-    # def __str__(self):             # НЕ ТРОГАТЬ !!!
-    #     list_inventory = session.query(Inventory).filter(Inventory.tg_user_id == self.id).all()
-    #     if list_inventory != []:
-    #         text_inventory = ''
-
-    #         for inventory in list_inventory:
-    #             text_inventory += f"Имя: {self.name}\nСсылка: <tg-spoiler>{self.link}</tg-spoiler>\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {name_division.name_division}\n"
-
-    #         return text_inventory

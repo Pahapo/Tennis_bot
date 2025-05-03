@@ -192,20 +192,7 @@ async def success_payment(callback: CallbackQuery, state:FSMContext):
 
 
 
-# @router.callback_query(F.data == 'confirm_success_payment')
-# async def confirm_success_payment(callback: CallbackQuery, state:FSMContext):
-#     await callback.answer('')
-
-#     await callback.message.answer(f"<b>Пользователь оплатил турнир?</b> 😎\n\n• Перед тем, как подтвердить, что оплата получена, перейди в раздел 'история транзакций' в банкинге", parse_mode=ParseMode.HTML, reply_markup=kp.send_success_payment)
-
-
-# @router.callback_query(F.data == 'confirm_error_payment')
-# async def confirm_error_payment(callback: CallbackQuery, state:FSMContext):
-#     await callback.answer('')
-
-#     await callback.message.answer(f'<b>Пользователь не оплатил турнир?</b> 🤔\n\n• Перед тем, как подтвердить, что оплата не получена, убедись, что время вышло', parse_mode=ParseMode.HTML, reply_markup=kp.send_error_payment)
-
-
-# @router.callback_query(F.data == 'send_error_payment')
-# async def send_error_payment(callback: CallbackQuery, state:FSMContext):
-#     await callback.answer('')
+@router.callback_query(F.data == 'confirm_error_payment')
+async def confirm_error_payment(callback: CallbackQuery, state:FSMContext):
+    # Удаляем сообщение после нажатия на кнопку
+    await callback.message.delete()

@@ -1,6 +1,6 @@
 from aiogram import Router
 from handlers.check_subscription import router as check_subscription
-from handlers.contestant import router as contestant
+from handlers.match import router as match
 from handlers.court_reservation import router as court_reservation
 from handlers.functions import router as functions
 from handlers.inventory import router as inventory
@@ -26,7 +26,7 @@ router = Router()
 
 # Включаем все роутеры
 router.include_router(check_subscription)
-router.include_router(contestant)
+router.include_router(match)
 router.include_router(court_reservation)
 router.include_router(functions)
 router.include_router(inventory)

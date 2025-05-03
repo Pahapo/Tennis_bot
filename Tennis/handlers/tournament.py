@@ -79,7 +79,9 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
     elif user_in_tournament:
         await call.message.answer(f'<b>Вы уже участвуете в турнире!</b> ✅\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.ban_status == True:
-        await call.message.answer(f'<b>🚫 Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        await call.message.answer(f'<b>❌ Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    elif user.division_level == None:
+        await call.message.answer(f'<b>⚠️ Дорогой пользователь, пока Вы не можете участвовать в турнире</b>\n\nДля начала Вам нужно получить дивизион. Этим уже занимаются наши главные редакторы\n\nБлагодарим за понимание!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.division_level not in levelTournament_list:
         await call.message.answer(f'<b>⚠️ Вы не можете участвовать в турнире</b>\n\nК сожалению, этот турнир доступен только для дивизиона(-ов):\n{tournament_lvl}', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.division_level in levelTournament_list:

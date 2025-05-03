@@ -1,10 +1,14 @@
-CREATE TABLE `contestant` (
-  `contestant_id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `match` (
+  `match_id` int NOT NULL AUTO_INCREMENT,
   `id_tg_user` bigint DEFAULT NULL,
-  `free_time_for_play` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`contestant_id`),
-  KEY `contestant_users_fk` (`id_tg_user`),
-  CONSTRAINT `contestant_users_fk` FOREIGN KEY (`id_tg_user`) REFERENCES `users` (`tg_user_id`)
+  `date_booking` varchar(40) DEFAULT NULL,
+  `date_without_booking` varchar(40) DEFAULT NULL,
+  `comment` varchar(300) DEFAULT NULL,
+  `player_1` bigint DEFAULT NULL,
+  `player_2` bigint DEFAULT NULL,
+  PRIMARY KEY (`match_id`),
+  KEY `match_users_fk` (`id_tg_user`),
+  CONSTRAINT `match_users_fk` FOREIGN KEY (`id_tg_user`) REFERENCES `users` (`tg_user_id`)
 );
 
 CREATE TABLE `division` (

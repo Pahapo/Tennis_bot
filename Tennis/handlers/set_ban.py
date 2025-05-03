@@ -21,7 +21,7 @@ router = Router()
 @router.callback_query(F.data == 'set_ban')
 async def set_ban(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await callback.message.answer('<b>Тут вы можете выдать бан игрокам</b> 🚫\n\nИгрок не сможет участвовать в турнирах объявленное количество дней\n\nНайдите игрока по поиску 🔍', parse_mode=ParseMode.HTML, reply_markup=kb.set_ban)
+    await callback.message.answer('<b>Тут вы можете выдать бан игрокам</b> ❌\n\nИгрок не сможет участвовать в турнирах объявленное количество дней\n\nНайдите игрока по поиску 🔍', parse_mode=ParseMode.HTML, reply_markup=kb.set_ban)
 
 
 @router.callback_query(F.data == 'find_users_for_ban')
@@ -33,7 +33,7 @@ async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):
     if user_id in MAIN_EDITOR or user_id in ADMINS:
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
-        await callback.message.answer('Функция недоступна! Вы не главный редактор! 🚫')
+        await callback.message.answer('Функция недоступна! Вы не главный редактор! ❌')
         st.cmd_start()
 
 
@@ -110,7 +110,7 @@ async def find_name(message: Message, state:FSMContext, bot):
         await message.answer(f"✅ Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!", reply_markup=kb.back_ban)
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
-        message_text_send = f"<b>Дорогой игрок, мы вынуждены сообщить, что Вам выдан Бан!</b> 🚫\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
+        message_text_send = f"<b>Дорогой игрок, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
 
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)

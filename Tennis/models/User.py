@@ -48,13 +48,6 @@ class User(Base):
             history = 'не участвовал(-а) 🥲'
 
         if self.division_level != None:
-            # levelTournament_list = list(map(int, self.division_level.split(",")))
-            # name_division = session.query(Division).all()
-            # # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-            # division_dict = {div.division_id: div.name_division for div in name_division}
-            # # Преобразуем список ID в список названий
-            # levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-            # division_lvl = ", ".join(levelTournament_names)
             division = session.query(Division).filter(Division.division_id == self.division_level).first()
             division_lvl = division.name_division
         else: 
@@ -62,7 +55,9 @@ class User(Base):
 
         user = session.query(User).filter(User.tg_user_id == self.tg_user_id).first()
 
+        text = f"Имя: {self.name_user}\nИстория турниров: {history}\nПол: {self.sex}\nВозраст: {self.age}\nДивизион: {division_lvl}" 
+        
         if user.ban_status == True:
-            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {division_lvl}\nИстория турниров: {history}\nНаличие бана: До {user.end_date_ban}\n" 
-        else:
-            return f"Имя: {self.name_user}\nВозраст: {self.age}\nПол: {self.sex}\nДивизион: {division_lvl}\nИстория турниров: {history}\n" 
+            text += f'\nНаличие бана: До {user.end_date_ban}'
+
+        return text

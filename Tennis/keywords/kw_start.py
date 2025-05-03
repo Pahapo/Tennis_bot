@@ -4,9 +4,10 @@ from config.config import CHANNEL
 # Администраторы
 
 main_admin_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнир 🏆', callback_data='main_edit_tournament')],
-                                                       [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='contestant')],
-                                                       [InlineKeyboardButton(text = 'Выдать бан 🚫', callback_data='set_ban')],
+                                                       [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
+                                                       [InlineKeyboardButton(text = 'Выдать бан ❌', callback_data='set_ban')],
                                                        [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                                                    #    [InlineKeyboardButton(text = 'Корты 🎾', callback_data='testtesttest')], # добавить
                                                        [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
                                                        [InlineKeyboardButton(text = 'ТЕСТИРОВАНИЕ', callback_data='testtesttest')], # изменить при тестировании новой функции!
                                                        [InlineKeyboardButton(text = 'Рассылка', callback_data='sending_messages')] # доделать рассылку (возможность прикреплять фото)!
@@ -14,9 +15,10 @@ main_admin_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(tex
 # Главные редакторы
 
 main_edit_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнир 🏆', callback_data='main_edit_tournament')],
-                                                      [InlineKeyboardButton(text = 'Дивизион 🥇 / Бан 🚫', callback_data='main_edit_level_ban')],
-                                                      [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='contestant')],
+                                                      [InlineKeyboardButton(text = 'Дивизион 🥇 / Бан ❌', callback_data='main_edit_level_ban')],
+                                                      [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
                                                       [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                                                    #   [InlineKeyboardButton(text = 'Корты 🎾', callback_data='testtesttest')], # добавить
                                                       [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]
                                                       ])
 
@@ -27,7 +29,7 @@ main_edit_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButt
                                                             ])
 
 main_edit_level_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
-                                                            [InlineKeyboardButton(text = 'Выдать бан 🚫', callback_data='set_ban')],
+                                                            [InlineKeyboardButton(text = 'Выдать бан ❌', callback_data='set_ban')],
                                                             [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                             ])
 
@@ -35,8 +37,9 @@ main_edit_level_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButto
 
 edit_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнир 🏆', callback_data='edit_tournament')],
                                                 [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')], # временно
-                                                [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='contestant')],
+                                                [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
                                                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                                                # [InlineKeyboardButton(text = 'Корты 🎾', callback_data='testtesttest')], # добавить
                                                 [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]
                                                 ])
 
@@ -44,7 +47,7 @@ edit_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(te
                                                         [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
                                                         [InlineKeyboardButton(text = 'Список турниров/участников 📖', callback_data='tournament_lists')],
                                                         [InlineKeyboardButton(text = 'Редактировать турнир ⚙️', callback_data='tournament_edit')],
-                                                        [InlineKeyboardButton(text = 'Удалить турнир 🚫', callback_data='delete_tournament')],
+                                                        [InlineKeyboardButton(text = 'Удалить турнир ❌', callback_data='delete_tournament')],
                                                         [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
                                                         [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                         ])

@@ -53,5 +53,5 @@ async def delete_tournament_anyway(callback: CallbackQuery, state:FSMContext):
         else:
             await callback.message.answer(f"Что-то пошло не так! Турнир '{name_tournament_delete}' не был найден\n\nХочешь узнать больше об ошибке? Обратись в поддержку\n🙋‍♂️ Поддержка @sup_MM", reply_markup=kb.exit)
     else:
-        await callback.message.answer('Функция недоступна! Вы не организатор! 🚫')
+        await callback.message.answer('Функция недоступна! Вы не организатор! ❌')
         st.cmd_start()

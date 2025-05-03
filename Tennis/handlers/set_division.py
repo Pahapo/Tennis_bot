@@ -40,7 +40,7 @@ async def find_users_for_division(callback: CallbackQuery, state:FSMContext):
     if user_id in MAIN_EDITOR or user_id in EDITOR:
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
-        await callback.message.answer('Функция недоступна! Вы не главный редактор! 🚫')
+        await callback.message.answer('Функция недоступна! Вы не главный редактор! ❌')
         st.cmd_start()
 
 

@@ -95,7 +95,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
         await callback.message.answer(f"✅ Пользователь '{user.name_user}' был исключён из турнира {name_finder_tournament}!", reply_markup=kb.back_delete_players)
 
         editors_list = await f.output_edits_list()
-        message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вы были исключены из турнира {name_finder_tournament}</b> 🚫\n\n<i>• Если это ошибка, пожалуйста, свяжитесь с редактором(-ами) турнира!</i> {editors_list}"
+        message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вы были исключены из турнира {name_finder_tournament}</b> ❌\n\n<i>• Если это ошибка, пожалуйста, свяжитесь с редактором(-ами) турнира!</i> {editors_list}"
 
         options = LinkPreviewOptions(
             is_disabled=True
@@ -108,7 +108,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
         
         await state.clear()
     else:
-        await callback.message.answer('Функция недоступна! Вы не организатор! 🚫')
+        await callback.message.answer('Функция недоступна! Вы не организатор! ❌')
         st.cmd_start()
 
 

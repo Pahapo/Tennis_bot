@@ -45,7 +45,7 @@ back_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '�
                                                 [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
                                                 ])
 
-edit_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Забанить 🚫', callback_data='set_new_ban')],
+edit_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Забанить ❌', callback_data='set_new_ban')],
                                                 [InlineKeyboardButton(text = 'Назад', callback_data='set_ban')]
                                                 ])
 
@@ -55,7 +55,7 @@ back_delete_players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButto
                                                             [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
                                                             ])
 
-edit_delete_players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Удалить из турнира 🚫', callback_data='delete_players_tournaments')],
+edit_delete_players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Удалить из турнира ❌', callback_data='delete_players_tournaments')],
                                                             [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
                                                             ])
 
