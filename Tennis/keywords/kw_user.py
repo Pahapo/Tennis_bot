@@ -11,9 +11,9 @@ player_get_card = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(te
                                                 [InlineKeyboardButton(text = '❌ Удалить', callback_data='delete_match')]
                                                 ])
 
-players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Найти матч 🙋‍♂️', callback_data='search_match')],
+players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Найти соперника 🙋‍♂️', callback_data='search_match')],
                                                 [InlineKeyboardButton(text = 'Создать запрос / Мои запросы 📋', callback_data='match_requests')],
-                                                [InlineKeyboardButton(text = 'Мои подтверждённые матчи 🎾', callback_data='my_match')],
+                                                [InlineKeyboardButton(text = 'Мои подтверждённые игры 🎾', callback_data='my_match')],
                                                 [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                 ])
 
@@ -26,7 +26,7 @@ matches_not_found = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
                                                     ]) 
 
 my_matches = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='match'),
-                                                    InlineKeyboardButton(text = 'Найти матч 🙋‍♂️', callback_data='search_match')]
+                                                    InlineKeyboardButton(text = 'Найти соперника 🙋‍♂️', callback_data='search_match')]
                                                     ]) 
 
 apply_match = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '❌ Отклонить', callback_data='reject_match'),

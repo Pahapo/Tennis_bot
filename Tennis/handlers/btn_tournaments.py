@@ -22,10 +22,30 @@ def get_list_tournaments():
 
 def create_tournaments_keyboard(tournament_names):
     buttons = [
+        [InlineKeyboardButton(text=name, callback_data=f"tournament_{name}")]
+        for name in tournament_names
+    ]
+    buttons.append([InlineKeyboardButton(text='Назад', callback_data='main_edit_tournament')])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+# Вывод кнопок под турнир для редактора
+
+def get_list_tournaments_editor():
+    tournaments_data = [
+        row.name_tournament for row in session.query(Tournament).filter(
+            func.str_to_date(Tournament.start_tournament, "%d.%m.%Y") >= datetime.today()
+        ).all()
+    ]
+    return tournaments_data
+
+
+def create_tournaments_keyboard_editor(tournament_names):
+    buttons = [
         [InlineKeyboardButton(text=name, callback_data=name)]
         for name in tournament_names
     ]
-    buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])
+    buttons.append([InlineKeyboardButton(text='Назад', callback_data='edit_tournament')])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 

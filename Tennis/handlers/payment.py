@@ -32,7 +32,7 @@ router = Router()
 async def register(callback: CallbackQuery, state:FSMContext): # доделать с оплатой!!!
     await callback.answer('')
     await state.set_state(cl.RegTournamentPlayerStates.level)
-    await callback.message.answer(f'<b>Страница оплаты по ЕРИП</b> 💳\n\n• Система \"Расчёт\" (ЕРИП)\n• Банковские, финансовые услуги\n• Банки, НКФО\n• Альфабанк\n• Пополнение счёта\n\n<b>Введите номер счёта</b> 👇\n\n<pre><code>{CARD_NUMBER}</code></pre>\n\n• Если вы не усеете оплатить участие в турнире до истечения срока резервирования, оно аннулируется автоматически!\n\n⏰ <b>Время: 120 минут</b>', parse_mode=ParseMode.HTML, reply_markup=kb.payment_address)
+    await callback.message.answer(f'<b>Страница оплаты по ЕРИП</b> 💳\n\n• Система \"Расчёт\" (ЕРИП)\n• Банковские, финансовые услуги\n• Банки, НКФО\n• Альфабанк\n• Пополнение счёта\n\n<b>Введите номер счёта</b> 👇\n\n<pre><code>{CARD_NUMBER}</code></pre>\n\n• Если вы не успеете оплатить участие в турнире до истечения срока резервирования, оно аннулируется автоматически!\n\n⏰ <b>Время: 120 минут</b>', parse_mode=ParseMode.HTML, reply_markup=kb.payment_address)
 
 
 @router.callback_query(F.data == 'confirm_payment')
@@ -84,7 +84,7 @@ async def save_photo_payment(message: types.Message, state: FSMContext, bot):
     end_time = end_time.strftime("%H:%M %d.%m")
 
     if tournament:
-        message_text_send = f"<b>Подтверждение оплаты пользователя <a href='{user_link}'>{user_name}</a></b>\n\n• После подтверждения игрок станет участником турнира \"{selected_tournament}\"!\n\n⏰ <b>Дата окончания оплаты:</b> до {end_time}\n\n🔗 <b>Чек оплаты:</b>\nID: {user_id}\nТурнир: {tournament.tournament_id}\nЦена: {tournament.price}\nЧек: {file_name}"
+        message_text_send = f"<b>Подтверждение оплаты пользователя <a href='{user_link}'>{user_name}</a></b>\n\n• После подтверждения игрок станет участником турнира \"{selected_tournament}\"!\n\n⏰ <b>Окончание подтверждения оплаты:</b> до {end_time}\n\n🔗 <b>Чек оплаты:</b>\nID: {user_id}\nТурнир: {tournament.tournament_id}\nЦена: {tournament.price}\nЧек: {file_name}"
     else:
         await message.answer("❌ Турнир не найден в базе данных! Игрок оплатил, но такой турнир не был найден в БД!")
         return
@@ -154,7 +154,7 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
         session.add(user)
         session.commit()
 
-        print(f"Игрок {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
+        print(f"✅ Игрок {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
         await callback.answer(f"✅ Оплата подтверждена", show_alert=False)
     else:
         print("❌ `user_id` не найден в сообщении при отправке сообщения с оплатой редактору за турнир!")
@@ -181,12 +181,12 @@ async def success_payment(callback: CallbackQuery, state:FSMContext):
         user = TournamentPlayers(id_tournament = selected_tournament.tournament_id, id_tg_user = data.get("user_id"))
         session.add(user)
         session.commit()
-        print(f"Игрок {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
+        print(f"✅ Игрок {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
 
     await callback.message.answer('✅ <b>Регистрация на турнир подтверждена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     
     gs.addPlayerInList(selected_user.name_user, selected_user.link, selected_tournament.name_tournament, user_division.name_division)
-    print(f"Добавление игрока в Excel для регистрации на турнир - '{selected_tournament.name_tournament}' произошло успешно!")
+    print(f"✅ Добавление игрока в Excel для регистрации на турнир - '{selected_tournament.name_tournament}' произошло успешно!")
     await state.clear()
 
 

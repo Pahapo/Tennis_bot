@@ -161,7 +161,6 @@ class TournamentPlayerData:
     
 class RegTournamentsStates(StatesGroup):
     name = State()
-    address = State()
     level = State()
     count = State()
     time1 = State()
@@ -171,9 +170,8 @@ class RegTournamentsStates(StatesGroup):
 
 
 class TournamentsData:
-    def __init__(self, name=None, address=None, level=None, count=None, time1=None, time2=None, price=None, regulations=None):
+    def __init__(self, name=None, level=None, count=None, time1=None, time2=None, price=None, regulations=None):
         self.name = name
-        self.address = address
         self.level = level
         self.count = count
         self.time1 = time1
@@ -194,7 +192,6 @@ class TournamentsData:
 
         return (
             f"Название турнира: {self.name}\n"
-            f"Адрес корта: {self.address}\n"
             f"Дивизион турнира: {tournament_lvl}\n"
             f"Максимальное кол-во участников: {self.count} чел.\n"
             f"Начало: {self.time1}\n"
@@ -215,7 +212,6 @@ class TournamentsData:
             self.name : 
             {
                 "Название турнира": self.name,
-                "Адрес корта": self.address,
                 "Дивизион турнира": tournament_lvl,
                 "Максимальное кол-во участников": self.count,
                 "Начало": self.time1,

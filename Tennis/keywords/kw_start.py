@@ -4,7 +4,7 @@ from config.config import CHANNEL
 # Администраторы
 
 main_admin_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнир 🏆', callback_data='main_edit_tournament')],
-                                                       [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
+                                                       [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                                                        [InlineKeyboardButton(text = 'Выдать бан ❌', callback_data='set_ban')],
                                                        [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                                                     #    [InlineKeyboardButton(text = 'Корты 🎾', callback_data='testtesttest')], # добавить
@@ -16,7 +16,7 @@ main_admin_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(tex
 
 main_edit_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнир 🏆', callback_data='main_edit_tournament')],
                                                       [InlineKeyboardButton(text = 'Дивизион 🥇 / Бан ❌', callback_data='main_edit_level_ban')],
-                                                      [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
+                                                      [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                                                       [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                                                     #   [InlineKeyboardButton(text = 'Корты 🎾', callback_data='testtesttest')], # добавить
                                                       [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]
@@ -37,7 +37,7 @@ main_edit_level_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButto
 
 edit_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнир 🏆', callback_data='edit_tournament')],
                                                 [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')], # временно
-                                                [InlineKeyboardButton(text = 'Поиск матча 🙋‍♂️', callback_data='match')],
+                                                [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                                                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                                                 # [InlineKeyboardButton(text = 'Корты 🎾', callback_data='testtesttest')], # добавить
                                                 [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]

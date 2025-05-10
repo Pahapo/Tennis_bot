@@ -138,7 +138,6 @@ def startDoingSheet(nameTournament, levelTournament):
 
 def addPlayerInList(name, user_link, name_tournament, user_division):
 
-    print(name, user_link, name_tournament, user_division)
     gc = gspread.service_account(filename='credentials_tennisbot.json')
     spreadsheet = gc.open(name_tournament)
     sheet = spreadsheet.worksheet(user_division)

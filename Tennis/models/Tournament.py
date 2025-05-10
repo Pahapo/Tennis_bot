@@ -8,7 +8,6 @@ class Tournament(Base):
     __tablename__ = "tournament"
     tournament_id = Column(Integer, primary_key=True, autoincrement=True)
     name_tournament = Column(String(50), nullable=False)
-    address = Column(String(40), nullable=False)
     division = Column(String(15), nullable=False)
     quantity_person = Column(Integer, nullable=False)
     start_tournament = Column(String(10), nullable=False)
@@ -19,10 +18,9 @@ class Tournament(Base):
 
 
     # Конструктор __init__
-    def __init__(self, name_tournament, address, division, quantity_person, start_tournament, end_tournament, price, link_table, regulations):
+    def __init__(self, name_tournament, division, quantity_person, start_tournament, end_tournament, price, link_table, regulations):
         # self.tournament_id = tournament_id
         self.name_tournament = name_tournament
-        self.address = address
         self.division = division
         self.quantity_person = quantity_person
         self.start_tournament = start_tournament
@@ -44,4 +42,4 @@ class Tournament(Base):
         else: 
             tournament_lvl = 'Не определён'
 
-        return f"Название: {self.name_tournament}\nАдрес: {self.address}\nДивизион турнира: {tournament_lvl}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 
+        return f"Название: {self.name_tournament}\nДивизион турнира: {tournament_lvl}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 

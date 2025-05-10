@@ -9,20 +9,32 @@ tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 
                                                     ])
 
 tournaments_data = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Удалить участника ❌', callback_data='delete_players')],
-                                                        [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
+                                                        [InlineKeyboardButton(text = 'Назад', callback_data='main_edit_tournament')]
                                                         ])
 
-table_list = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')], # исправить
-                                                    [InlineKeyboardButton(text = 'Архив 📚', callback_data='history_tournament_table')], # исправить
-                                                    [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
+tournaments_data_edit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Удалить участника ❌', callback_data='delete_players')],
+                                                              [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
+                                                              ])
+
+table_list = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')],
+                                                    [InlineKeyboardButton(text = 'Архив 📚', callback_data='history_tournament_table')],
+                                                    [InlineKeyboardButton(text = 'Назад', callback_data='main_edit_tournament')]
                                                     ])
 
-create_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Создать турнир 🎾', callback_data='create_tournament')], # исправить
+table_list_edit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')],
+                                                    [InlineKeyboardButton(text = 'Архив 📚', callback_data='history_tournament_table')],
+                                                    [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
+                                                    ])
+
+create_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Создать турнир 🎾', callback_data='create_tournament')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='tournament_table')]
                                                     ])
 
 # Вывод кнопок турнира
-tournament_info = bt.create_tournaments_keyboard(bt.get_list_tournaments())
+# tournament_info = bt.create_tournaments_keyboard(bt.get_list_tournaments())
+
+# Вывод кнопок турнира для редактора
+tournament_info_editor = bt.create_tournaments_keyboard_editor(bt.get_list_tournaments_editor())
 
 # Вывод кнопок под ссылку турнира
 active_tournament_table = bt.create_links_tournaments_keyboard(bt.get_links_tournaments())

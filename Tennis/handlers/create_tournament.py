@@ -159,7 +159,6 @@ async def register_age(message: Message, state:FSMContext):
         # Создаём объект PlayerData
         tournament_data = cl.TournamentsData(
             name=data.get("name"),
-            address=data.get("address"),
             level=data.get("level"),
             count=int(data.get("count")),
             time1=data.get("time1"),
@@ -171,7 +170,6 @@ async def register_age(message: Message, state:FSMContext):
     tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
     if tournament:
         tournament.name_tournament = data.get("name")
-        tournament.address = data.get("address")
         tournament.division = data.get("level")
         tournament.quantity_person = int(data.get("count"))
         tournament.start_tournament = data.get("time1")
@@ -190,7 +188,7 @@ async def register_age(message: Message, state:FSMContext):
 
         link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"))
         
-        new_tournament = Tournament(name_tournament = data.get("name"), address = data.get("address"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
+        new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
         session.add(new_tournament)  # Добавляем объект в сессию
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 

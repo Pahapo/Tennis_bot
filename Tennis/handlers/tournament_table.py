@@ -1,6 +1,8 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from aiogram.enums import ParseMode
+from aiogram.fsm.context import FSMContext
+from config.config import EDITOR
 
 import handlers.btn_tournaments as bt
 import handlers.functions as f
@@ -12,11 +14,17 @@ router = Router()
 
 
 @router.callback_query(F.data == 'tournament_table')
-async def tournament_table(callback: CallbackQuery, bot):
+async def tournament_table(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
 
+    data = await state.get_data()
+    user_id = data.get("user_id")
+
     if await f.check_subscription(callback.from_user.id, bot):
-        await callback.message.answer("<b>Турнирная таблица доступна для редактирования только организаторам турнира!</b>\n• Игроки имеют доступ \"читателя\"\n\n⚡️ Таблица создаётся автоматически после создания турнира редактором\n⚡️ Разные дивизионы расположены на разных листах", parse_mode=ParseMode.HTML, reply_markup=kb.table_list)
+        if user_id in EDITOR:
+            await callback.message.answer("<b>Турнирная таблица доступна для редактирования только организаторам турнира!</b>\n• Игроки имеют доступ \"читателя\"\n\n⚡️ Таблица создаётся автоматически после создания турнира редактором\n⚡️ Разные дивизионы расположены на разных листах", parse_mode=ParseMode.HTML, reply_markup=kb.table_list_edit)
+        else:
+            await callback.message.answer("<b>Турнирная таблица доступна для редактирования только организаторам турнира!</b>\n• Игроки имеют доступ \"читателя\"\n\n⚡️ Таблица создаётся автоматически после создания турнира редактором\n⚡️ Разные дивизионы расположены на разных листах", parse_mode=ParseMode.HTML, reply_markup=kb.table_list)
     else:
         await f.check_subscription_message(callback)
 

@@ -26,7 +26,7 @@ async def match(callback: CallbackQuery, bot):
     await callback.answer('')
 
     if await f.check_subscription(callback.from_user.id, bot):
-        await callback.message.answer(f"<b>Тут ты можешь найти матч</b> 🙋‍♂️🎾\n\n• Создай свой, чтобы другие игроки могли найти тебя 👇", parse_mode=ParseMode.HTML, reply_markup=kb.players)
+        await callback.message.answer(f"<b>Поиск соперника</b> 🙋‍♂️🎾\n\nВ этом разделе игроки публикуют заявки на поиск соперника для игры.\nТы можешь откликнуться на уже созданную игру другим игроком, или создать запрос на игру самостоятельно\n\n⚡️ Желательно создавать заявку на поиск соперника с уже забронированым кортом", parse_mode=ParseMode.HTML, reply_markup=kb.players)
     else:
         await f.check_subscription_message(callback)
 
@@ -60,13 +60,10 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
     
     for user_tg in tg_users_id:
         if user_id == user_tg:
-            print("user_id = ", user_id)
             count_users -= 1
 
-    print("count_users = ", count_users)
-
     if count_users >= 1:
-        await callback.message.answer(f"<b>Список доступных матчей</b> 👇", parse_mode=ParseMode.HTML) # сделать список отфильтрованным по уровню вашего дивизиона (если None у человека дивизион, то пусть видит все карточки матчей)
+        await callback.message.answer(f"<b>Список доступных соперников</b> 👇", parse_mode=ParseMode.HTML) # сделать список отфильтрованным по уровню вашего дивизиона (если None у человека дивизион, то пусть видит все карточки соперников)
     
         options = LinkPreviewOptions(
             is_disabled=True
@@ -131,7 +128,7 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
                         await callback.message.answer(list_matches, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.players_data)
                         list_matches = ''
     else:               
-        await callback.message.answer(f"Нам жаль, но список 📂 доступных матчей пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.matches_not_found)
+        await callback.message.answer(f"Нам жаль, но список 📂 доступных соперников пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.matches_not_found)
     
 
 
@@ -157,7 +154,7 @@ async def apply_match(callback: CallbackQuery, state:FSMContext, bot):
 
         if contestant:
             # НЕ ИЗМЕНЯТЬ СООБЩЕНИЕ ! ! ! (это повлияет на функцию accept_match)
-            message_text_send = f"<b>Пользователь 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a> откликнулся(-ась) на вашу заявку!</b>\n\n<b>ДЕТАЛИ МАТЧА:</b>\n⏰ Дата матча: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}"
+            message_text_send = f"<b>Пользователь 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a> откликнулся(-ась) на вашу заявку!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}"
 
             options = LinkPreviewOptions(
                 is_disabled=True
@@ -167,10 +164,10 @@ async def apply_match(callback: CallbackQuery, state:FSMContext, bot):
                 await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.apply_match)
                 await callback.answer(f"✅ Заявка отправлена!", show_alert=False)
             except Exception as e:
-                print(f"Не удалось отправить запрос на матч пользователю с id: {contestant.tg_user_id} из-за ошибки: {e}")
+                print(f"Не удалось отправить запрос на игру пользователю с id: {contestant.tg_user_id} из-за ошибки: {e}")
     else:
         await callback.answer('')
-        print(f"Не удалось отправить запрос на матч от пользователя, т.к. в сообщении матча не распознана ссылка или дата. Текст матча: {message_text}")
+        print(f"Не удалось отправить запрос на игру от пользователя, т.к. в сообщении игры не распознана ссылка или дата. Текст игры: {message_text}")
 
 
 
@@ -185,7 +182,7 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
     # Поиск ссылки
     link_match = re.search(r'Соперник:\s*(https://t\.me/\w+)', message_text)
     # Поиск даты
-    date_match = re.search(r'Дата матча:\s*(\d{2}:\d{2} \d{2}\.\d{2}\.\d{4})', message_text)
+    date_match = re.search(r'Дата игры:\s*(\d{2}:\d{2} \d{2}\.\d{2}\.\d{4})', message_text)
 
     if link_match and date_match:
         link = link_match.group(1)
@@ -200,26 +197,26 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
                 is_disabled=True
             )
 
-            print(f"✅ Матч подтверждён пользователем с id {user_id}!")
-            await callback.answer(f"✅ Матч объявлен!", show_alert=False)
-            message_text_send2 = f"✅ <b>Матч подтверждён пользователем 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a>!</b>\n\n<b>ДЕТАЛИ МАТЧА:</b>\n⏰ Дата матча: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}\n\n<blockquote>Ваш матч теперь доступен в разделе \"Мои подтверждённые матчи 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре</blockquote>\n\nГотовьтесь к встрече на корте! 🎾"
+            print(f"✅ Игра подтверждена пользователем с id {user_id}!")
+            await callback.answer(f"✅ Игра объявлена!", show_alert=False)
+            message_text_send2 = f"✅ <b>Игра подтверждёна пользователем 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}\n\n<blockquote>Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре</blockquote>\n\nГотовьтесь к встрече на корте! 🎾"
             try:
 
                 await bot.send_message(chat_id=contestant.tg_user_id, text="🏆")
                 await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send2, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                print("Подтверждение матча отправленно сопернику для информирования")
+                print("Подтверждение игры отправленно сопернику для информирования")
             except Exception as e:
-                print(f"Не удалось отправить сообщение о подтверждённом матче пользователю с id: {user_id} из-за ошибки: {e}")
+                print(f"Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
 
             await callback.message.answer("🏆")
-            await callback.message.answer(f"✅ <b>Матч объявлен!</b>\n\n• Ваш матч теперь доступен в разделе \"Мои подтверждённые матчи 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре\n\nГотовьтесь к встрече на корте {date}! 🎾", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+            await callback.message.answer(f"✅ <b>Игра объявлена!</b>\n\n• Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре\n\nГотовьтесь к встрече на корте {date}! 🎾", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
             
             if user_match:
                 user_match.player_1 = user.tg_user_id
                 user_match.player_2 = contestant.tg_user_id
                 session.commit()
 
-            # напоминание о матче
+            # напоминание о игре
             time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
             time_before_match = time_before_match.total_seconds()
 
@@ -230,20 +227,20 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
                     is_disabled=True
                 )
 
-                text_notification = f"<b>Напоминание!</b>\n⚡️До матча с <a href='{user.link}'><b>{user.name_user}</b></a> осталось 2 часа"
+                text_notification = f"<b>Напоминание!</b>\n⚡️До игры с <a href='{user.link}'><b>{user.name_user}</b></a> осталось 2 часа"
                 try:
                     await bot.send_message(chat_id=contestant.tg_user_id, text=text_notification, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                    print("Отправлено напоминания пользователям о матче")
+                    print("Отправлено напоминания пользователям об игре")
                 except Exception as e:
-                    print(f"Не удалось отправить напоминания пользователям о матче из-за ошибки: {e}")
+                    print(f"Не удалось отправить напоминания пользователям об игре из-за ошибки: {e}")
 
-                await callback.message.answer(f"<b>Напоминание!</b>\n⚡️До матча с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                await callback.message.answer(f"<b>Напоминание!</b>\n⚡️До игры с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
         
         else:
-            print("❌ При попытке отправки подтверждения матча произошла ошибка! Ссылка игрока некорректная или игрока с такой ссылкой не существует!")
+            print("❌ При попытке отправки подтверждения игры произошла ошибка! Ссылка игрока некорректная или игрока с такой ссылкой не существует!")
 
     else:
-        print("❌ При попытке подтверждения матча произошла ошибка! Он не был найден из-за ошибки с ссылкой или датой!")
+        print("❌ При попытке подтверждения игры произошла ошибка! Он не был найден из-за ошибки с ссылкой или датой!")
         await callback.answer('')
 
     # Удаляем сообщение после нажатия на кнопку
@@ -298,8 +295,8 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
                 if match.date_without_booking != None:
                     date = match.date_without_booking
 
-                await callback.message.answer(f"✅ <b>Матч с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ МАТЧА:</b>\n⏰ Дата матча: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\n\nГотовьтесь к встрече на корте! 🎾", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
+                await callback.message.answer(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\n\nГотовьтесь к встрече на корте! 🎾", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
             else: 
-                await callback.message.answer(f"Список 📂 подтверждённых матчей пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)
+                await callback.message.answer(f"Список 📂 подтверждённых игр пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)
     else:
-        print(f"Список подтверждённых матчей игрока с id ({user_id}) не отображается в разделе 'Мои подтверждённые матчи 🎾'")
+        print(f"Список подтверждённых игр игрока с id ({user_id}) не отображается в разделе 'Мои подтверждённые игры 🎾'")

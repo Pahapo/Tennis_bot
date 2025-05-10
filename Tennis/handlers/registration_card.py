@@ -155,21 +155,21 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         user_match.date_booking = data.get("date_booking")
         user_match.date_without_booking = data.get("date_without_booking")
         user_match.comment = data.get("comment")
-        print(f"Карточка матча пользователя с ID {user_id} обновлена!")
+        print(f"Игра пользователя с ID {user_id} обновлена!")
     else:
         new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), comment = data.get("comment"))
         session.add(new_match)
-        print(f"Карточка матча создана пользователем с ID {user_id}!")
+        print(f"Карточка игры создана пользователем с ID {user_id}!")
     session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
     await f.check_ban_user(user_id)
 
     if callback:
-        await callback.message.answer('✅ Матч создан!')
-        await callback.message.answer(f'<b>Ваша карточка матча выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
+        await callback.message.answer('✅ Игра создана!')
+        await callback.message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
     else:
-        await message.answer('✅ Матч создан!')
-        await message.answer(f'<b>Ваша карточка матча выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
+        await message.answer('✅ Игра создана!')
+        await message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
 
 
 @router.callback_query(F.data == 'match_requests')
@@ -185,9 +185,9 @@ async def match_requests(callback: CallbackQuery):
 
     if user_matches:
         if len(user_matches) == 1:
-            await callback.message.answer(f'<b>Ваш запрос на матч выглядит так</b> 👇', parse_mode=ParseMode.HTML)
+            await callback.message.answer(f'<b>Ваш запрос на игру выглядит так</b> 👇', parse_mode=ParseMode.HTML)
         else:
-            await callback.message.answer(f'<b>Ваши запросы на матчи выглядят так</b> 👇', parse_mode=ParseMode.HTML)
+            await callback.message.answer(f'<b>Ваши запросы на игры выглядят так</b> 👇', parse_mode=ParseMode.HTML)
 
         for user_match in user_matches:
             if user and user_match:
@@ -202,12 +202,12 @@ async def match_requests(callback: CallbackQuery):
                 if user_match.comment:
                     text += f'\nКомментарий: <blockquote>{user_match.comment}</blockquote>'
                 
-                await callback.message.answer(f'<b>Запрос на матч</b> (ID: {user_match.match_id}) 🎾\n\n{user}{text}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player_get_card)
+                await callback.message.answer(f'<b>Запрос на игру</b> (ID: {user_match.match_id}) 🎾\n\n{user}{text}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player_get_card)
         if len(user_matches) < 3:
-                await callback.message.answer(f'<b>Хотите создать ещё 1 запрос на матч?</b>', parse_mode=ParseMode.HTML, reply_markup=kb.add_card_q)
+                await callback.message.answer(f'<b>Хотите создать ещё 1 запрос на игру?</b>', parse_mode=ParseMode.HTML, reply_markup=kb.add_card_q)
 
     else:
-        await callback.message.answer("<b>Активных матчей не найдено! Хотите создать?</b>", parse_mode=ParseMode.HTML, reply_markup=kb.create_card)
+        await callback.message.answer("<b>Активных игр не найдено! Хотите создать?</b>", parse_mode=ParseMode.HTML, reply_markup=kb.create_card)
 
 
 
@@ -229,9 +229,9 @@ async def delete_match(callback: types.CallbackQuery, state: FSMContext):
             session.commit()
 
         await callback.answer(f"✅ Карточка удалена!", show_alert=False)
-        print(f"✅ Карточка матча удалена пользователем с id {user_id}!")
+        print(f"✅ Карточка игры удалена пользователем с id {user_id}!")
     else:
-        print("❌ При попытке удалить карточку матча произошла ошибка!")
+        print("❌ При попытке удалить карточку игры произошла ошибка!")
 
     # Удаляем сообщение после нажатия на кнопку
     await callback.message.delete()

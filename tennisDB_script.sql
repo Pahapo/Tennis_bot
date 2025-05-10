@@ -20,7 +20,6 @@ CREATE TABLE `division` (
 CREATE TABLE `tournament` (
   `tournament_id` int NOT NULL AUTO_INCREMENT,
   `name_tournament` varchar(50) DEFAULT NULL,
-  `address` varchar(40) DEFAULT NULL,
   `division` varchar(15) DEFAULT NULL,
   `quantity_person` int DEFAULT NULL,
   `start_tournament` varchar(10) DEFAULT NULL,
