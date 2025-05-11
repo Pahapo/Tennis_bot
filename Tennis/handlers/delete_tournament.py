@@ -19,17 +19,19 @@ router = Router()
 @router.callback_query(F.data == 'delete_tournament')
 async def delete_tournament(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await callback.message.answer('<b>Тут вы можете удалить турнир!</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=kt.tournament_info_delete)
+    tournament_info_delete = bt.create_tournaments_delete_keyboard(bt.get_list_tournaments_delete())
+
+    await callback.message.answer('<b>Тут вы можете удалить турнир!</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=tournament_info_delete)
 
 
-@router.callback_query(F.data.in_(bt.get_list_tournaments_delete())) 
-async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
-    await call.answer('')      
+@router.callback_query(F.data.startswith("tournament_delete_"))
+async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
+    await callback.answer('')   
 
-    selected_tournament = call.data.replace("_delete", "")  # Получаем название выбранного турнира
+    selected_tournament = callback.data.replace("tournament_delete_", "").replace("_delete", "")  # Получаем название выбранного турнира
     await state.update_data(name_tournament_delete = selected_tournament)
 
-    await call.message.answer(f'Подтвердите удаление турнира {selected_tournament}', parse_mode=ParseMode.HTML, reply_markup=kt.confirm_delete_tournament)
+    await callback.message.answer(f'Подтвердите удаление турнира {selected_tournament}', parse_mode=ParseMode.HTML, reply_markup=kt.confirm_delete_tournament)
     
 
 @router.callback_query(F.data == 'delete_tournament_anyway')

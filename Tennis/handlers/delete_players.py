@@ -2,7 +2,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from aiogram import F, Router
-from config.config import EDITOR
+from config.config import EDITOR, ADMINS
 
 import keywords.kw_any as kb
 import keywords.kw_tournament as kt
@@ -24,19 +24,20 @@ router = Router()
 @router.callback_query(F.data == 'delete_players')
 async def delete_players(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await callback.message.answer('<b>Тут вы можете удалить участника из турнира за нарушение или по веским причинам</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=kt.tournament_info_del_players)
+    tournament_info_del_players = bt.create_tournaments_keyboard_players(bt.get_list_tournaments_players())
+
+    await callback.message.answer('<b>Тут вы можете удалить участника из турнира за нарушение или по веским причинам</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=tournament_info_del_players)
 
 
+@router.callback_query(F.data.startswith("delete_player_"))
+async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
+    await callback.answer('')      
 
-@router.callback_query(F.data.in_(bt.get_list_tournaments_players())) 
-async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
-    await call.answer('')      
-
-    selected_tournament = call.data.replace("_players", "")  # Получаем название выбранного турнира
-    await state.update_data(name_tournament_del_players = selected_tournament)
+    selected_players = callback.data.replace("delete_player_", "").replace("_players", "")  # Получаем название выбранного турнира
+    await state.update_data(name_tournament_del_players = selected_players)
 
     await state.set_state(cl.FindUser.players_delete)
-    await call.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
+    await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     
 
 @router.message(cl.FindUser.players_delete)
@@ -79,7 +80,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
     await callback.answer('')
 
     user_id = callback.from_user.id
-    if user_id in EDITOR:
+    if user_id in EDITOR or user_id in ADMINS:
 
         data = await state.get_data()
         name_finder_tournament = data.get("name_tournament_del_players")

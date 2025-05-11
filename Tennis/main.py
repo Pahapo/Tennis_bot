@@ -13,7 +13,7 @@ dp.include_router(router)
 
 # Запуск бота
 async def main():
-    # asyncio.create_task(f.check_players(bot))  # Запускаем трекер игроков без дивизиона   # ВКЛЮЧИТЬ ПОСЛЕ ТЕСТИРОВАНИЯ ! ! ! ! ! !
+    asyncio.create_task(f.check_players(bot))  # Запускаем трекер игроков без дивизиона
     await dp.start_polling(bot) # start_polling обращается к серверу телеграмм и спрашивает не пришло ли какое-то сообщение
 
 

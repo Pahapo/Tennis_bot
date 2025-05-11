@@ -22,7 +22,7 @@ def get_list_tournaments():
 
 def create_tournaments_keyboard(tournament_names):
     buttons = [
-        [InlineKeyboardButton(text=name, callback_data=f"tournament_{name}")]
+        [InlineKeyboardButton(text=name, callback_data=f"tournament_out_bnt_{name}")]
         for name in tournament_names
     ]
     buttons.append([InlineKeyboardButton(text='Назад', callback_data='main_edit_tournament')])
@@ -30,14 +30,6 @@ def create_tournaments_keyboard(tournament_names):
 
 
 # Вывод кнопок под турнир для редактора
-
-def get_list_tournaments_editor():
-    tournaments_data = [
-        row.name_tournament for row in session.query(Tournament).filter(
-            func.str_to_date(Tournament.start_tournament, "%d.%m.%Y") >= datetime.today()
-        ).all()
-    ]
-    return tournaments_data
 
 
 def create_tournaments_keyboard_editor(tournament_names):
@@ -94,7 +86,7 @@ def get_list_tournaments_players():
 
 def create_tournaments_keyboard_players(tournaments_data):
     buttons = [
-        [InlineKeyboardButton(text=name.replace("_players", ""), callback_data=name)]
+        [InlineKeyboardButton(text=name.replace("_players", ""), callback_data=f"delete_player_{name}")]
         for name in tournaments_data
     ]
     buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])
@@ -114,7 +106,7 @@ def get_list_tournaments_edit():
 
 def create_tournaments_edit_keyboard(tournaments_data):
     buttons = [
-        [InlineKeyboardButton(text=name.replace("_edit", ""), callback_data=name)]
+        [InlineKeyboardButton(text=name.replace("_edit", ""), callback_data=f"tournament_edit_{name}")]
         for name in tournaments_data
     ]
     buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])
@@ -134,7 +126,7 @@ def get_list_tournaments_delete():
 
 def create_tournaments_delete_keyboard(tournaments_data):
     buttons = [
-        [InlineKeyboardButton(text=name.replace("_delete", ""), callback_data=name)]
+        [InlineKeyboardButton(text=name.replace("_delete", ""), callback_data=f"tournament_delete_{name}")]
         for name in tournaments_data
     ]
     buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])

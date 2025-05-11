@@ -17,18 +17,19 @@ router = Router()
 @router.callback_query(F.data == 'tournament_edit')
 async def tournament_edit(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await callback.message.answer('<b>Тут вы можете отредактировать созданный турнир!</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=kt.tournament_info_edit)
+    tournament_info_edit = bt.create_tournaments_edit_keyboard(bt.get_list_tournaments_edit())
 
+    await callback.message.answer('<b>Тут вы можете отредактировать созданный турнир!</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=tournament_info_edit)
 
-@router.callback_query(F.data.in_(bt.get_list_tournaments_edit())) 
-async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
-    await call.answer('')      
-
-    selected_tournament = call.data.replace("_edit", "")  # Получаем название выбранного турнира
+   
+@router.callback_query(F.data.startswith("tournament_edit_"))
+async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
+    await callback.answer('')       
+    selected_tournament = callback.data.replace("tournament_edit_", "").replace("_edit", "")  # Получаем название выбранного турнира
     tournament = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
     await state.update_data(id_tournament = tournament.tournament_id)
 
     try:
-        await ct.create_tournament(call, state)
+        await ct.create_tournament(callback, state)
     except Exception as e:
-        print(f"Ошибка в create_tournament: {e}")
+        print(f"Ошибка в create_tournament! Подробнее: {e}")

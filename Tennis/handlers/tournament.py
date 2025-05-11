@@ -51,64 +51,21 @@ async def tournament_info(callback: CallbackQuery, state:FSMContext):
     if not tournaments:
         await callback.message.answer(f'<b>Пусто</b> 🥲\n\nНам жаль, но в данный момент нет ни одного доступного турнира...', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     else: 
+        tournament_info_editor = bt.create_tournaments_keyboard_editor(tournaments)
         tournament_info = bt.create_tournaments_keyboard(tournaments)
         if user_id in EDITOR:
-            await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=kb.tournament_info_editor)
+            await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info_editor)
         else:
             await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info)
-    
-
-# @router.callback_query(F.data.in_(bt.get_list_tournaments())) 
-# async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
-#     await call.answer('')      
-
-#     user_id = call.from_user.id
-#     selected_tournament = call.data  # Получаем название выбранного турнира
-#     await state.update_data(selected_tournament = selected_tournament)  # Сохраняем выбранный турнир в состояние
-
-#     # Получаем турнир
-#     tournament_data = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
-#     # Запрос "зареган ли юзер на выбранный им турнир?"
-#     user_in_tournament = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id, TournamentPlayers.id_tournament == tournament_data.tournament_id).all()
-#     # Запрос для подсчёта количества игроков
-#     player_count = session.query(func.count()).filter(TournamentPlayers.id_tournament == tournament_data.tournament_id).scalar()
-
-#     user = session.query(User).filter_by(tg_user_id = user_id).first()
-
-#     levelTournament_list = list(map(int, tournament_data.division.split(",")))
-#     name_division = session.query(Division).all()
-#     # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-#     division_dict = {div.division_id: div.name_division for div in name_division}
-#     # Преобразуем список ID в список названий
-#     levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-
-#     tournament_lvl = ", ".join(levelTournament_names)
-
-#     if int(player_count) >= int(tournament_data.quantity_person):            
-#         await call.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-#     elif user_in_tournament:
-#         await call.message.answer(f'<b>Вы уже участвуете в турнире!</b> ✅\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-#     elif user.ban_status == True:
-#         await call.message.answer(f'<b>❌ Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-#     elif user.division_level == None:
-#         await call.message.answer(f'<b>⚠️ Дорогой пользователь, пока Вы не можете участвовать в турнире</b>\n\nДля начала Вам нужно получить дивизион. Этим уже занимаются наши главные редакторы\n\nБлагодарим за понимание!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-#     elif user.division_level not in levelTournament_list:
-#         await call.message.answer(f'<b>⚠️ Вы не можете участвовать в турнире</b>\n\nК сожалению, этот турнир доступен только для дивизиона(-ов):\n{tournament_lvl}', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-#     elif user.division_level in levelTournament_list:
-#         await call.message.answer(f"{tournament_data.regulations}\n\n<b>ДЕТАЛИ ТУРНИРА</b> 🏆\n\n<b><i>Турнир \"{tournament_data.name_tournament.upper()}\"</i></b>\n💪 Дивизион: {tournament_lvl}\n🙋‍♂️ Количество участников: {tournament_data.quantity_person} чел.\n📆 Начало: {tournament_data.start_tournament}\n📆 Окончание: {tournament_data.end_tournament}\n💰 Стоимость участия: {tournament_data.price} бел.руб.", parse_mode=ParseMode.HTML, reply_markup=kb.reglament)
-#     else:
-#         await call.message.answer(f"📋 <b>Какая-то ошибка</b>\n\nПожалуйста, если вы видите это сообщение, свяжитесь с нами 🙋‍♂️ @sup_MM", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-
-
 
 
 # Новый обработчик в роутерах:
-@router.callback_query(F.data.startswith("tournament_"))
+@router.callback_query(F.data.startswith("tournament_out_bnt_"))
 async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')      
 
     user_id = callback.from_user.id
-    selected_tournament = callback.data.replace("tournament_", "")
+    selected_tournament = callback.data.replace("tournament_out_bnt_", "")
     await state.update_data(selected_tournament = selected_tournament)  # Сохраняем выбранный турнир в состояние
 
     # Получаем турнир

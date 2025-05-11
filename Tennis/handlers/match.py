@@ -274,29 +274,27 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
 
     if sorted_matches:
         for match in sorted_matches:
-            if len(sorted_matches) > 0:
-                user_id_player = ''
+            user_id_player = ''
 
-                if match.player_1 != user_id:
-                    user_id_player = match.player_1
+            if match.player_1 != user_id:
+                user_id_player = match.player_1
 
-                if match.player_2 != user_id:
-                    user_id_player = match.player_2
+            if match.player_2 != user_id:
+                user_id_player = match.player_2
 
-                contestant = session.query(User).filter(User.tg_user_id == user_id_player).first()
+            contestant = session.query(User).filter(User.tg_user_id == user_id_player).first()
 
-                options = LinkPreviewOptions(
-                    is_disabled=True
-                )
+            options = LinkPreviewOptions(
+                is_disabled=True
+            )
 
-                if match.date_booking != None:
-                    date = match.date_booking
+            if match.date_booking != None:
+                date = match.date_booking
 
-                if match.date_without_booking != None:
-                    date = match.date_without_booking
+            if match.date_without_booking != None:
+                date = match.date_without_booking
 
-                await callback.message.answer(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\n\nГотовьтесь к встрече на корте! 🎾", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
-            else: 
-                await callback.message.answer(f"Список 📂 подтверждённых игр пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)
+            await callback.message.answer(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\n\nГотовьтесь к встрече на корте! 🎾", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
     else:
+        await callback.message.answer(f"Список 📂 подтверждённых игр пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)
         print(f"Список подтверждённых игр игрока с id ({user_id}) не отображается в разделе 'Мои подтверждённые игры 🎾'")

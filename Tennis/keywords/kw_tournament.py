@@ -26,6 +26,8 @@ table_list_edit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(te
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
                                                     ])
 
+table_list_back = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='tournament_table')]])
+
 create_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Создать турнир 🎾', callback_data='create_tournament')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='tournament_table')]
                                                     ])
@@ -34,22 +36,22 @@ create_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text =
 # tournament_info = bt.create_tournaments_keyboard(bt.get_list_tournaments())
 
 # Вывод кнопок турнира для редактора
-tournament_info_editor = bt.create_tournaments_keyboard_editor(bt.get_list_tournaments_editor())
+# tournament_info_editor = bt.create_tournaments_keyboard_editor(bt.get_list_tournaments_editor())
 
 # Вывод кнопок под ссылку турнира
-active_tournament_table = bt.create_links_tournaments_keyboard(bt.get_links_tournaments())
+# active_tournament_table = bt.create_links_tournaments_keyboard(bt.get_links_tournaments())
 
 # Вывод кнопок под ссылку турнира, которые попали в архив
-history_tournament_table = bt.create_links_tournaments_keyboard(bt.get_history_links_tournaments())
+# history_tournament_table = bt.create_links_tournaments_keyboard(bt.get_history_links_tournaments())
 
 # Вывод кнопок под ссылку турнира для удаления игрока
-tournament_info_del_players = bt.create_tournaments_keyboard_players(bt.get_list_tournaments_players())
+# tournament_info_del_players = bt.create_tournaments_keyboard_players(bt.get_list_tournaments_players())
 
 # Вывод кнопок для редактирования турнира
-tournament_info_edit = bt.create_tournaments_edit_keyboard(bt.get_list_tournaments_edit())
+# tournament_info_edit = bt.create_tournaments_edit_keyboard(bt.get_list_tournaments_edit())
 
 # Вывод кнопок для удаления турнира
-tournament_info_delete = bt.create_tournaments_delete_keyboard(bt.get_list_tournaments_delete())
+# tournament_info_delete = bt.create_tournaments_delete_keyboard(bt.get_list_tournaments_delete())
 
 confirm_delete_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament'),
                                                                 InlineKeyboardButton(text = '✅ Подтвердить!', callback_data='delete_tournament_anyway')]
