@@ -8,6 +8,7 @@ from config.config import MAIN_EDITOR, ADMINS
 import keywords.kw_any as kb
 import handlers.classes as cl
 import handlers.start as st
+import handlers.validation as valid
 
 from config.db import session
 from models.Division import Division
@@ -79,6 +80,10 @@ async def set_new_ban(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.FindUser.period_ban)
 async def find_name(message: Message, state:FSMContext):
+    if not valid.validate_isdigit(message.text):
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+
     await state.update_data(period_ban = int(message.text))
     await state.set_state(cl.FindUser.reason_ban)
     await message.answer('Опишите причину бана. (Этот текст увидит пользователь) 👇')

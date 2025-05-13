@@ -36,50 +36,49 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
 
     def __str__(self):             # НЕ ТРОГАТЬ !!!
         user = session.query(User).filter(User.tg_user_id == self.id).first()
+        user_in_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == self.id).all()
+        tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
+        history_tournaments = session.query(Tournament).filter(Tournament.tournament_id.in_(tournament_ids)).all()
+
+        text_card =  f"Имя: {user.name_user}\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\n"
+
+        history = ''
+
+        for toutnament in history_tournaments:
+            if history == '':
+                history += f"\"{toutnament.name_tournament}\""
+            else:
+                history += f", \"{toutnament.name_tournament}\""
+
+        if history == '':
+            history += 'не участвовал(-а) 🥲'
+
+        text_card += f"История турниров: {history}\n"
+
+        if self.sex:
+            text_card += f"Пол: {self.sex}\n"
+        else:
+            text_card += f"Пол: {user.sex}\n"
+
+        if self.age:
+            text_card += f"Возраст: {self.age}\n"
+        else:
+            text_card += f"Возраст: {user.age}\n"
+            
         if user.division_level != None:
             name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
-            user_in_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == self.id).all()
-            tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
-            history_tournaments = session.query(Tournament).filter(Tournament.tournament_id.in_(tournament_ids)).all()
-
-            text_card =  f"Имя: {user.name_user}\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\n"
-
-            history = ''
-
-            for toutnament in history_tournaments:
-                if history == '':
-                    history += f"\"{toutnament.name_tournament}\""
-                else:
-                    history += f", \"{toutnament.name_tournament}\""
-
-            if history == '':
-                history += 'не участвовал(-а) 🥲'
-
-            text_card += f"История турниров: {history}\n"
-
-            if self.sex:
-                text_card += f"Пол: {self.sex}\n"
-            else:
-                text_card += f"Пол: {user.sex}\n"
-
-            if self.age:
-                text_card += f"Возраст: {self.age}\n"
-            else:
-                text_card += f"Возраст: {user.age}\n"
+            text_card += f"Дивизион: {name_division.name_division}\n"
+        else:
+            text_card += f"Дивизион: Не определён\n" # Добавить выбор дивизиона
             
-            if name_division.name_division:
-                text_card += f"Дивизион: {name_division.name_division}\n"
-            else:
-                text_card += f"Дивизион: Не определён\n" # Добавить выбор дивизиона
-            
-            if self.date_booking:
-                text_card += f"Бронь корта: на {self.date_booking} 🎾\n"
-            else:
-                text_card += f"Брони нет! Предлагаю поиграть: {self.date_without_booking}\n"
+        if self.date_booking:
+            text_card += f"Бронь корта: на {self.date_booking} 🎾\n"
+        else:
+            text_card += f"Брони нет! Предлагаю поиграть: {self.date_without_booking}\n"
 
-            if self.comment:
-                text_card += f"Комментарий: <blockquote>{self.comment}</blockquote>\n"
-            return text_card
+        if self.comment:
+            text_card += f"Комментарий: <blockquote>{self.comment}</blockquote>\n"
+        return text_card
             
     
     def get_data(self):

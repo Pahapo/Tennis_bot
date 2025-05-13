@@ -10,6 +10,7 @@ from typing import Optional
 import keywords.kw_user as kb
 import handlers.classes as cl
 import handlers.functions as f
+import handlers.validation as valid
 
 from config.db import session
 from models.User import User
@@ -45,6 +46,14 @@ async def register(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.RegPlayerStates.age)
 async def register_age(message: Message, state:FSMContext):
+    user_age = message.text.strip()
+
+    # Проверяем, корректно ли введен возраст
+    if not valid.validate_age(user_age):
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+
+
     user_id = message.from_user.id
     user = message.from_user
 
@@ -95,6 +104,11 @@ async def register_date_q(call: CallbackQuery, state: FSMContext):
 
 @router.message(cl.RegPlayerStates.date_without_booking)
 async def register_date(message: Message, state:FSMContext):
+    user_date = message.text.strip()
+    if not valid.validate_datetime(user_date):
+        await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку
+    
     await state.update_data(date_without_booking = message.text)
     await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
@@ -102,6 +116,11 @@ async def register_date(message: Message, state:FSMContext):
 
 @router.message(cl.RegPlayerStates.date_booking)
 async def register_date(message: Message, state:FSMContext):
+    user_date = message.text.strip()
+    if not valid.validate_datetime(user_date):
+        await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку
+    
     await state.update_data(date_booking = message.text)
     await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
@@ -115,12 +134,20 @@ async def register_comment_q(call: CallbackQuery, state: FSMContext):
         await call.message.answer(f'Укажите комментарий 👇') 
 
     if call.data == "no_c":
+        await state.update_data(comment = None)
         await register_card(None, call.message, state)
 
 
 
 @router.message(cl.RegPlayerStates.comment)
 async def register_comment(message: Message, state: FSMContext):
+    user_comment = message.text.strip()
+    if not valid.validate_comment(user_comment):
+        # await message.answer("⚠ Ошибка! Комментарий должен быть не длиннее 300 символов. Попробуйте снова.")
+        remaining_chars = len(user_comment) - 300
+        await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов")
+        return  # Останавливаем обработку
+    
     await state.update_data(comment = message.text)
     await register_card(None, message, state)
 

@@ -67,7 +67,7 @@ async def search_match(callback: CallbackQuery):
             if user_id in EDITOR:
                 await callback.message.answer(list_tournaments, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.tournaments_data_edit)
         else:
-            await callback.message.answer(f"Нам жаль, но список 📂 турниров пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.tournaments_data)
+            await callback.message.answer(f"Нам жаль, но список 📂 турниров пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.tournaments_data_exit)
     else:
         await callback.message.answer('Функция недоступна! Вы не являетесь организатором! ❌')
         st.cmd_start()

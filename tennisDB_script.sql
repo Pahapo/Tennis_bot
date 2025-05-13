@@ -1,3 +1,24 @@
+CREATE TABLE `division` (
+  `division_id` int NOT NULL,
+  `name_division` varchar(20) NOT NULL,
+  PRIMARY KEY (`division_id`)
+);
+
+CREATE TABLE `users` (
+  `tg_user_id` bigint NOT NULL,
+  `name_user` varchar(20) DEFAULT NULL,
+  `link` varchar(30) DEFAULT NULL,
+  `age` int DEFAULT NULL,
+  `sex` varchar(10) DEFAULT NULL,
+  `division_level` int DEFAULT NULL,
+  `ban_status` tinyint(1) DEFAULT NULL,
+  `end_date_ban` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`tg_user_id`),
+  UNIQUE KEY `tg_user_id` (`tg_user_id`),
+  KEY `users_division_fk` (`division_level`),
+  CONSTRAINT `users_division_fk` FOREIGN KEY (`division_level`) REFERENCES `division` (`division_id`)
+);
+
 CREATE TABLE `match` (
   `match_id` int NOT NULL AUTO_INCREMENT,
   `id_tg_user` bigint DEFAULT NULL,
@@ -9,12 +30,6 @@ CREATE TABLE `match` (
   PRIMARY KEY (`match_id`),
   KEY `match_users_fk` (`id_tg_user`),
   CONSTRAINT `match_users_fk` FOREIGN KEY (`id_tg_user`) REFERENCES `users` (`tg_user_id`)
-);
-
-CREATE TABLE `division` (
-  `division_id` int NOT NULL,
-  `name_division` varchar(20) NOT NULL,
-  PRIMARY KEY (`division_id`)
 );
 
 CREATE TABLE `tournament` (
@@ -39,21 +54,6 @@ CREATE TABLE `tournament_players` (
   KEY `tournament_players_users_fk` (`id_tg_user`),
   CONSTRAINT `tournament_players_tournament_fk` FOREIGN KEY (`id_tournament`) REFERENCES `tournament` (`tournament_id`),
   CONSTRAINT `tournament_players_users_fk` FOREIGN KEY (`id_tg_user`) REFERENCES `users` (`tg_user_id`)
-);
-
-CREATE TABLE `users` (
-  `tg_user_id` bigint NOT NULL,
-  `name_user` varchar(20) DEFAULT NULL,
-  `link` varchar(30) DEFAULT NULL,
-  `age` int DEFAULT NULL,
-  `sex` varchar(10) DEFAULT NULL,
-  `division_level` int DEFAULT NULL,
-  `ban_status` tinyint(1) DEFAULT NULL,
-  `end_date_ban` varchar(10) DEFAULT NULL,
-  PRIMARY KEY (`tg_user_id`),
-  UNIQUE KEY `tg_user_id` (`tg_user_id`),
-  KEY `users_division_fk` (`division_level`),
-  CONSTRAINT `users_division_fk` FOREIGN KEY (`division_level`) REFERENCES `division` (`division_id`)
 );
 
 CREATE TABLE `inventory` (

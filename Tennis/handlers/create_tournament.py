@@ -4,11 +4,13 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 from datetime import datetime, timedelta
+from sqlalchemy import inspect
 from config.config import EDITOR
 
 import keywords.kw_tournament as kb
 import handlers.classes as cl
 import handlers.start as st
+import handlers.validation as valid
 
 from config.db import session
 from models.Tournament import Tournament
@@ -35,6 +37,15 @@ async def create_tournament(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.name)
 async def register_name(message: Message, state:FSMContext):
+
+    # Инспектируем таблицу Tournament
+    mapper = inspect(Tournament)    
+    # Получаем размер `name_tournament`
+    name_tournament_length = mapper.columns["name_tournament"].type.length
+
+    if len(message.text) > name_tournament_length:
+        await message.answer(f"⚠ Ошибка! Текст превышает {name_tournament_length} символов")
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
     await state.update_data(name = message.text)
 
@@ -86,8 +97,9 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext):
         elif call.data == "lvl_t_5":
             level = ',5'
 
-        level = data.get("level") + level   
-        await state.update_data(level = level)
+        if level[1] not in data.get("level"):
+            level = data.get("level") + level   
+            await state.update_data(level = level)
 
     count_level += 1
     await state.update_data(count_level = count_level)
@@ -113,6 +125,12 @@ async def not_add_level_tournament(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.count)
 async def register_age(message: Message, state:FSMContext):
+
+    # Проверяем, корректно ли введено количество участников
+    if not valid.validate_isdigit(message.text):
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+
     
     await state.update_data(count = message.text)
     form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=7)).strftime('%d.%m.%Y')
@@ -123,6 +141,11 @@ async def register_age(message: Message, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.time1)
 async def register_age(message: Message, state:FSMContext):
+
+    if not valid.validate_date(message.text):
+        await message.answer("⚠ Ошибка! Формат даты должен быть <b>DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку
+    
     
     await state.update_data(time1 = message.text)
     form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=37)).strftime('%d.%m.%Y')
@@ -133,6 +156,10 @@ async def register_age(message: Message, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.time2)
 async def register_age(message: Message, state:FSMContext):
+
+    if not valid.validate_date(message.text):
+        await message.answer("⚠ Ошибка! Формат даты должен быть <b>DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку
     
     await state.update_data(time2 = message.text)
     await state.set_state(cl.RegTournamentsStates.price)
@@ -141,6 +168,10 @@ async def register_age(message: Message, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.price)
 async def register_age(message: Message, state:FSMContext):
+
+    if not valid.validate_isdigit(message.text):
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
     
     await state.update_data(price = message.text)
     await state.set_state(cl.RegTournamentsStates.regulations)
@@ -149,7 +180,11 @@ async def register_age(message: Message, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.regulations)
 async def register_age(message: Message, state:FSMContext):
-    
+
+    if len(message.text) > 2500:
+        await message.answer(f"⚠ Ошибка! Текст превышает 2500 символов")
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+
     await state.update_data(regulations = message.html_text)
     
     data = await state.get_data()
@@ -169,8 +204,11 @@ async def register_age(message: Message, state:FSMContext):
 
     tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
     if tournament:
+
+        gs.edit_name_tournament(tournament.name_tournament, data.get("name"))
+
         tournament.name_tournament = data.get("name")
-        tournament.division = data.get("level")
+        # tournament.division = data.get("level")
         tournament.quantity_person = int(data.get("count"))
         tournament.start_tournament = data.get("time1")
         tournament.end_tournament = data.get("time2")

@@ -78,6 +78,7 @@ def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
                 ]
             }
         ).execute()
+
     delete_template_list(new_spreadsheet_id, source_sheet_id)
 
 
@@ -128,6 +129,9 @@ def startDoingSheet(nameTournament, levelTournament):
     newSheetId = createNewSheet(source_spreadsheet_id, nameTournament)
 
     # ----- Копирование листов-дивизионов в новой таблице, удаление шаблон-листа из новой таблицы -----
+    print("newSheetId = ", newSheetId)
+    print("source_spreadsheet_id = ", source_spreadsheet_id)
+    print("levelTournament = ", levelTournament)
     copy_lists(newSheetId, source_spreadsheet_id, levelTournament)
     # copy_lists(newSheetId, source_spreadsheet_id)
 
@@ -150,3 +154,36 @@ def addPlayerInList(name, user_link, name_tournament, user_division):
 
     sheet.update(f"{column_letter}{first_empty_row}", [[f"{name} ({user_name})"]]) # Записываем значение в первую свободную ячейку
     
+
+def edit_name_tournament(old_name_tournament, new_name_tournament):
+    # # Создаём клиент Google Drive API
+    # drive_service = build("drive", "v3", credentials='credentials_tennisbot.json')
+    # sheets_service = build("sheets", "v4", credentials='credentials_tennisbot.json')
+   
+    drive_service = build("drive", "v3", credentials=creds_drive) # Создаем клиент API Google Drive
+
+    # Ищем таблицу в Google Drive
+    query = f"name='{old_name_tournament}' and mimeType='application/vnd.google-apps.spreadsheet'"
+    results = drive_service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get("files", [])
+
+    if not files:
+        print(f"❌ Таблица '{old_name_tournament}' не найдена!")
+    else:
+        spreadsheet_id = files[0]["id"]  # Берем ID первой найденной таблицы
+
+        # Формируем запрос на изменение названия
+        update_request = {
+            "requests": [
+                {
+                    "updateSpreadsheetProperties": {
+                        "properties": {"title": new_name_tournament},
+                        "fields": "title"
+                    }
+                }
+            ]
+        }
+
+        # Отправляем запрос в Google Sheets API
+        service_sheets.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=update_request).execute()
+        print(f"✅ Название таблицы изменено на: {new_name_tournament}")

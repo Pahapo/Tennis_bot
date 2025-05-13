@@ -12,6 +12,8 @@ tournaments_data = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(t
                                                         [InlineKeyboardButton(text = 'Назад', callback_data='main_edit_tournament')]
                                                         ])
 
+tournaments_data_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='main_edit_tournament')]])
+
 tournaments_data_edit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Удалить участника ❌', callback_data='delete_players')],
                                                               [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
                                                               ])
