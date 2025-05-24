@@ -7,9 +7,10 @@ from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile
+from aiogram.filters import StateFilter
 from aiogram import F, Router, types
 from datetime import datetime, timedelta
-
+from config.config import EDITOR
 
 import keywords.kw_tournament as kb
 import keywords.kw_payment as kp
@@ -22,29 +23,38 @@ from models.TournamentPlayers import TournamentPlayers
 from models.Tournament import Tournament
 from models.User import User
 from models.Payment import Payment
+from models.PaymentMethod import PaymentMethod
 from models.Division import Division
-from config.config import CARD_NUMBER, EDITOR
 
 
 router = Router()
 
+
 @router.callback_query(F.data == 'reglament_confirm')
-async def register(callback: CallbackQuery, state:FSMContext): # доделать с оплатой!!!
+async def register(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
     await state.set_state(cl.RegTournamentPlayerStates.level)
-    await callback.message.answer(f'<b>Страница оплаты по ЕРИП</b> 💳\n\n• Система \"Расчёт\" (ЕРИП)\n• Банковские, финансовые услуги\n• Банки, НКФО\n• Альфабанк\n• Пополнение счёта\n\n<b>Введите номер счёта</b> 👇\n\n<pre><code>{CARD_NUMBER}</code></pre>\n\n• Если вы не успеете оплатить участие в турнире до истечения срока резервирования, оно аннулируется автоматически!\n\n⏰ <b>Время: 120 минут</b>', parse_mode=ParseMode.HTML, reply_markup=kb.payment_address)
+    payment_method = session.query(PaymentMethod).filter(PaymentMethod.payment_method_id == 1).first()
+
+    if payment_method:
+        await callback.message.answer(f'<b>Страница оплаты по ЕРИП</b> 💳\n\n• Система \"Расчёт\" (ЕРИП)\n• Банковские, финансовые услуги\n• Банки, НКФО\n• {payment_method.bank_name}\n• Пополнение счёта\n\n<b>Введите номер счёта</b> 👇\n\n<pre><code>{payment_method.payment_method}</code></pre>\n\n• Если вы не успеете оплатить участие в турнире до истечения срока резервирования, оно аннулируется автоматически!\n\n⏰ <b>Время: 120 минут</b>', parse_mode=ParseMode.HTML, reply_markup=kb.payment_address)
+    else:
+        await callback.message.answer(f'<b>Произошла ошибка загрузки страницы оплаты!</b> 💳\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
 
 
 @router.callback_query(F.data == 'confirm_payment')
 async def confirm_payment(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
+    await state.set_state(cl.SendMessage.payment_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
+    
     await callback.message.answer('<b>Подтвердите оплату, отправив скриншот чека об оплате!</b> 👇', parse_mode=ParseMode.HTML, reply_markup=kb.confirm_payment_pl)
     await check_payment(callback, state)
 
 
-@router.message(F.content_type == types.ContentType.PHOTO)    # КАК НЕ ПОЛУЧАТЬ ФОТО ИЗ ЛЮБОГО МЕСТА, А ТОЛЬКО ПРИ ОТПРАВКЕ ЧЕКА?
+@router.message(F.content_type == types.ContentType.PHOTO, StateFilter(cl.SendMessage.payment_flag))
 async def save_photo_payment(message: types.Message, state: FSMContext, bot):
     
+    await state.set_state(None)
     await message.answer('После подтверждения оплаты вы станете участником турнира!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     
     data = await state.get_data()
@@ -70,7 +80,7 @@ async def save_photo_payment(message: types.Message, state: FSMContext, bot):
     file = await message.bot.get_file(message.photo[-1].file_id)  # Получаем информацию о файле
     file_path = file.file_path  # Теперь `file_path` определён
 
-    print(f"✅ Игроком с id {user_id} отправлен чек об оплате для участия в турнире {selected_tournament}. Чек: `{save_path}`")
+    print(f"✅ Игроком с id {user_id} отправлен чек об оплате для участия в турнире {selected_tournament}. Чек: '{save_path}'")
 
     # Загружаем файл
     async with aiohttp.ClientSession() as session:
@@ -86,7 +96,7 @@ async def save_photo_payment(message: types.Message, state: FSMContext, bot):
     if tournament:
         message_text_send = f"<b>Подтверждение оплаты пользователя <a href='{user_link}'>{user_name}</a></b>\n\n• После подтверждения игрок станет участником турнира \"{selected_tournament}\"!\n\n⏰ <b>Окончание подтверждения оплаты:</b> до {end_time}\n\n🔗 <b>Чек оплаты:</b>\nID: {user_id}\nТурнир: {tournament.tournament_id}\nЦена: {tournament.price}\nЧек: {file_name}"
     else:
-        await message.answer("❌ Турнир не найден в базе данных! Игрок оплатил, но такой турнир не был найден в БД!")
+        await message.answer("❌ Турнир не найден в базе данных! Игрок оплатил (проверить), но такой турнир не был найден в БД!")
         return
 
     # Отправляем скриншот редактору для проверки
@@ -154,7 +164,7 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
         session.add(user)
         session.commit()
 
-        print(f"✅ Игрок {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
+        print(f"✅ Игрок с id {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
         await callback.answer(f"✅ Оплата подтверждена", show_alert=False)
     else:
         print("❌ `user_id` не найден в сообщении при отправке сообщения с оплатой редактору за турнир!")
@@ -181,12 +191,17 @@ async def success_payment(callback: CallbackQuery, state:FSMContext):
         user = TournamentPlayers(id_tournament = selected_tournament.tournament_id, id_tg_user = data.get("user_id"))
         session.add(user)
         session.commit()
-        print(f"✅ Игрок {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
+        print(f"✅ Игрок с id {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
 
     await callback.message.answer('✅ <b>Регистрация на турнир подтверждена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     
-    gs.addPlayerInList(selected_user.name_user, selected_user.link, selected_tournament.name_tournament, user_division.name_division)
-    print(f"✅ Добавление игрока в Excel для регистрации на турнир - '{selected_tournament.name_tournament}' произошло успешно!")
+    try:
+        gs.addPlayerInList(selected_user.name_user, selected_user.link, selected_tournament.name_tournament, user_division.name_division)
+        print(f"✅ Игрок добавлен в Excel после регистрации на турнир - '{selected_tournament.name_tournament}' в '{user_division.name_division}' дивизион!")
+    except Exception as e:
+        print(f"Редактору не получилось добавить пользователя с id {selected_user.tg_user_id} в турнир '{selected_tournament.name_tournament}' и дивизион '{user_division.name_division} 'из-за ошибки: {e}")
+        await callback.message.answer(f"<b>Не получилось добавить пользователя {selected_user.name_user} в турнир '{selected_tournament.name_tournament}' и дивизион '{user_division.name_division} 'из-за ошибки!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    
     await state.clear()
 
 

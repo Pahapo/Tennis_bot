@@ -10,6 +10,5 @@ class Inventory(Base):
 
     # Конструктор __init__
     def __init__(self, photo, description):
-        # self.tournament_id = tournament_id
         self.photo = photo
         self.description = description

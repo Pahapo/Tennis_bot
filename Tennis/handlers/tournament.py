@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from aiogram import F, Router
 from sqlalchemy import func
-from config.config import EDITOR
+from config.config import ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_start as ks
 import keywords.kw_tournament as kb
@@ -51,14 +51,17 @@ async def tournament_info(callback: CallbackQuery, state:FSMContext):
     if not tournaments:
         await callback.message.answer(f'<b>Пусто</b> 🥲\n\nНам жаль, но в данный момент нет ни одного доступного турнира...', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     else: 
-        tournament_info_editor = bt.create_tournaments_keyboard_editor(tournaments)
-        tournament_info = bt.create_tournaments_keyboard(tournaments)
         if user_id in EDITOR:
+            tournament_info_editor = bt.create_tournaments_keyboard_editor(tournaments)
             await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info_editor)
+        elif user_id in ADMINS or user_id in MAIN_EDITOR:
+            tournament_info_admins = bt.create_tournaments_keyboard_admin(tournaments)
+            await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info_admins)
         else:
+            tournament_info = bt.create_tournaments_keyboard(tournaments)
             await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info)
-
-
+       
+            
 # Новый обработчик в роутерах:
 @router.callback_query(F.data.startswith("tournament_out_bnt_"))
 async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):

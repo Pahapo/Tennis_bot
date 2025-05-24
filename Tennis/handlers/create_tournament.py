@@ -1,4 +1,5 @@
 import pytz
+import asyncio
 from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
@@ -7,9 +8,9 @@ from datetime import datetime, timedelta
 from sqlalchemy import inspect
 from config.config import EDITOR
 
-import keywords.kw_tournament as kb
 import handlers.classes as cl
-import handlers.start as st
+import handlers.functions as f
+import keywords.kw_tournament as kb
 import handlers.validation as valid
 
 from config.db import session
@@ -53,9 +54,16 @@ async def register_name(message: Message, state:FSMContext):
     if tournament:
         await state.set_state(cl.RegTournamentsStates.name)
         await message.answer('Турнир с таким именем уже существует! Придумайте другое имя 👇')
-    else:
-        await state.set_state(cl.RegTournamentsStates.level)
-        await message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
+    else:  
+        data = await state.get_data()
+        tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
+        if tournament:
+            await state.set_state(cl.RegTournamentsStates.count)
+            await message.answer('Введите количество участников в 1 дивизионе 👇')
+            await state.update_data(level = tournament.division)
+        else:
+            await state.set_state(cl.RegTournamentsStates.level)
+            await message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
 
 
 @router.callback_query(F.data.in_(["lvl_t_1", "lvl_t_2", "lvl_t_3", "lvl_t_4", "lvl_t_5", "lvl_t_all"]))
@@ -179,7 +187,7 @@ async def register_age(message: Message, state:FSMContext):
 
 
 @router.message(cl.RegTournamentsStates.regulations)
-async def register_age(message: Message, state:FSMContext):
+async def register_age(message: Message, state:FSMContext, bot):
 
     if len(message.text) > 2500:
         await message.answer(f"⚠ Ошибка! Текст превышает 2500 символов")
@@ -206,9 +214,10 @@ async def register_age(message: Message, state:FSMContext):
     if tournament:
 
         gs.edit_name_tournament(tournament.name_tournament, data.get("name"))
+        
+        old_name = tournament.name_tournament
 
         tournament.name_tournament = data.get("name")
-        # tournament.division = data.get("level")
         tournament.quantity_person = int(data.get("count"))
         tournament.start_tournament = data.get("time1")
         tournament.end_tournament = data.get("time2")
@@ -218,11 +227,15 @@ async def register_age(message: Message, state:FSMContext):
 
         link_sheet_tournament = tournament.link_table
 
-        print(f"Турнир - '{data.get("name")}' был обновлён редактором!")
-        await message.answer('✅ Турнир обновлён!\n\n• Если вы изменили название турнира, оно не будет изменено в названии exel таблицы.\n\nИсправьте самостоятельно или обратитесь в поддержку\n🙋‍♂️ Поддержка @sup_MM')
+        print(f"Турнир '{old_name}' был обновлён редактором на '{data.get("name")}'!")
+        await message.answer('✅ Турнир обновлён!')
 
     else:
-        await message.answer('⏰ Начинаем создавать турнир и excel таблицу...')
+        tournament_sms = await message.answer('⏰ Начинаем создавать турнир')
+        await asyncio.sleep(2)
+        await tournament_sms.edit_text("Создаём Excel таблицу... 📁")
+        await asyncio.sleep(2)
+        await tournament_sms.edit_text("Добавляем участников... 🙋‍♂️")
 
         link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"))
         
@@ -233,5 +246,12 @@ async def register_age(message: Message, state:FSMContext):
         await message.answer('✅ Турнир создан!')
         print(f"Создан новый турнир - '{data.get("name")}'.")
 
-    await message.answer(f"<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}Ссылка на турнир: {link_sheet_tournament}\n\n• Ссылки на турниры находятся в разделе \"Турнирные таблицы 📋\"", parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
+        await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot)
+        
+    try:
+        await message.answer(f"<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}Ссылка на турнир: {link_sheet_tournament}\n\n• Ссылки на турниры находятся в разделе \"Турнирные таблицы 📋\"", parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
+    except Exception as e:
+        print(f"Сообщение с турнирной карточкой не удалось вывести редактору из-за ошибки: {e}")
+        await message.answer("<b>Турнирная карточка по какой-то причине не вывелась!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     await state.clear()
+

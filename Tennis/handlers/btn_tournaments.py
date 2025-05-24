@@ -19,8 +19,17 @@ def get_list_tournaments():
     ]
     return tournaments_data
 
-
 def create_tournaments_keyboard(tournament_names):
+    buttons = [
+        [InlineKeyboardButton(text=name, callback_data=f"tournament_out_bnt_{name}")]
+        for name in tournament_names
+    ]
+    buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+# Вывод кнопок под турнир для администратора и главного редактора
+
+def create_tournaments_keyboard_admin(tournament_names):
     buttons = [
         [InlineKeyboardButton(text=name, callback_data=f"tournament_out_bnt_{name}")]
         for name in tournament_names
@@ -34,7 +43,7 @@ def create_tournaments_keyboard(tournament_names):
 
 def create_tournaments_keyboard_editor(tournament_names):
     buttons = [
-        [InlineKeyboardButton(text=name, callback_data=name)]
+        [InlineKeyboardButton(text=name, callback_data=f"tournament_out_bnt_{name}")]
         for name in tournament_names
     ]
     buttons.append([InlineKeyboardButton(text='Назад', callback_data='edit_tournament')])
@@ -109,7 +118,7 @@ def create_tournaments_edit_keyboard(tournaments_data):
         [InlineKeyboardButton(text=name.replace("_edit", ""), callback_data=f"tournament_edit_{name}")]
         for name in tournaments_data
     ]
-    buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])
+    buttons.append([InlineKeyboardButton(text='Назад', callback_data='tournament_edit')])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -130,4 +139,14 @@ def create_tournaments_delete_keyboard(tournaments_data):
         for name in tournaments_data
     ]
     buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+# находим игроков, хоть раз участвовавших в турнирах для отправки уведомления о создании нового турнира
+
+def create_tournaments_keyboard_notification(tournament_name):
+    buttons = [
+        [InlineKeyboardButton(text="Записаться! 🏆", callback_data=f"tournament_out_bnt_{tournament_name}")]
+    ]
+    buttons.append([InlineKeyboardButton(text='Главное меню!', callback_data='start_message')])
     return InlineKeyboardMarkup(inline_keyboard=buttons)

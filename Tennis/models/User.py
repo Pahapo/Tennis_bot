@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, BigInteger
 from config.db import Base
-import handlers.functions as f
 
 from config.db import session
 from models.Division import Division

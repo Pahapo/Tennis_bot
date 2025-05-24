@@ -3,10 +3,10 @@ import gspread
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 from aiogram.enums import ParseMode
+from config.config import EMAILS
 
 from config.db import session
 from models.Division import Division
-from config.config import EMAILS
 
 
 # --- Авторизация через Google Sheets и Drive API -----
@@ -20,8 +20,8 @@ service_sheets = build('sheets', 'v4', credentials=creds_sheets)
 service_drive = build('drive', 'v3', credentials=creds_drive)
 
 
-def createNewSheet(source_spreadsheet_id, nameTournament):
 
+def createNewSheet(source_spreadsheet_id, nameTournament):
     # --- Создание копии таблицы -----
     copied_file = service_drive.files().copy(
         fileId=source_spreadsheet_id,
@@ -33,6 +33,8 @@ def createNewSheet(source_spreadsheet_id, nameTournament):
     # !!! --- ЗАПРОС В БД: добавление ссылки в таблицу Турниры --- !!!
 
     return new_spreadsheet_id
+
+
 
 def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
 # def copy_lists(new_spreadsheet_id, source_spreadsheet_id):
@@ -82,6 +84,7 @@ def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
     delete_template_list(new_spreadsheet_id, source_sheet_id)
 
 
+
 def accessToSheet(new_spreadsheet_id):
     # --- ДОСТУП К ТАБЛИЦЕ -----
     # Публичный доступ (просмотр)
@@ -104,6 +107,8 @@ def accessToSheet(new_spreadsheet_id):
         print(f"Доступ на редактирование предоставлен: {email}")
     return link_sheet_tournament
 
+
+
 def delete_template_list(new_spreadsheet_id, source_sheet_id):
     # Запрос на удаление первого листа
     delete_request = {
@@ -117,6 +122,8 @@ def delete_template_list(new_spreadsheet_id, source_sheet_id):
     }
     service_sheets.spreadsheets().batchUpdate(spreadsheetId=new_spreadsheet_id, body=delete_request).execute()
     print(f"Лист с ID {source_sheet_id} успешно удалён!")
+
+
 
 def startDoingSheet(nameTournament, levelTournament):
 # def startDoingSheet(nameTournament):
@@ -140,8 +147,8 @@ def startDoingSheet(nameTournament, levelTournament):
     return link_sheet_tournament
 
 
-def addPlayerInList(name, user_link, name_tournament, user_division):
 
+def addPlayerInList(name, user_link, name_tournament, user_division):
     gc = gspread.service_account(filename='credentials_tennisbot.json')
     spreadsheet = gc.open(name_tournament)
     sheet = spreadsheet.worksheet(user_division)
@@ -154,6 +161,7 @@ def addPlayerInList(name, user_link, name_tournament, user_division):
 
     sheet.update(f"{column_letter}{first_empty_row}", [[f"{name} ({user_name})"]]) # Записываем значение в первую свободную ячейку
     
+
 
 def edit_name_tournament(old_name_tournament, new_name_tournament):
     # # Создаём клиент Google Drive API
@@ -186,4 +194,22 @@ def edit_name_tournament(old_name_tournament, new_name_tournament):
 
         # Отправляем запрос в Google Sheets API
         service_sheets.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=update_request).execute()
-        print(f"✅ Название таблицы изменено на: {new_name_tournament}")
+        print(f"✅ Название таблицы '{old_name_tournament}' изменено на '{new_name_tournament}'!")
+
+
+
+def delete_player_from_tournament(nameTournament, person, user_division):
+    person = '@' + person.replace("https://t.me/", "")
+
+    # ----- Открытие исходной таблицы -----
+    gc = gspread.service_account(filename='credentials_tennisbot.json')
+    spreadsheet = gc.open(nameTournament)
+    sheet = spreadsheet.worksheet(user_division)
+    values = sheet.col_values(2)
+
+    matches = [(i + 1) for i, value in enumerate(values) if person in value]
+    if matches:
+        # Очистка ячейки с найденным значением
+        sheet.update_cell(matches[0], 2, "")  # 2 — это номер колонки (B)
+    else:
+        print("При удалении из Excel пользователь не был найден!")

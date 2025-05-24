@@ -10,11 +10,12 @@ import handlers.btn_tournaments as bt
 import handlers.functions as f
 import handlers.classes as cl
 import handlers.start as st
-
+import googleSheet.googleSheet as gs
 
 from config.db import session
 from models.TournamentPlayers import TournamentPlayers
 from models.Tournament import Tournament
+from models.Division import Division
 from models.User import User
 
 
@@ -75,7 +76,7 @@ async def find_name_del_players(message: Message, state:FSMContext):
         await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_delete_players)
 
     
-@router.callback_query(F.data == 'delete_players_tournaments')            # дописать автоматическое удаление из google таблицы пользователя
+@router.callback_query(F.data == 'delete_players_tournaments')
 async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
 
@@ -87,25 +88,34 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
         name_finder_user = data.get("name_finder_user")
 
         user = session.query(User).filter(User.link == name_finder_user).first()
+        selected_division = session.query(Division).filter(Division.division_id == user.division_level).first()
         selected_tournament = session.query(Tournament).filter(Tournament.name_tournament == name_finder_tournament).first()
+        
         # Удаление игрока из турнира
         session.query(TournamentPlayers).filter((TournamentPlayers.id_tg_user == user.tg_user_id) & (TournamentPlayers.id_tournament == selected_tournament.tournament_id)).delete()
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
-        print(f"Пользователь '{user.name_user}' был исключён из турнира {name_finder_tournament}!")
-        await callback.message.answer(f"✅ Пользователь '{user.name_user}' был исключён из турнира {name_finder_tournament}!", reply_markup=kb.back_delete_players)
-
-        editors_list = await f.output_edits_list()
-        message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вы были исключены из турнира {name_finder_tournament}</b> ❌\n\n<i>• Если это ошибка, пожалуйста, свяжитесь с редактором(-ами) турнира!</i> {editors_list}"
-
-        options = LinkPreviewOptions(
-            is_disabled=True
-        )
-
         try:
-            await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+            gs.delete_player_from_tournament(name_finder_tournament, name_finder_user, selected_division.name_division)
+            print(f"✅ Игрок удалён из Excel из турнира - '{selected_tournament.name_tournament}' дивизиона '{selected_division.name_division}'!")
+            
+            await callback.message.answer(f"✅ Пользователь {user.name_user} был исключён из турнира {name_finder_tournament}!", reply_markup=kb.exit)
+
+            editors_list = await f.output_edits_list()
+            message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вы были исключены из турнира {name_finder_tournament}</b> ❌\n\n<i>• Если это ошибка, пожалуйста, свяжитесь с редактором(-ами) турнира!</i> {editors_list}"
+
+            options = LinkPreviewOptions(
+                is_disabled=True
+            )
+
+            try:
+                await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+            except Exception as e:
+                print(f"Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+
         except Exception as e:
-            print(f"Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+            print(f"Редактору не получилось удалить пользователя с id {user.tg_user_id} из турнира '{selected_tournament.name_tournament}' в дивизионе '{selected_division.name_division} 'из-за ошибки: {e}")
+            await callback.message.answer(f"<b>Не получилось удалить пользователя {user.name_user} из турнира '{selected_tournament.name_tournament}' в дивизионе '{selected_division.name_division} 'из-за ошибки!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         
         await state.clear()
     else:

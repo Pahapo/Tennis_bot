@@ -82,3 +82,16 @@ CREATE TABLE `payment` (
   CONSTRAINT `payment_players_tournament_fk` FOREIGN KEY (`id_tournament`) REFERENCES `tournament` (`tournament_id`),
   CONSTRAINT `payment_players_users_fk` FOREIGN KEY (`id_tg_user`) REFERENCES `users` (`tg_user_id`)
 );
+
+CREATE TABLE `payment_method` (
+  `payment_method_id` int NOT NULL AUTO_INCREMENT,
+  `payment_method` varchar(40) DEFAULT NULL,
+  `bank_name` varchar(25) DEFAULT NULL,
+  PRIMARY KEY (`payment_method_id`)
+);
+
+CREATE TABLE `old_users` (
+  `tg_old_users_id` bigint NOT NULL,
+  `division_level` int DEFAULT NULL,
+  PRIMARY KEY (`tg_old_users_id`)
+);

@@ -16,7 +16,5 @@ EDITOR = list(map(int, os.getenv('EDITOR').split(',')))                 # Соз
 EMAILS = list(map(str, os.getenv('EMAILS').split(',')))
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-CARD_NUMBER = os.getenv('CARD_NUMBER')
-
 
 # PG_LINK=postgresql://USER_LOGIN:USER_PASSWORD@HOST_API:PORT/NAME_BD #Ссылка подключения к базе данных PostgreSQL   

@@ -12,9 +12,11 @@ from config.config import CHANNEL, CHANNEL_ID, ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_start as kb
 import keywords.kw_any as ka
+import handlers.btn_tournaments as bt
 
 from config.db import session
 from models.User import User
+from models.OldUsers import OldUsers
 from models.FastUser import FastUser
 from models.Tournament import Tournament
 from models.TournamentPlayers import TournamentPlayers
@@ -27,17 +29,26 @@ MOSCOW_TZ = pytz.timezone("Europe/Moscow")
 adm_start_t = "<b>Привет Хозяин!</b> 👋\n\nКак день?\nКак настроение?\n\nПротестируй весь мой функционал, чтобы я работал идеально! 👇"
 m_edit_start_t = "Мы рады приветствовать тебя в команде нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основные задачи:</b>\n\n✅ Распределение игроков по парам;\n✅ Анализ дивизиона для игроков;\n✅ Выдача банов\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Мир – Новости</b>"
 edit_start_t = "Мы рады приветствовать тебя в команде нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основная задача:</b>\n\n✅ Создание и контроль турниров\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Минск Мир – Новости</b>"
-all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперника;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Для начала <b><a href='{CHANNEL}'>подпишитесь на канал</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
+all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперника;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Следи за телеграмм каналом <b><a href='{CHANNEL}'>Минск-Мир - Новости</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
 async def save_user(user_id, user_name, user_link): # Сохранение пользователей в список для рассылки
 
-    user = session.query(User).filter_by(tg_user_id = user_id).first()
+    user = session.query(User).filter(User.tg_user_id == user_id).first()
     if not user:
         print(f"Новый пользователь нажал /start")
-        new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
+
+        old_user = session.query(OldUsers).filter(OldUsers.tg_old_users_id == user_id).first()
+
+        if old_user:
+            new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link, division_level = old_user.division_level)
+        else:
+            new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
+
         session.add(new_user)
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
+
+    
 
 
 
@@ -76,6 +87,7 @@ async def check_ban_user(user_id):
             session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
 
+
 @router.callback_query(F.data == 'start_message')
 async def start_message(callback: CallbackQuery, bot):
     await callback.answer('')
@@ -97,7 +109,8 @@ async def start_message(callback: CallbackQuery, bot):
         await callback.message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=create_tournament_table_keyboard(user_id))
 
 
-# Вывод кнопоки для турнирной таблицы
+
+# Вывод кнопоки для user
 
 def create_tournament_table_keyboard(user_id):
     last_toutnament_id = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()).first()    # протестировать на вывод последнего элемента
@@ -123,26 +136,31 @@ def create_tournament_table_keyboard(user_id):
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
+
 async def output_edits_list():
     edits = session.query(User).filter(User.tg_user_id.in_(EDITOR)).all() # Получаем список User с указанным free_time
     edit_list = ''
     for edit in edits:
         edit_list += f"\n🙋‍♂️ <a href='{edit.link}'>{edit.name_user}</a>"
-    return edit_list
+    return edit_list    
+
 
 
 async def check_players(bot):
     while True:
         now = datetime.now(tz=MOSCOW_TZ)
 
-        # Вычисляем следующее четверг 11:00
-        days_until_thursday = (5 - now.weekday() + 7) % 7  # Суббота = 5-й день
-        next_thursday = now + timedelta(days=days_until_thursday)
-        target_time = next_thursday.replace(hour=11, minute=0, second=0, microsecond=0)
+        # Определяем, сколько дней до следующего вторника или субботы
+        if now.weekday() < 1:  # Сегодня понедельник или ранее — ждем вторника
+            days_until_target = (1 - now.weekday()) % 7
+        else:  # Сегодня вторник или позже — ждем субботы
+            days_until_target = (6 - now.weekday()) % 7
+
+        next_target_day = now + timedelta(days=days_until_target)
+        target_time = next_target_day.replace(hour=11, minute=0, second=0, microsecond=0)
 
         wait_seconds = (target_time - now).total_seconds()
-        # print(f"⏳ Ждём до {target_time.strftime('%d.%m.%Y %H:%M')}, осталось {wait_seconds:.2f} секунд")
-        await asyncio.sleep(wait_seconds)  # Спим до субботы 11:00
+        await asyncio.sleep(wait_seconds)  # Спим до нужного дня
 
         # Проверяем игроков
         users_without_division = session.query(User).filter(User.division_level.is_(None)).all()
@@ -151,9 +169,28 @@ async def check_players(bot):
                 message_text_send = f"<b>⚠️ {len(users_without_division)} игрока(-ов) ожидают получения дивизиона!</b>"
                 try:
                     await bot.send_message(chat_id=edit, text=message_text_send, parse_mode="HTML", reply_markup=ka.exit)
-                    print(f"✅ Уведомление о {len(users_without_division)} игроках, ожидающих получение дивизиона, отправлено главному редактору ({edit})!")
+                    print(f"✅ Уведомление отправлено ({edit})!")
                 except Exception as e:
-                    print(f"❌ ОШИБКА: уведомление о игроках, ожидающих получение дивизиона, не было отправлено главному редактору ({edit}). Подробнее: {e}")
+                    print(f"❌ Ошибка: {e}")
 
-        # Ждём ровно 7 ДНЕЙ перед повторной проверкой
-        await asyncio.sleep(604800)
+        # Ждем 3 или 4 дня до следующей проверки
+        await asyncio.sleep(259200 if now.weekday() == 1 else 345600)  # 3 дня до субботы, 4 до вторника
+
+
+
+async def notification_about_new_tournament(tournament_name, tournament_start, division, bot): # находим игроков, хоть раз участвовавших в турнирах для отправки уведомления о создании нового турнира
+    users = session.query(User).filter(User.division_level.in_(division.split(','))).all()
+    if users:
+        users_tg_ids = [user.tg_user_id for user in users]
+        players = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user.in_(users_tg_ids)).all()
+        if players:
+            players_tg_ids = [player.id_tg_user for player in players]
+
+            if players_tg_ids:
+                try:
+                    message_text_send = f"⚡️ <b>Доступен новый турнир для вашего дивизиона!</b>\n\n<b>Название:</b> {tournament_name}\n<b>Дата начала:</b> {tournament_start}\n\n<b>Хотите принять участие? 😎</b>"
+                    exit = bt.create_tournaments_keyboard_notification(tournament_name)
+                    for players_tg_id in list(set(players_tg_ids)):
+                        await bot.send_message(chat_id=players_tg_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=exit)
+                except Exception as e:
+                    print(f"Не удалось отправить сообщение о появлении нового турнира пользователю с id: {players_tg_id} из-за ошибки: {e}")

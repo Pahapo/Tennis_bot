@@ -9,6 +9,8 @@ from models.TournamentPlayers import TournamentPlayers
 
 class SendMessage(StatesGroup):
     message = State()
+    payment_flag = State()
+    message_flag = State()
 
 class RegPlayerStates(StatesGroup):
     id = State()

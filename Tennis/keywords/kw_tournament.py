@@ -34,27 +34,6 @@ create_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text =
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='tournament_table')]
                                                     ])
 
-# Вывод кнопок турнира
-# tournament_info = bt.create_tournaments_keyboard(bt.get_list_tournaments())
-
-# Вывод кнопок турнира для редактора
-# tournament_info_editor = bt.create_tournaments_keyboard_editor(bt.get_list_tournaments_editor())
-
-# Вывод кнопок под ссылку турнира
-# active_tournament_table = bt.create_links_tournaments_keyboard(bt.get_links_tournaments())
-
-# Вывод кнопок под ссылку турнира, которые попали в архив
-# history_tournament_table = bt.create_links_tournaments_keyboard(bt.get_history_links_tournaments())
-
-# Вывод кнопок под ссылку турнира для удаления игрока
-# tournament_info_del_players = bt.create_tournaments_keyboard_players(bt.get_list_tournaments_players())
-
-# Вывод кнопок для редактирования турнира
-# tournament_info_edit = bt.create_tournaments_edit_keyboard(bt.get_list_tournaments_edit())
-
-# Вывод кнопок для удаления турнира
-# tournament_info_delete = bt.create_tournaments_delete_keyboard(bt.get_list_tournaments_delete())
-
 confirm_delete_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament'),
                                                                 InlineKeyboardButton(text = '✅ Подтвердить!', callback_data='delete_tournament_anyway')]
                                                                 ])
@@ -84,7 +63,7 @@ reg_tournament_lvl = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
                                                             ])
 
 payment_address = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '✅ Я оплатил(-а)', callback_data='confirm_payment')],
-                                                      [InlineKeyboardButton(text = 'Отменить и выйти', callback_data='start_message')]
+                                                      [InlineKeyboardButton(text = '❌ Отменить и выйти', callback_data='start_message')]
                                                       ])
 
 confirm_payment_pl = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '❌ Отменить и выйти', callback_data='start_message')]])

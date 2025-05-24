@@ -26,7 +26,7 @@ async def match(callback: CallbackQuery, bot):
     await callback.answer('')
 
     if await f.check_subscription(callback.from_user.id, bot):
-        await callback.message.answer(f"<b>Поиск соперника</b> 🙋‍♂️🎾\n\nВ этом разделе игроки публикуют заявки на поиск соперника для игры.\nТы можешь откликнуться на уже созданную игру другим игроком, или создать запрос на игру самостоятельно\n\n⚡️ Желательно создавать заявку на поиск соперника с уже забронированым кортом", parse_mode=ParseMode.HTML, reply_markup=kb.players)
+        await callback.message.answer(f"<b>Поиск соперника</b> 🙋‍♂️🎾\n\nВ этом разделе игроки публикуют заявки на поиск соперника для игры.\nТы можешь откликнуться на уже созданную игру другим игроком или создать запрос на игру самостоятельно\n\n⚡️ Желательно создавать заявку на поиск соперника с уже забронированым кортом", parse_mode=ParseMode.HTML, reply_markup=kb.players)
     else:
         await f.check_subscription_message(callback)
 
@@ -297,4 +297,3 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\n\nГотовьтесь к встрече на корте! 🎾", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
     else:
         await callback.message.answer(f"Список 📂 подтверждённых игр пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)
-        print(f"Список подтверждённых игр игрока с id ({user_id}) не отображается в разделе 'Мои подтверждённые игры 🎾'")
