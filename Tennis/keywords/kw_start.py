@@ -25,6 +25,7 @@ main_edit_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text
 main_edit_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
                                                             [InlineKeyboardButton(text = 'Список турниров/участников 📖', callback_data='tournament_lists')],
                                                             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
+                                                            [InlineKeyboardButton(text = 'Касса 💳', callback_data='kassa')],
                                                             [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                             ])
 
@@ -49,9 +50,10 @@ edit_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(te
                                                         [InlineKeyboardButton(text = 'Редактировать турнир ⚙️', callback_data='tournament_edit')],
                                                         [InlineKeyboardButton(text = 'Удалить турнир ❌', callback_data='delete_tournament')],
                                                         [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
+                                                        [InlineKeyboardButton(text = 'Касса 💳', callback_data='kassa')],
                                                         [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                         ])
 
 builder = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Подписаться на канал", url=CHANNEL),
-                                                InlineKeyboardButton(text="Я подписался", callback_data="check_subscription")]
+                                                InlineKeyboardButton(text="Я подписался ✅", callback_data="check_subscription")]
                                                 ])

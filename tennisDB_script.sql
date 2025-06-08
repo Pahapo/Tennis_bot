@@ -13,6 +13,7 @@ CREATE TABLE `users` (
   `division_level` int DEFAULT NULL,
   `ban_status` tinyint(1) DEFAULT NULL,
   `end_date_ban` varchar(10) DEFAULT NULL,
+  `coins` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`tg_user_id`),
   UNIQUE KEY `tg_user_id` (`tg_user_id`),
   KEY `users_division_fk` (`division_level`),
@@ -36,6 +37,7 @@ CREATE TABLE `tournament` (
   `tournament_id` int NOT NULL AUTO_INCREMENT,
   `name_tournament` varchar(50) DEFAULT NULL,
   `division` varchar(15) DEFAULT NULL,
+  `type` varchar(25) DEFAULT NULL,
   `quantity_person` int DEFAULT NULL,
   `start_tournament` varchar(10) DEFAULT NULL,
   `end_tournament` varchar(10) DEFAULT NULL,
@@ -71,12 +73,15 @@ CREATE TABLE `fast_booking_players` (
 );
 
 CREATE TABLE `payment` (
-  `id_player` int NOT NULL AUTO_INCREMENT,
+  `id_payment` int NOT NULL AUTO_INCREMENT,
   `id_tournament` int DEFAULT NULL,
   `id_tg_user` bigint DEFAULT NULL,
-  `price` int DEFAULT NULL,
+  `price` varchar(10) DEFAULT NULL,
+  `coins` varchar(10) DEFAULT NULL,
   `photo` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`id_player`),
+  `salesman` varchar(20) DEFAULT NULL,
+  `date` DATETIME,
+  PRIMARY KEY (`id_payment`),
   KEY `payment_players_tournament_fk` (`id_tournament`),
   KEY `payment_players_users_fk` (`id_tg_user`),
   CONSTRAINT `payment_players_tournament_fk` FOREIGN KEY (`id_tournament`) REFERENCES `tournament` (`tournament_id`),
@@ -94,4 +99,12 @@ CREATE TABLE `old_users` (
   `tg_old_users_id` bigint NOT NULL,
   `division_level` int DEFAULT NULL,
   PRIMARY KEY (`tg_old_users_id`)
+);
+
+CREATE TABLE `referals` (
+  `tg_users_id` bigint NOT NULL,
+  `referals` varchar(250) DEFAULT NULL,
+  `referals` varchar(250) DEFAULT NULL,
+  `count` int DEFAULT NULL,
+  PRIMARY KEY (`tg_users_id`)
 );

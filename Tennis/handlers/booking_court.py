@@ -7,25 +7,24 @@ from config.config import MAIN_EDITOR, ADMINS
 
 import keywords.kw_any as kb
 import handlers.functions as f
-import handlers.start as st
 
 
 router = Router()
 
 
 @router.callback_query(F.data == 'fast_booking_court')
-async def fast_booking_court(callback: CallbackQuery, state:FSMContext):
+async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
     data = await state.get_data()
-    user_id = data.get("user_id") # взяли из состояния, которое записалось при /start
+    user_id = callback.from_user.id
 
     if await f.check_fast_user(user_id):
         await callback.message.answer('<b>Быстрое бронирование 🎾</b>\n\nЕсли вы новичок, используйте \"Обычное бронирование\"\nЕсли Вы часто или профессионально играете, Вам подойдёт этот вариант\n\n<b>Автоматическое бронирование обеспечит Вас кортом в любое время</b>. Вы не столкнётесь с проблемой занятого корта, ведь бронирование мы берём на себя!\n\n<b>3 ПРОСТЫХ ШАГА:</b>\n• Выбери дату\n• Выбери корт\n• Выбери время\n\n⚡️ Чтобы использовать \"<b>Быстрое бронирование 🎾</b>\" необходима подписка \"<b>Tennis PRO</b>\"\n\n⚡️ Воспользуйтесь бесплатной версией, чтобы протестировать возможности (доступна 1 раз)', parse_mode=ParseMode.HTML, reply_markup=kb.fast_booking_court)
     else:
-        st.cmd_start()
+        await f.start_message(callback, bot)
 
 # @router.callback_query(F.data == 'find_users_for_ban')
-# async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):
+# async def find_users_for_ban(callback: CallbackQuery, state:FSMContext, bot):
 #     await callback.answer('')
 #     await state.set_state(cl.FindUser.name_ban)
     
@@ -34,18 +33,18 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext):
 #         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
 #     else:
 #         await callback.message.answer('Функция недоступна! Вы не главный редактор! ❌')
-#         st.cmd_start()
+#         await f.start_message(callback, bot)
 
 
 # @router.message(cl.FindUser.name_ban)
 # async def find_name(message: Message, state:FSMContext):
 #     await state.update_data(name = message.text)
 #     name_finder_user = message.text.lower()
+#     if 'https://t.me/' not in name_finder_user:
+#         if '@' in name_finder_user:
+#             name_finder_user = name_finder_user.replace('@', '', 1)
 
-#     if '@' in name_finder_user:
-#         name_finder_user = name_finder_user.replace('@', '', 1)
-
-#     name_finder_user = 'https://t.me/' + name_finder_user
+#         name_finder_user = 'https://t.me/' + name_finder_user
 
 #     options = LinkPreviewOptions(
 #         is_disabled=True
@@ -115,7 +114,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext):
 #         try:
 #             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
 #         except Exception as e:
-#             print(f"Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+#             print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
 #     else:
 #         print(f"ОШИБКА! Пользователя '{user.name_user}' не был забанен!")  
 #     await state.clear()

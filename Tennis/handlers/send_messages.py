@@ -11,7 +11,7 @@ from config.config import ADMINS
 import keywords.kw_send_message as kb
 import keywords.kw_any as ka
 import handlers.classes as cl
-import handlers.start as st
+import handlers.functions as f
 
 from config.db import session
 from models.User import User
@@ -20,7 +20,7 @@ router = Router()
 
 
 @router.callback_query(F.data == 'sending_messages')
-async def register(callback: CallbackQuery, state:FSMContext):
+async def register(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
 
     user_id = callback.from_user.id
@@ -28,7 +28,7 @@ async def register(callback: CallbackQuery, state:FSMContext):
         await callback.message.answer('Для начала выбери, какое сообщение ты хочешь отправить: с фото или без него?', reply_markup=kb.send_message_photo_q)
     else:
         await callback.message.answer('Функция недоступна! Вы не админ! ❌')
-        st.cmd_start()
+        await f.start_message(callback, bot)
 
 
 
@@ -152,7 +152,7 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
                     count_send_message += 1
 
                 except Exception as e:
-                    print(f"Не удалось отправить сообщение при рассылке пользователю с id: {user_id} из-за ошибки: {e}")
+                    print(f"❌ Не удалось отправить сообщение при рассылке пользователю с id: {user_id} из-за ошибки: {e}")
             
             await callback.message.answer(f"✅ <b>Рассылка завершена!</b>\n\nСообщение получило {count_send_message} чел.", parse_mode=ParseMode.HTML, reply_markup=ka.exit)
         else:
@@ -164,7 +164,7 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
 
     else:
         await callback.message.answer('Функция недоступна! Вы не админ! ❌', reply_markup=ka.exit)
-        st.cmd_start()
+        await f.start_message(callback, bot)
     await state.clear()
 
 
@@ -199,7 +199,7 @@ async def send_winner(callback: CallbackQuery, bot):
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
     #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #             except Exception as e:
-    #                 print(f"Не удалось отправить сообщение пользователю с name: {user_name} из-за ошибки: {e}")     # ИЗМЕНИТЬ user_name
+    #                 print(f"❌ Не удалось отправить сообщение пользователю с name: {user_name} из-за ошибки: {e}")     # ИЗМЕНИТЬ user_name
     #     except FileNotFoundError:
     #         await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного!")
     # else:

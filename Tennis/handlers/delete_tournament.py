@@ -7,7 +7,7 @@ from config.config import EDITOR
 import keywords.kw_any as kb
 import keywords.kw_tournament as kt
 import handlers.btn_tournaments as bt
-import handlers.start as st
+import handlers.functions as f
 
 from config.db import session
 from models.Tournament import Tournament
@@ -35,7 +35,7 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     
 
 @router.callback_query(F.data == 'delete_tournament_anyway')
-async def delete_tournament_anyway(callback: CallbackQuery, state:FSMContext):
+async def delete_tournament_anyway(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
 
     user_id = callback.from_user.id
@@ -56,4 +56,4 @@ async def delete_tournament_anyway(callback: CallbackQuery, state:FSMContext):
             await callback.message.answer(f"Что-то пошло не так! Турнир '{name_tournament_delete}' не был найден\n\nХочешь узнать больше об ошибке? Обратись в поддержку\n🙋‍♂️ Поддержка @sup_MM", reply_markup=kb.exit)
     else:
         await callback.message.answer('Функция недоступна! Вы не организатор! ❌')
-        st.cmd_start()
+        await f.start_message(callback, bot)

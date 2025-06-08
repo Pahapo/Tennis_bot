@@ -36,7 +36,7 @@ def createNewSheet(source_spreadsheet_id, nameTournament):
 
 
 
-def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
+def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament, quantity_person):
 # def copy_lists(new_spreadsheet_id, source_spreadsheet_id):
     # Получаем ID исходного листа
     source_sheets_info = service_sheets.spreadsheets().get(spreadsheetId=source_spreadsheet_id).execute()
@@ -49,10 +49,8 @@ def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
     # Преобразуем список ID в список названий
     levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
 
-
     # --- Копирование листа -----
     for i in levelTournament_names:
-    # for i in range(5):
         # Копируем лист в новую таблицу
         response = service_sheets.spreadsheets().sheets().copyTo(
             spreadsheetId=source_spreadsheet_id,
@@ -78,6 +76,16 @@ def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament):
                         }
                     }
                 ]
+            }
+        ).execute()
+
+        # Добавляем "Список игроков" и количество в первую свободную строку
+        service_sheets.spreadsheets().values().append(
+            spreadsheetId=new_spreadsheet_id,
+            range=f"{i}!B:B",
+            valueInputOption="RAW",
+            body={
+                "values": [[f"Список игроков ({quantity_person} чел.):"]]
             }
         ).execute()
 
@@ -125,21 +133,21 @@ def delete_template_list(new_spreadsheet_id, source_sheet_id):
 
 
 
-def startDoingSheet(nameTournament, levelTournament):
-# def startDoingSheet(nameTournament):
+def startDoingSheet(nameTournament, levelTournament, quantity_person, type):
     # ----- Открытие исходной таблицы -----
     gc = gspread.service_account(filename='credentials_tennisbot.json')
-    spreadsheet = gc.open("Турнир")
+    # spreadsheet = gc.open("Турнир")
+    spreadsheet = gc.open(type)
     source_spreadsheet_id = spreadsheet.id
 
     # ----- Создание новой таблицы турнира -----
     newSheetId = createNewSheet(source_spreadsheet_id, nameTournament)
 
     # ----- Копирование листов-дивизионов в новой таблице, удаление шаблон-листа из новой таблицы -----
-    print("newSheetId = ", newSheetId)
-    print("source_spreadsheet_id = ", source_spreadsheet_id)
-    print("levelTournament = ", levelTournament)
-    copy_lists(newSheetId, source_spreadsheet_id, levelTournament)
+    # print("newSheetId = ", newSheetId)
+    # print("source_spreadsheet_id = ", source_spreadsheet_id)
+    # print("levelTournament = ", levelTournament)
+    copy_lists(newSheetId, source_spreadsheet_id, levelTournament, quantity_person)
     # copy_lists(newSheetId, source_spreadsheet_id)
 
     # ----- Предоставление доступа к таблице -----

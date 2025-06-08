@@ -127,8 +127,31 @@ async def add_level_tournament(callback: CallbackQuery, state:FSMContext):
 @router.callback_query(F.data == 'not_add_level_tournament')
 async def not_add_level_tournament(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
+    await state.set_state(cl.RegTournamentsStates.type)
+    await callback.message.answer('Выберите тип турнира 👇', reply_markup=kb.type_tournament)
+
+
+@router.callback_query(F.data.in_(["type_t_1", "type_t_2", "type_t_3", "type_t_4", "type_t_5", "type_t_6"]))
+async def handle_types_buttons(call: CallbackQuery, state: FSMContext):
+    await call.answer('')
+
+    if call.data == "type_t_1":
+        type = 'Одиночный'
+    if call.data == "type_t_2":
+        type = 'Парный'
+    if call.data == "type_t_3":
+        type = 'Микст'
+    if call.data == "type_t_4":
+        type = 'Командный'
+    if call.data == "type_t_5":
+        type = 'Марафон'
+    if call.data == "type_t_6":
+        type = 'Тай-Брейк'
+
+    await state.update_data(type = type)
+
     await state.set_state(cl.RegTournamentsStates.count)
-    await callback.message.answer('Введите количество участников в 1 дивизионе 👇')
+    await call.message.answer('Введите количество участников в каждом дивизионе 👇')
 
 
 @router.message(cl.RegTournamentsStates.count)
@@ -203,6 +226,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         tournament_data = cl.TournamentsData(
             name=data.get("name"),
             level=data.get("level"),
+            type=data.get("type"),
             count=int(data.get("count")),
             time1=data.get("time1"),
             time2=data.get("time2"),
@@ -218,6 +242,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         old_name = tournament.name_tournament
 
         tournament.name_tournament = data.get("name")
+        tournament.type = data.get("type")
         tournament.quantity_person = int(data.get("count"))
         tournament.start_tournament = data.get("time1")
         tournament.end_tournament = data.get("time2")
@@ -234,17 +259,18 @@ async def register_age(message: Message, state:FSMContext, bot):
         tournament_sms = await message.answer('⏰ Начинаем создавать турнир')
         await asyncio.sleep(2)
         await tournament_sms.edit_text("Создаём Excel таблицу... 📁")
-        await asyncio.sleep(2)
-        await tournament_sms.edit_text("Добавляем участников... 🙋‍♂️")
-
-        link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"))
         
-        new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
+        type_tournament = f"Турнир {data.get("type")} (шаблон)"
+        link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"), int(data.get("count")), type_tournament)
+
+        await tournament_sms.edit_text("Добавляем участников... 🙋‍♂️")
+        
+        new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), type = data.get("type"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
         session.add(new_tournament)  # Добавляем объект в сессию
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
-        await message.answer('✅ Турнир создан!')
-        print(f"Создан новый турнир - '{data.get("name")}'.")
+        await tournament_sms.edit_text('✅ Турнир создан!')
+        print(f"Создан новый турнир - '{data.get("name")}'")
 
         await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot)
         

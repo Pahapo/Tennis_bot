@@ -20,6 +20,10 @@ from handlers.delete_tournament import router as delete_tournament
 from handlers.edit_tournament import router as edit_tournament
 from handlers.output_player_without_division import router as output_player_without_division
 from handlers.booking_court import router as booking_court
+from handlers.referrals import router as referrals
+from handlers.kassa import router as kassa
+from handlers.score import router as score
+
 
 router = Router()
 
@@ -46,3 +50,6 @@ router.include_router(delete_tournament)
 router.include_router(edit_tournament)
 router.include_router(output_player_without_division)
 router.include_router(booking_court)
+router.include_router(referrals)
+router.include_router(kassa)
+router.include_router(score)

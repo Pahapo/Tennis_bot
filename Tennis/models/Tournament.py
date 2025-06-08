@@ -9,6 +9,7 @@ class Tournament(Base):
     tournament_id = Column(Integer, primary_key=True, autoincrement=True)
     name_tournament = Column(String(50), nullable=False)
     division = Column(String(15), nullable=False)
+    type = Column(String(25), nullable=False)
     quantity_person = Column(Integer, nullable=False)
     start_tournament = Column(String(10), nullable=False)
     end_tournament = Column(String(10))
@@ -18,10 +19,11 @@ class Tournament(Base):
 
 
     # Конструктор __init__
-    def __init__(self, name_tournament, division, quantity_person, start_tournament, end_tournament, price, link_table, regulations):
+    def __init__(self, name_tournament, division, type, quantity_person, start_tournament, end_tournament, price, link_table, regulations):
         # self.tournament_id = tournament_id
         self.name_tournament = name_tournament
         self.division = division
+        self.type = type
         self.quantity_person = quantity_person
         self.start_tournament = start_tournament
         self.end_tournament = end_tournament
@@ -42,4 +44,4 @@ class Tournament(Base):
         else: 
             tournament_lvl = 'Не определён'
 
-        return f"Название: {self.name_tournament}\nДивизион турнира: {tournament_lvl}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 
+        return f"Название: {self.name_tournament}\nДивизион турнира: {tournament_lvl}\Тип турнира: {self.type}\nМаксимальное кол-во участников:{self.quantity_person}\nНачало:{self.start_tournament}\nОкончание:{self.end_tournament}" 

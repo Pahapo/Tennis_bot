@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 from aiogram import F, Router
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from config.config import ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_tournament as kb
-import handlers.start as st
+import handlers.functions as f
 
 from config.db import session
 from models.User import User
@@ -18,7 +19,7 @@ router = Router()
 message_text_send = ''
 
 @router.callback_query(F.data == 'tournament_lists')
-async def search_match(callback: CallbackQuery):
+async def search_match(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
 
     user_id = callback.from_user.id
@@ -70,7 +71,7 @@ async def search_match(callback: CallbackQuery):
             await callback.message.answer(f"Нам жаль, но список 📂 турниров пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.tournaments_data_exit)
     else:
         await callback.message.answer('Функция недоступна! Вы не являетесь организатором! ❌')
-        st.cmd_start()
+        await f.start_message(callback, bot)
     
 
 

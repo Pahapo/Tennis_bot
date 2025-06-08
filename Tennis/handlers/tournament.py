@@ -1,5 +1,6 @@
+import os
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, LinkPreviewOptions
+from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram import F, Router
 from sqlalchemy import func
@@ -39,28 +40,39 @@ async def tournament_main_edit(callback: CallbackQuery):
     
 
 @router.callback_query(F.data == 'tournament_info')
-async def tournament_info(callback: CallbackQuery, state:FSMContext):
+async def tournament_info(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
-    await f.check_ban_user(callback.from_user.id) # проверка на бан
 
-    data = await state.get_data()
-    user_id = data.get("user_id")
+    if await f.check_subscription(callback.from_user.id, bot):
+        await f.check_ban_user(callback.from_user.id) # проверка на бан
 
-    tournaments = bt.get_list_tournaments()  # Получаем актуальный список
+        await state.update_data(coins=None)  # Устанавливаем `None` для обнуления монет
+        await state.update_data(tournament_price_with_coins=None) # Устанавливаем `None` для обнуления стоимости турнира с учётом монет
+        await state.update_data(remaining_coins=None) # Устанавливаем `None` для обнуления оставшихся монет после списания
 
-    if not tournaments:
-        await callback.message.answer(f'<b>Пусто</b> 🥲\n\nНам жаль, но в данный момент нет ни одного доступного турнира...', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-    else: 
-        if user_id in EDITOR:
-            tournament_info_editor = bt.create_tournaments_keyboard_editor(tournaments)
-            await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info_editor)
-        elif user_id in ADMINS or user_id in MAIN_EDITOR:
-            tournament_info_admins = bt.create_tournaments_keyboard_admin(tournaments)
-            await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info_admins)
-        else:
-            tournament_info = bt.create_tournaments_keyboard(tournaments)
-            await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info)
-       
+        user_id = callback.from_user.id
+
+        tournaments = bt.get_list_tournaments()  # Получаем актуальный список
+
+        if not tournaments:
+            await callback.message.answer(f'<b>Пусто</b> 🥲\n\nНам жаль, но в данный момент нет ни одного доступного турнира...', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        else: 
+            if user_id in EDITOR:
+                tournament_info_editor = bt.create_tournaments_keyboard_editor(tournaments)
+                await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info_editor)
+            elif user_id in ADMINS or user_id in MAIN_EDITOR:
+                tournament_info_admins = bt.create_tournaments_keyboard_admin(tournaments)
+                await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info_admins)
+            else:
+                tournament_info = bt.create_tournaments_keyboard(tournaments)
+
+                if os.path.exists("Tennis/img/tournament/tournament.jpg"):  # Проверка, есть ли файл
+                    photo = FSInputFile("Tennis/img/tournament/tournament.jpg")  # Загружаем файл
+                    await callback.message.answer_photo(photo, caption=f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info)
+                else:
+                    await callback.message.answer(f"<b>Тут отображаются доступные турниры, в которых можно принять участие</b>\n\nДоступные турниры 👇", parse_mode=ParseMode.HTML, reply_markup=tournament_info)
+    else:
+        await f.check_subscription_message(callback)
             
 # Новый обработчик в роутерах:
 @router.callback_query(F.data.startswith("tournament_out_bnt_"))
@@ -92,14 +104,14 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     if int(player_count) >= int(tournament_data.quantity_person):            
         await callback.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user_in_tournament:
-        await callback.message.answer(f'<b>Вы уже участвуете в турнире!</b> ✅\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        await callback.message.answer(f'✅ <b>Вы уже участвуете в турнире!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.ban_status == True:
-        await callback.message.answer(f'<b>❌ Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        await callback.message.answer(f'❌ <b>Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.division_level == None:
-        await callback.message.answer(f'<b>⚠️ Дорогой пользователь, пока Вы не можете участвовать в турнире</b>\n\nДля начала Вам нужно получить дивизион. Этим уже занимаются наши главные редакторы\n\nБлагодарим за понимание!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        await callback.message.answer(f'⚠️ <b>Дорогой пользователь, пока Вы не можете участвовать в турнире</b>\n\nДля начала Вам нужно получить дивизион. Этим уже занимаются наши главные редакторы\n\nБлагодарим за понимание!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.division_level not in levelTournament_list:
-        await callback.message.answer(f'<b>⚠️ Вы не можете участвовать в турнире</b>\n\nК сожалению, этот турнир доступен только для дивизиона(-ов):\n{tournament_lvl}', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        await callback.message.answer(f'⚠️ <b>Вы не можете участвовать в турнире</b>\n\nК сожалению, этот турнир доступен только для дивизиона(-ов):\n{tournament_lvl}', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.division_level in levelTournament_list:
         await callback.message.answer(f"{tournament_data.regulations}\n\n<b>ДЕТАЛИ ТУРНИРА</b> 🏆\n\n<b><i>Турнир \"{tournament_data.name_tournament.upper()}\"</i></b>\n💪 Дивизион: {tournament_lvl}\n🙋‍♂️ Количество участников: {tournament_data.quantity_person} чел.\n📆 Начало: {tournament_data.start_tournament}\n📆 Окончание: {tournament_data.end_tournament}\n💰 Стоимость участия: {tournament_data.price} бел.руб.", parse_mode=ParseMode.HTML, reply_markup=kb.reglament)
     else:
-        await callback.message.answer(f"📋 <b>Какая-то ошибка</b>\n\nПожалуйста, если вы видите это сообщение, свяжитесь с нами 🙋‍♂️ @sup_MM", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        await callback.message.answer(f"❌ <b>Какая-то ошибка</b>\n\nПожалуйста, если вы видите это сообщение, свяжитесь с нами 🙋‍♂️ @sup_MM", parse_mode=ParseMode.HTML, reply_markup=kb.exit)

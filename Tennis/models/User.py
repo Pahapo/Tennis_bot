@@ -16,10 +16,11 @@ class User(Base):
     division_level = Column(Integer)
     ban_status = Column(Boolean)
     end_date_ban = Column(String(10))
+    coins = Column(Integer)
 
 
     # Конструктор __init__
-    def __init__(self, tg_user_id, name_user, link, age=None, sex=None, division_level=None, ban_status=None, end_date_ban=None):
+    def __init__(self, tg_user_id, name_user, link, age=None, sex=None, division_level=None, ban_status=None, end_date_ban=None, coins=None):
         self.tg_user_id = tg_user_id
         self.name_user = name_user
         self.link = link
@@ -28,6 +29,7 @@ class User(Base):
         self.division_level = division_level
         self.ban_status = ban_status
         self.end_date_ban = end_date_ban
+        self.coins = coins
 
 
     def __repr__(self):
@@ -54,7 +56,15 @@ class User(Base):
 
         user = session.query(User).filter(User.tg_user_id == self.tg_user_id).first()
 
-        text = f"Имя: {self.name_user}\nИстория турниров: {history}\nПол: {self.sex}\nВозраст: {self.age}\nДивизион: {division_lvl}" 
+        text = f"Имя: {self.name_user}\nИстория турниров: {history}"
+        
+        if self.sex:
+            text += f'\nПол: {self.sex}'
+
+        if self.age:
+            text += f'\nВозраст: {self.age}'
+        
+        text += f'\nДивизион: {division_lvl}'
         
         if user.ban_status == True:
             text += f'\nНаличие бана: До {user.end_date_ban}'

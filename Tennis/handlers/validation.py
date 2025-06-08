@@ -43,3 +43,7 @@ def validate_isdigit(number: str) -> bool:
     """Проверяет на - положительное целое число."""
     return number.isdigit()
 
+
+def validate_score(score: str) -> bool:
+    """Проверяет, что комментарий не превышает 11 символов."""
+    return len(score) <= 11

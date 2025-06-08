@@ -163,6 +163,7 @@ class TournamentPlayerData:
 class RegTournamentsStates(StatesGroup):
     name = State()
     level = State()
+    type = State()
     count = State()
     time1 = State()
     time2 = State()
@@ -171,9 +172,10 @@ class RegTournamentsStates(StatesGroup):
 
 
 class TournamentsData:
-    def __init__(self, name=None, level=None, count=None, time1=None, time2=None, price=None, regulations=None):
+    def __init__(self, name=None, level=None, type=None, count=None, time1=None, time2=None, price=None, regulations=None):
         self.name = name
         self.level = level
+        self.type = type
         self.count = count
         self.time1 = time1
         self.time2 = time2
@@ -194,6 +196,7 @@ class TournamentsData:
         return (
             f"Название турнира: {self.name}\n"
             f"Дивизион турнира: {tournament_lvl}\n"
+            f"Тип турнира: {self.type}\n"
             f"Максимальное кол-во участников: {self.count} чел.\n"
             f"Начало: {self.time1}\n"
             f"Окончание: {self.time2}\n"
@@ -214,6 +217,7 @@ class TournamentsData:
             {
                 "Название турнира": self.name,
                 "Дивизион турнира": tournament_lvl,
+                "Тип турнира": self.type,
                 "Максимальное кол-во участников": self.count,
                 "Начало": self.time1,
                 "Окончание": self.time2,
@@ -224,11 +228,18 @@ class TournamentsData:
 
 class FindUser(StatesGroup):
     tg_user_id = State()
+    name_score = State()
     name_ban = State()
+    name_kassa = State()
     name_division = State()
     name_division_del_players = State()
     players_delete = State()
     link = State()
     level = State()
+    score = State()
     period_ban = State()
     reason_ban = State()
+
+
+class UsedCoins(StatesGroup):
+    coins = State()

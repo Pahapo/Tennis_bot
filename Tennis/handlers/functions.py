@@ -1,9 +1,10 @@
-import asyncio
-from datetime import datetime, timedelta
+import re
 import pytz
+import asyncio
 from sqlalchemy import null
 from datetime import datetime
 from aiogram.enums import ParseMode
+from datetime import datetime, timedelta
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import CallbackQuery, LinkPreviewOptions
@@ -32,11 +33,41 @@ edit_start_t = "Мы рады приветствовать тебя в кома�
 all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперника;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Следи за телеграмм каналом <b><a href='{CHANNEL}'>Минск-Мир - Новости</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
-async def save_user(user_id, user_name, user_link): # Сохранение пользователей в список для рассылки
+async def save_user(user_id, user_name, user_link, message): # Сохранение пользователей в список для рассылки
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
     if not user:
         print(f"Новый пользователь нажал /start")
+
+        # СКАЗКА (~30 секунд)
+
+        story = await message.answer(f"Привет <b>{user_name}!</b> 👋", parse_mode=ParseMode.HTML)  # Сохраняем отправленное сообщение
+        await asyncio.sleep(2)
+        await story.edit_text("Давай я расскажу тебе 1 историю... 🎾")
+        await asyncio.sleep(2.5)
+        await story.edit_text("Где-то в далёком-придалёком королевстве 👑")
+        await asyncio.sleep(2.5)
+        await story.edit_text("Среди замков и драконов 🐉")
+        await asyncio.sleep(1.9)
+        await story.edit_text("Основался легендарный теннисный клуб! 🛡️")
+        await asyncio.sleep(2.5)
+        await story.edit_text("Только самые смелые выходили на корт ⚡️")
+        await asyncio.sleep(2.5)
+        await story.edit_text("Их ждали великие дуэли, турниры и таинственные награды...")
+        await asyncio.sleep(3)
+        await story.edit_text("Хочешь очутиться в далёком-придалёком королевстве? 👑")
+        await asyncio.sleep(2.8)
+        await story.edit_text("Сразиться с соперниками?!")
+        await asyncio.sleep(2)
+        await story.edit_text("Выиграть турнир?! 🏆")
+        await asyncio.sleep(2)
+        await story.edit_text("Стать теннисным лордом?! 👑")
+        await asyncio.sleep(2.1)
+        await story.edit_text("<b>Пора начинать наше приключение!</b> 🚀", parse_mode=ParseMode.HTML)
+        await asyncio.sleep(2.3)
+        await story.edit_text("Корт ждёт героя, готового вписать своё имя в историю! 🎾")
+        await asyncio.sleep(3)
+        await story.delete()
 
         old_user = session.query(OldUsers).filter(OldUsers.tg_old_users_id == user_id).first()
 
@@ -49,8 +80,6 @@ async def save_user(user_id, user_name, user_link): # Сохранение по�
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
     
-
-
 
 async def check_subscription(user_id: int, bot) -> bool: # Проверяет, подписан ли пользователь на канал
     try:
@@ -73,7 +102,7 @@ async def check_fast_user(user_id):
         return True
     else:
         return False 
-
+    
 
 
 async def check_ban_user(user_id):
@@ -106,13 +135,14 @@ async def start_message(callback: CallbackQuery, bot):
     elif user_id in EDITOR:
         await callback.message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
     else:
-        await callback.message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=create_tournament_table_keyboard(user_id))
+        keyboard = await create_tournament_table_keyboard_user(user_id)
+        await callback.message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
 
 
-# Вывод кнопоки для user
+# Вывод кнопок для user
 
-def create_tournament_table_keyboard(user_id):
+async def create_tournament_table_keyboard_user(user_id):
     last_toutnament_id = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()).first()    # протестировать на вывод последнего элемента
     
     if last_toutnament_id is None:
@@ -120,19 +150,44 @@ def create_tournament_table_keyboard(user_id):
             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
             [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
             [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]
+            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
+            [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
         ]
     else:
+        buttons = [
+            [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
+            [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
+            [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
+            [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
+        ]
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+@router.callback_query(F.data == 'user_tournament_keyboard')
+async def user_tournament_keyboard(callback: CallbackQuery):
+    await callback.answer('')
+    user_id = callback.from_user.id
+
+    keyboard = await create_tournament_table_keyboard(user_id)
+    await callback.message.answer(f"<b>Тут собрана вся полезная информация касающаяся турнира</b>, в котором Вы участвуете! 🏆\n\n😎 \"Только упорные тренировки сделают из тебя чемпиона!\"", parse_mode=ParseMode.HTML, reply_markup=keyboard)
+
+
+async def create_tournament_table_keyboard(user_id):
+    last_toutnament_id = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()).first()    # протестировать на вывод последнего элемента
+    
+    if last_toutnament_id is not None:
         last_toutnament = session.query(Tournament).filter(Tournament.tournament_id == last_toutnament_id.id_tournament).first()
 
         buttons = [
             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
             [InlineKeyboardButton(text = 'Турнирная таблица 📋', url=last_toutnament.link_table)],
-            [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
-            [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')]
+            [InlineKeyboardButton(text = 'Записать счёт 🙋‍♂️', callback_data='score')],
+            [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
         ]
-
+    else:
+        return
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -193,4 +248,34 @@ async def notification_about_new_tournament(tournament_name, tournament_start, d
                     for players_tg_id in list(set(players_tg_ids)):
                         await bot.send_message(chat_id=players_tg_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=exit)
                 except Exception as e:
-                    print(f"Не удалось отправить сообщение о появлении нового турнира пользователю с id: {players_tg_id} из-за ошибки: {e}")
+                    print(f"❌ Не удалось отправить сообщение о появлении нового турнира пользователю с id: {players_tg_id} из-за ошибки: {e}")
+
+
+
+@router.callback_query(F.data == 'spam')
+async def spam(callback: CallbackQuery, bot):
+
+    await callback.answer(f"Спасибо за обращение!", show_alert=False)
+
+    message_text = callback.message.text
+    match = re.search(r"(@[^\s]+) vs (@[^\s]+)\n.*? Счёт: ([\d: ]+)", message_text)  # Ищем нужные значения
+
+    if match:
+        spam_name = match.group(1)  # Спамер
+        user_name = match.group(2)  # Игрок
+        text = match.group(3)  # Игрок
+
+        message_text_send = f"<b>Игрок {user_name} подал заявку о спаме на пользователя {spam_name} ❗️</b>\n\nТекст вообщения: {text}"
+        for admin in ADMINS:
+            try:
+                await bot.send_message(chat_id=admin, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+            except Exception as e:
+                print(f"❌ Не удалось отправить сообщение от пользователя {user_name} из-за ошибки: {e}")
+    else:
+        print(f"❌ Сообщение о СПАМе не дошло от пользователя {user_name} из-за ошибки: {e}")
+
+    # Удаляем сообщение после нажатия на кнопку
+    await callback.message.delete()
+
+
+

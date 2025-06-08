@@ -8,7 +8,7 @@ import keywords.kw_any as kb
 import keywords.kw_start as ks
 import keywords.kw_user as kb_user
 import handlers.classes as cl
-import handlers.start as st
+import handlers.functions as f
 
 from config.db import session
 from models.Division import Division
@@ -32,7 +32,7 @@ async def set_division(callback: CallbackQuery, state:FSMContext):
 
 
 @router.callback_query(F.data == 'find_users_for_division')
-async def find_users_for_division(callback: CallbackQuery, state:FSMContext):
+async def find_users_for_division(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
     await state.set_state(cl.FindUser.name_division)
     
@@ -40,19 +40,20 @@ async def find_users_for_division(callback: CallbackQuery, state:FSMContext):
     if user_id in MAIN_EDITOR or user_id in EDITOR:
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
-        await callback.message.answer('Функция недоступна! Вы не главный редактор! ❌')
-        st.cmd_start()
+        await callback.message.answer('Функция недоступна! Вы не главный редактор / редактор! ❌')
+        await f.start_message(callback, bot)
 
 
 @router.message(cl.FindUser.name_division)
-async def find_name(message: Message, state:FSMContext):
+async def find_name_division(message: Message, state:FSMContext):
     await state.update_data(name = message.text)
     name_finder_user = message.text.lower()
 
-    if '@' in name_finder_user:
-        name_finder_user = name_finder_user.replace('@', '', 1)
+    if 'https://t.me/' not in name_finder_user:
+        if '@' in name_finder_user:
+            name_finder_user = name_finder_user.replace('@', '', 1)
 
-    name_finder_user = 'https://t.me/' + name_finder_user
+        name_finder_user = 'https://t.me/' + name_finder_user
 
     options = LinkPreviewOptions(
         is_disabled=True
@@ -122,7 +123,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
-            print(f"Не удалось отправить сообщение о изменении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+            print(f"❌ Не удалось отправить сообщение о изменении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
         print(f"ОШИБКА! Дивизион пользователя \"{user.tg_user_id}\" не был изменён. Пользователь не найден в БД!")  
     await state.clear()

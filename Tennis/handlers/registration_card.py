@@ -4,7 +4,7 @@ from aiogram import F, Router, types
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 import keywords.kw_user as kb
@@ -19,14 +19,14 @@ from models.Match import Match
 router = Router()
 
 user_data = {}  # Ключ: username, значение: PlayerData
+MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 
 
 @router.callback_query(F.data == 'register_player')
 async def register(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
 
-    data = await state.get_data()
-    user_id = data.get("user_id")
+    user_id = callback.from_user.id
     user = session.query(User).filter(User.tg_user_id == user_id).first()
 
     if user:
@@ -53,17 +53,6 @@ async def register_age(message: Message, state:FSMContext):
         await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
-
-    user_id = message.from_user.id
-    user = message.from_user
-
-    if user.username:
-        user_link = f"https://t.me/{user.username}"
-    else:
-        user_link = ""
-        
-    await state.update_data(id = user_id)
-    await state.update_data(link = user_link)
     await state.update_data(age = message.text)
     await message.answer('Выберите ваш пол 👇', reply_markup=kb.sex)
 
@@ -87,23 +76,36 @@ async def register_date_q(call: CallbackQuery, state: FSMContext):
     if call.data == "yes_b_c":
         await state.update_data(booking = 'Да')
 
-        now = datetime.now(tz=pytz.utc).astimezone(pytz.timezone('Europe/Moscow'))
-        form_date = now.strftime("%H:%M %d.%m.%Y")
+        form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=1)).strftime('%d.%m.%Y')
+
         await state.set_state(cl.RegPlayerStates.date_booking)
-        await call.message.answer(f'Укажите время и дату в формате (<code>{form_date}</code>) 👇', parse_mode=ParseMode.HTML) 
+        await call.message.answer(f'Укажите время и дату в формате (<code>12:00 {form_date}</code>) 👇', parse_mode=ParseMode.HTML) 
 
     if call.data == "no_b_c":
         await state.update_data(booking = 'Нет')
 
-        now = datetime.now(tz=pytz.utc).astimezone(pytz.timezone('Europe/Moscow'))
-        form_date = now.strftime("%H:%M %d.%m.%Y")
+        # now = datetime.now(tz=pytz.utc).astimezone(pytz.timezone('Europe/Moscow'))
+        # form_date = now.strftime("%H:%M %d.%m.%Y")
+        form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=1)).strftime('%d.%m.%Y')
+
         await state.set_state(cl.RegPlayerStates.date_without_booking)
-        await call.message.answer(f'Укажите время и дату, когда хотели бы поиграть в формате (<code>{form_date}</code>) 👇', parse_mode=ParseMode.HTML) 
+        await call.message.answer(f'Укажите время и дату, когда хотели бы поиграть в формате (<code>12:00 {form_date}</code>) 👇', parse_mode=ParseMode.HTML) 
 
 
 
 @router.message(cl.RegPlayerStates.date_without_booking)
 async def register_date(message: Message, state:FSMContext):
+    user_id = message.from_user.id
+    user = message.from_user
+
+    if user.username:
+        user_link = f"https://t.me/{user.username}"
+    else:
+        user_link = ""
+    
+    await state.update_data(user_id = user_id)
+    await state.update_data(link = user_link)
+
     user_date = message.text.strip()
     if not valid.validate_datetime(user_date):
         await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
@@ -116,6 +118,17 @@ async def register_date(message: Message, state:FSMContext):
 
 @router.message(cl.RegPlayerStates.date_booking)
 async def register_date(message: Message, state:FSMContext):
+    user_id = message.from_user.id
+    user = message.from_user
+
+    if user.username:
+        user_link = f"https://t.me/{user.username}"
+    else:
+        user_link = ""
+    
+    await state.update_data(user_id = user_id)
+    await state.update_data(link = user_link)
+
     user_date = message.text.strip()
     if not valid.validate_datetime(user_date):
         await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
@@ -143,7 +156,6 @@ async def register_comment_q(call: CallbackQuery, state: FSMContext):
 async def register_comment(message: Message, state: FSMContext):
     user_comment = message.text.strip()
     if not valid.validate_comment(user_comment):
-        # await message.answer("⚠ Ошибка! Комментарий должен быть не длиннее 300 символов. Попробуйте снова.")
         remaining_chars = len(user_comment) - 300
         await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов")
         return  # Останавливаем обработку
@@ -167,10 +179,8 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         comment=data.get("comment")
     )
 
-    user_id = data.get("user_id")
-
-    user = session.query(User).filter(User.tg_user_id == user_id).first()
-    user_match = session.query(Match).filter((Match.id_tg_user == user_id) & ((Match.date_booking == data.get("date_booking")) | (Match.date_without_booking == data.get("date_booking")))).first()
+    user = session.query(User).filter(User.tg_user_id == data.get("user_id")).first()
+    user_match = session.query(Match).filter((Match.id_tg_user == data.get("user_id")) & ((Match.date_booking == data.get("date_booking")) | (Match.date_without_booking == data.get("date_booking")))).first()
 
     if user:
         if not user.age:
@@ -182,21 +192,35 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         user_match.date_booking = data.get("date_booking")
         user_match.date_without_booking = data.get("date_without_booking")
         user_match.comment = data.get("comment")
-        print(f"Игра пользователя с ID {user_id} обновлена!")
+        
+        print(f"Игра пользователя с ID {data.get("user_id")} обновлена!")
+        if callback:
+            await callback.message.answer('✅ Игра обновлена!')
+        else:
+            await message.answer('✅ Игра обновлена!')
     else:
         new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), comment = data.get("comment"))
         session.add(new_match)
-        print(f"Карточка игры создана пользователем с ID {user_id}!")
+
+        print(f"✅ Карточка игры создана пользователем с ID {data.get("user_id")}!")
+        if callback:
+            await callback.message.answer('✅ Игра создана!')
+        else:
+            await message.answer('✅ Игра создана!')
+
     session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
-    await f.check_ban_user(user_id)
+    await f.check_ban_user(data.get("user_id"))
 
     if callback:
-        await callback.message.answer('✅ Игра создана!')
         await callback.message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
     else:
-        await message.answer('✅ Игра создана!')
         await message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
+
+    # Обнуляем данные
+    await state.update_data(date_booking = None)
+    await state.update_data(date_without_booking = None)
+
 
 
 @router.callback_query(F.data == 'match_requests')
@@ -241,8 +265,7 @@ async def match_requests(callback: CallbackQuery):
 @router.callback_query(F.data == 'delete_match')
 async def delete_match(callback: types.CallbackQuery, state: FSMContext):
 
-    data = await state.get_data()
-    user_id = data.get("user_id")
+    user_id = callback.from_user.id
     
     message_text = callback.message.text or callback.message.caption  # Получаем текст сообщения
     match = re.search(r"ID: (\d+)", message_text)  # Ищем нужные значения

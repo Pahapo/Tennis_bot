@@ -7,7 +7,7 @@ from config.config import MAIN_EDITOR, ADMINS
 
 import keywords.kw_any as kb
 import handlers.classes as cl
-import handlers.start as st
+import handlers.functions as f
 import handlers.validation as valid
 
 from config.db import session
@@ -26,7 +26,7 @@ async def set_ban(callback: CallbackQuery, state:FSMContext):
 
 
 @router.callback_query(F.data == 'find_users_for_ban')
-async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):
+async def find_users_for_ban(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
     await state.set_state(cl.FindUser.name_ban)
     
@@ -34,19 +34,20 @@ async def find_users_for_ban(callback: CallbackQuery, state:FSMContext):
     if user_id in MAIN_EDITOR or user_id in ADMINS:
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
-        await callback.message.answer('Функция недоступна! Вы не главный редактор! ❌')
-        st.cmd_start()
+        await callback.message.answer('Функция недоступна! Вы не главный редактор / редактор! ❌')
+        await f.start_message(callback, bot)
 
 
 @router.message(cl.FindUser.name_ban)
 async def find_name(message: Message, state:FSMContext):
     await state.update_data(name = message.text)
     name_finder_user = message.text.lower()
+    
+    if 'https://t.me/' not in name_finder_user:
+        if '@' in name_finder_user:
+            name_finder_user = name_finder_user.replace('@', '', 1)
 
-    if '@' in name_finder_user:
-        name_finder_user = name_finder_user.replace('@', '', 1)
-
-    name_finder_user = 'https://t.me/' + name_finder_user
+        name_finder_user = 'https://t.me/' + name_finder_user
 
     options = LinkPreviewOptions(
         is_disabled=True
@@ -79,7 +80,7 @@ async def set_new_ban(callback: CallbackQuery, state:FSMContext):
 
 
 @router.message(cl.FindUser.period_ban)
-async def find_name(message: Message, state:FSMContext):
+async def find_name_p_ban(message: Message, state:FSMContext):
     if not valid.validate_isdigit(message.text):
         await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
@@ -90,7 +91,7 @@ async def find_name(message: Message, state:FSMContext):
 
 
 @router.message(cl.FindUser.reason_ban)
-async def find_name(message: Message, state:FSMContext, bot):
+async def find_name_r_ban(message: Message, state:FSMContext, bot):
     await state.update_data(reason_ban = message.text)
 
     data = await state.get_data()
@@ -120,7 +121,7 @@ async def find_name(message: Message, state:FSMContext, bot):
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
-            print(f"Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+            print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
         print(f"ОШИБКА! Пользователя '{user.name_user}' не был забанен!")  
     await state.clear()

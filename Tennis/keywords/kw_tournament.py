@@ -50,6 +50,14 @@ level_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(t
                                                         [InlineKeyboardButton(text = 'Все дивизионы', callback_data='lvl_t_all')]
                                                         ])
 
+type_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Одиночный', callback_data='type_t_1')],
+                                                        [InlineKeyboardButton(text = 'Парный', callback_data='type_t_2')],
+                                                        [InlineKeyboardButton(text = 'Микст', callback_data='type_t_3')]  # запятая
+                                                        # [InlineKeyboardButton(text = 'Командный', callback_data='type_t_4')],
+                                                        # [InlineKeyboardButton(text = 'Марафон', callback_data='type_t_5')],
+                                                        # [InlineKeyboardButton(text = 'Короли тай-брейков', callback_data='type_t_6')]
+                                                        ])
+
 add_level_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Добавить дивизион ⚡️', callback_data='add_level_tournament')],
                                                             [InlineKeyboardButton(text = 'Нет', callback_data='not_add_level_tournament')]
                                                             ])
@@ -62,8 +70,8 @@ reg_tournament_lvl = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
                                                             [InlineKeyboardButton(text = 'Не знаю свой дивизион', callback_data='lvl_p_6')]
                                                             ])
 
-payment_address = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '✅ Я оплатил(-а)', callback_data='confirm_payment')],
-                                                      [InlineKeyboardButton(text = '❌ Отменить и выйти', callback_data='start_message')]
-                                                      ])
+# реферальная система
 
-confirm_payment_pl = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '❌ Отменить и выйти', callback_data='start_message')]])
+use_coins_q = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Да, использовать 💰', callback_data='use_coins')],
+                                                  [InlineKeyboardButton(text = 'Назад', callback_data='reglament_confirm')]
+                                                  ])

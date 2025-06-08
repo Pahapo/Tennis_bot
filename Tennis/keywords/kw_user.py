@@ -17,6 +17,10 @@ players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Н
                                                 [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                 ])
 
+confirm_match = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Мои подтверждённые игры 🎾', callback_data='my_match')],
+                                                [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                ])
+
 players_data = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='match'),
                                                     InlineKeyboardButton(text = '✅ Подать заявку', callback_data='apply_match')]
                                                     ]) 

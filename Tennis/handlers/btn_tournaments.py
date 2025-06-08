@@ -102,7 +102,7 @@ def create_tournaments_keyboard_players(tournaments_data):
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-# Вывод кнопок для редактирования турнир
+# Вывод кнопок для редактирования турнира
 
 def get_list_tournaments_edit():
     tournaments_data = [
@@ -119,6 +119,26 @@ def create_tournaments_edit_keyboard(tournaments_data):
         for name in tournaments_data
     ]
     buttons.append([InlineKeyboardButton(text='Назад', callback_data='tournament_edit')])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+# Вывод кнопок под учёт наличных расчётов за турнир
+
+def get_list_tournaments_players_kassa():
+    tournaments_data = [
+        row.name_tournament+'_kassa' for row in session.query(Tournament).filter(
+            func.str_to_date(Tournament.start_tournament, "%d.%m.%Y") >= datetime.today()
+        ).all()
+    ]
+    return tournaments_data
+
+
+def create_tournaments_keyboard_players_kassa(tournaments_data):
+    buttons = [
+        [InlineKeyboardButton(text=name.replace("_kassa", ""), callback_data=f"kassa_players_{name}")]
+        for name in tournaments_data
+    ]
+    buttons.append([InlineKeyboardButton(text='Назад', callback_data='start_message')])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 

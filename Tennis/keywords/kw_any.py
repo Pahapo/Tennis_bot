@@ -18,6 +18,37 @@ edit_division = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='set_division')]
                                                     ])
 
+edit_kassa = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Внести платёж 💰', callback_data='set_new_check')],
+                                                    [InlineKeyboardButton(text = 'Найти другого игрока 🔍', callback_data='find_users_for_kassa')],
+                                                    [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                    ])
+
+exit_kassa = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Выбрать другой 🏆', callback_data='set_new_check')],
+                                                    [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                    ])
+
+edit_score = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Выбрать соперника ⚡', callback_data='set_new_score')],
+                                                    [InlineKeyboardButton(text = 'Найти другого 🔍', callback_data='find_users_for_score')],
+                                                    [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                    ])
+
+back_score = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Найти другого игрока 🔍', callback_data='find_users_for_score')],
+                                                    [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                    ])
+
+confirm_score = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Подтвердить счёт! ✅', callback_data='confirm_score')],
+                                                    [InlineKeyboardButton(text = 'Исправить счёт', callback_data='set_new_score')]
+                                                    ])
+
+confirm_score_contestant = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Подтвердить счёт! ✅', callback_data='handle_button_click_confirm_score')],
+                                                    [InlineKeyboardButton(text = 'Не согласен! ❌', callback_data='unconfirm_score_contestant')],
+                                                    [InlineKeyboardButton(text = 'Сообщить о спаме', callback_data='spam')]
+                                                    ])
+
+another_score = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Записать другой счёт ⚡', callback_data='find_users_for_score')],
+                                                    [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                    ])
+
 pl_without_div = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Золотой', callback_data='lvl_wd_1')],
                                                         [InlineKeyboardButton(text = 'Серебряный', callback_data='lvl_wd_2')],
                                                         [InlineKeyboardButton(text = 'Бронзовый', callback_data='lvl_wd_3')],

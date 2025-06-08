@@ -4,8 +4,10 @@ from dotenv import load_dotenv
 load_dotenv()  # Загружает переменные из .env
 
 TOKEN = os.getenv('TOKEN')
+BOT_USERNAME = os.getenv('BOT_USERNAME')
 CHANNEL = os.getenv('CHANNEL')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
+CHANNEL_SCORES = os.getenv('CHANNEL_SCORES')
 
 ADMINS = list(map(int, os.getenv('ADMINS').split(',')))                 # ID администраторов (можно хранить и в базе данных, но на старте так удобнее)
 MAIN_EDITOR = list(map(int, os.getenv('MAIN_EDITOR').split(',')))       # Распределяет игроков по парам

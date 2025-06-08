@@ -8,17 +8,15 @@ import handlers.btn_tournaments as bt
 import handlers.functions as f
 import keywords.kw_tournament as kb
 
-router = Router()
 
-# ПРЕДУСМОТРЕТЬ, ЕСЛИ СПИСОК ПУСТОЙ, ТО ВЫВОДИТЬ ДРУГОЕ СООБЩЕНИЕ ! ! !
+router = Router()
 
 
 @router.callback_query(F.data == 'tournament_table')
 async def tournament_table(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
 
-    data = await state.get_data()
-    user_id = data.get("user_id")
+    user_id = callback.from_user.id
 
     if await f.check_subscription(callback.from_user.id, bot):
         if user_id in EDITOR:

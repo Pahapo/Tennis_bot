@@ -5,11 +5,9 @@ from aiogram import F, Router
 from config.config import EDITOR, ADMINS
 
 import keywords.kw_any as kb
-import keywords.kw_tournament as kt
 import handlers.btn_tournaments as bt
 import handlers.functions as f
 import handlers.classes as cl
-import handlers.start as st
 import googleSheet.googleSheet as gs
 
 from config.db import session
@@ -34,8 +32,8 @@ async def delete_players(callback: CallbackQuery, state:FSMContext):
 async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')      
 
-    selected_players = callback.data.replace("delete_player_", "").replace("_players", "")  # Получаем название выбранного турнира
-    await state.update_data(name_tournament_del_players = selected_players)
+    selected_tournament = callback.data.replace("delete_player_", "").replace("_players", "")  # Получаем название выбранного турнира
+    await state.update_data(name_tournament_del_players = selected_tournament)
 
     await state.set_state(cl.FindUser.players_delete)
     await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
@@ -45,11 +43,12 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
 async def find_name_del_players(message: Message, state:FSMContext):
     await state.update_data(players_delete = message.text)
     name_finder_user = message.text
+    
+    if 'https://t.me/' not in name_finder_user:
+        if '@' in name_finder_user:
+            name_finder_user = name_finder_user.replace('@', '', 1)
 
-    if '@' in name_finder_user:
-        name_finder_user = name_finder_user.replace('@', '', 1)
-
-    name_finder_user = 'https://t.me/' + name_finder_user
+        name_finder_user = 'https://t.me/' + name_finder_user
 
     options = LinkPreviewOptions(
         is_disabled=True
@@ -111,16 +110,16 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
             try:
                 await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
             except Exception as e:
-                print(f"Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+                print(f"❌ Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
 
         except Exception as e:
-            print(f"Редактору не получилось удалить пользователя с id {user.tg_user_id} из турнира '{selected_tournament.name_tournament}' в дивизионе '{selected_division.name_division} 'из-за ошибки: {e}")
-            await callback.message.answer(f"<b>Не получилось удалить пользователя {user.name_user} из турнира '{selected_tournament.name_tournament}' в дивизионе '{selected_division.name_division} 'из-за ошибки!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+            print(f"Редактору не получилось удалить пользователя с id {user.tg_user_id} из турнира '{selected_tournament.name_tournament}' в дивизионе '{selected_division.name_division}' из-за ошибки: {e}")
+            await callback.message.answer(f"<b>Не получилось удалить пользователя {user.name_user} из турнира '{selected_tournament.name_tournament}' в дивизионе '{selected_division.name_division}' из-за ошибки!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         
         await state.clear()
     else:
         await callback.message.answer('Функция недоступна! Вы не организатор! ❌')
-        st.cmd_start()
+        await f.start_message(callback, bot)
 
 
 
