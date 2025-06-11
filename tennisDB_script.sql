@@ -25,6 +25,7 @@ CREATE TABLE `match` (
   `id_tg_user` bigint DEFAULT NULL,
   `date_booking` varchar(40) DEFAULT NULL,
   `date_without_booking` varchar(40) DEFAULT NULL,
+  `name_court` varchar(50) DEFAULT NULL,
   `comment` varchar(300) DEFAULT NULL,
   `player_1` bigint DEFAULT NULL,
   `player_2` bigint DEFAULT NULL,

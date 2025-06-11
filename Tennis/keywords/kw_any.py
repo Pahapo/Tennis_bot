@@ -105,6 +105,14 @@ fast_booking_court = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
                                                           [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                           ])
 
+name_booking_court = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Северная Америка - Кижеватова 3Б', callback_data='name_court_1')],
+                                                          [InlineKeyboardButton(text = 'Африка - Теслы 6', callback_data='name_court_2')],
+                                                          [InlineKeyboardButton(text = 'Центральная Европа - Теслы 16', callback_data='name_court_3')],
+                                                          [InlineKeyboardButton(text = 'Средиземноморский - Теслы 24', callback_data='name_court_4')],
+                                                          [InlineKeyboardButton(text = 'Тропические острова - Лученка 24', callback_data='name_court_5')],
+                                                          [InlineKeyboardButton(text = 'Евразия - Лученка 1', callback_data='name_court_6')]
+                                                          ])
+
 # inventory
 
 inventory = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Открыть Барахолку 🛒', url='https://t.me/tennis_mm_market')],

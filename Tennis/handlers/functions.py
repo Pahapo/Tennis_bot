@@ -5,11 +5,12 @@ from sqlalchemy import null
 from datetime import datetime
 from aiogram.enums import ParseMode
 from datetime import datetime, timedelta
+from sqlalchemy.exc import IntegrityError
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram import F, Router
-from config.config import CHANNEL, CHANNEL_ID, ADMINS, MAIN_EDITOR, EDITOR
+from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_start as kb
 import keywords.kw_any as ka
@@ -76,15 +77,21 @@ async def save_user(user_id, user_name, user_link, message): # Сохранен�
         else:
             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
 
-        session.add(new_user)
-        session.commit() # Сохраняем изменения (фиксируем транзакцию)
+        try:
+            session.add(new_user)
+            session.commit() # Сохраняем изменения (фиксируем транзакцию)
+        except IntegrityError as e:
+            print(f"Пользователь {new_user} уже существует! Ошибка: {e}")
 
-    
+
 
 async def check_subscription(user_id: int, bot) -> bool: # Проверяет, подписан ли пользователь на канал
     try:
-        member = await bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
-        return member.status in ["member", "administrator", "creator"]
+        for channel in CHANNELS_SUB:
+            member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
+            if member.status not in ["member", "administrator", "creator"]:
+                return False  # Не подписан на текущий канал
+        return True  # Подписан на все каналы
     except TelegramBadRequest:
         return False
     
@@ -150,16 +157,16 @@ async def create_tournament_table_keyboard_user(user_id):
             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
             [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
             [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
-            [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
+            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+            # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
         ]
     else:
         buttons = [
             [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
             [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
             [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
-            [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
+            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+            # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
         ]
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)

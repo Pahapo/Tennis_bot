@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from config.config import CHANNEL
+from config.config import CHANNEL, CHANNEL_CHAT
 
 # Администраторы
 
@@ -54,6 +54,7 @@ edit_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(te
                                                         [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                         ])
 
-builder = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Подписаться на канал", url=CHANNEL),
-                                                InlineKeyboardButton(text="Я подписался ✅", callback_data="check_subscription")]
+builder = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Подписаться на ММ", url=CHANNEL),
+                                                InlineKeyboardButton(text="Подписаться на чат", url=CHANNEL_CHAT)],
+                                                [InlineKeyboardButton(text="Я подписался ✅", callback_data="check_subscription")]
                                                 ])

@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import keywords.kw_user as kb
+import keywords.kw_any as ka
 import handlers.classes as cl
 import handlers.functions as f
 import handlers.validation as valid
@@ -56,7 +57,7 @@ async def register_age(message: Message, state:FSMContext):
     await state.set_state(None)
 
     await state.update_data(age = message.text)
-    await message.answer('Выберите ваш пол 👇', reply_markup=kb.sex)
+    await message.answer('Выберите Ваш пол 👇', reply_markup=kb.sex)
 
 
 
@@ -67,7 +68,6 @@ async def register_sex(call: CallbackQuery, state: FSMContext):
         await state.update_data(sex = 'Мужчина')
     if call.data == "women":
         await state.update_data(sex = 'Женщина')
-    await state.set_state(cl.RegPlayerStates.booking)
     await call.message.answer('Вы уже забронировали корт? 🎾', reply_markup=kb.booking_court_q)
 
 
@@ -114,9 +114,28 @@ async def register_date(message: Message, state:FSMContext):
         return  # Останавливаем обработку
     
     await state.set_state(None)
-
     await state.update_data(date_without_booking = message.text)
-    await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
+
+    await message.answer('Выберите забронированный корт 👇', reply_markup=ka.name_booking_court)
+
+
+@router.callback_query(F.data.in_(["name_court_1", "name_court_2", "name_court_3", "name_court_4", "name_court_5", "name_court_6"]))
+async def register_date_q(call: CallbackQuery, state: FSMContext):
+    await call.answer('')
+    if call.data == "name_court_1":
+        await state.update_data(name_court = 'Северная Америка - Кижеватова 3Б')
+    if call.data == "name_court_2":
+        await state.update_data(name_court = 'Африка - Теслы 6')
+    if call.data == "name_court_3":
+        await state.update_data(name_court = 'Центральная Европа - Теслы 16')
+    if call.data == "name_court_4":
+        await state.update_data(name_court = 'Средиземноморский - Теслы 24')
+    if call.data == "name_court_5":
+        await state.update_data(name_court = 'Тропические острова - Лученка 24')
+    if call.data == "name_court_6":
+        await state.update_data(name_court = 'Евразия - Лученка 1')
+
+    await call.message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
 
 
@@ -254,10 +273,12 @@ async def match_requests(callback: CallbackQuery):
                 text = ''
 
                 if user_match.date_booking:
-                    text += f'\nБронь корта: {user_match.date_booking} 🎾'
+                    text += f'\n\nБронь корта: {user_match.date_booking}'
+                    if user_match.name_court:
+                        text += f'\nКорт: {user_match.name_court}'
                     
                 if user_match.date_without_booking:
-                    text += f'\nБрони нет! Предлагаю поиграть: {user_match.date_without_booking}'
+                    text += f'\n\nБрони нет! Предлагаю поиграть: {user_match.date_without_booking}'
 
                 if user_match.comment:
                     text += f'\nКомментарий: <blockquote>{user_match.comment}</blockquote>'

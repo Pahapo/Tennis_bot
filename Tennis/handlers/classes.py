@@ -21,17 +21,19 @@ class RegPlayerStates(StatesGroup):
     booking = State()
     date_booking = State()
     date_without_booking = State()
+    name_court = State()
     skills = State()
     comment = State()
 
 class PlayerData:     # НЕ ТРОГАТЬ !!!
-    def __init__(self, id=None, link=None, age=None, sex=None, date_booking=None, date_without_booking=None, skills=None, comment=None, ban=None, tournaments_list=None):
+    def __init__(self, id=None, link=None, age=None, sex=None, date_booking=None, date_without_booking=None, name_court=None, skills=None, comment=None, ban=None, tournaments_list=None):
         self.id = id
         self.link = link
         self.age = age
         self.sex = sex
         self.date_booking = date_booking
         self.date_without_booking = date_without_booking
+        self.name_court = name_court
         self.skills = skills
         self.comment = comment
         self.ban = ban
@@ -75,9 +77,11 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
             text_card += f"Дивизион: Не определён\n" # Добавить выбор дивизиона
             
         if self.date_booking:
-            text_card += f"Бронь корта: на {self.date_booking} 🎾\n"
+            text_card += f"\nБронь корта: на {self.date_booking}\n"
+            if self.name_court:
+                text_card += f"Корт: {self.name_court}\n"
         else:
-            text_card += f"Брони нет! Предлагаю поиграть: {self.date_without_booking}\n"
+            text_card += f"\nБрони нет! Предлагаю поиграть: {self.date_without_booking}\n"
 
         if self.comment:
             text_card += f"Комментарий: <blockquote>{self.comment}</blockquote>\n"
@@ -97,13 +101,13 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
         return {
             self.id : 
             {
-                "Имя": user.name_user,
                 "Ссылка": self.link,
                 "История турниров": self.tournaments_list,
                 "Пол": self.sex,
                 "Возраст": self.age,
                 "Дивизион": tournament_lvl,
                 "Бронь корта": self.date_booking,
+                "Корт": self.name_court,
                 "Предложение о дате игры": self.date_without_booking,
                 "Комментарий": self.comment
             }
