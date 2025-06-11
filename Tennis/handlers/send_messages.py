@@ -45,6 +45,8 @@ async def register(callback: CallbackQuery, state:FSMContext):
 async def sending_messages(message: Message, state:FSMContext):    
     await state.update_data(message_text_send = message.html_text)
 
+    await state.set_state(None)
+
     options = LinkPreviewOptions(
         is_disabled=True
     )
@@ -69,7 +71,8 @@ async def register(callback: CallbackQuery, state:FSMContext):
 
 
 @router.message(F.content_type == types.ContentType.PHOTO, StateFilter(cl.SendMessage.message_flag))
-async def save_photo_payment(message: types.Message, state: FSMContext, bot):
+async def save_photo_payment(message: types.Message, state: FSMContext):
+
     await state.set_state(None)
 
     if message.caption:

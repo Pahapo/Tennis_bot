@@ -42,6 +42,8 @@ async def find_users_for_ban(callback: CallbackQuery, state:FSMContext, bot):
 async def find_name(message: Message, state:FSMContext):
     await state.update_data(name = message.text)
     name_finder_user = message.text.lower()
+
+    await state.set_state(None)
     
     if 'https://t.me/' not in name_finder_user:
         if '@' in name_finder_user:
@@ -81,9 +83,12 @@ async def set_new_ban(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.FindUser.period_ban)
 async def find_name_p_ban(message: Message, state:FSMContext):
+
     if not valid.validate_isdigit(message.text):
         await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+    
+    await state.set_state(None)
 
     await state.update_data(period_ban = int(message.text))
     await state.set_state(cl.FindUser.reason_ban)
@@ -93,6 +98,8 @@ async def find_name_p_ban(message: Message, state:FSMContext):
 @router.message(cl.FindUser.reason_ban)
 async def find_name_r_ban(message: Message, state:FSMContext, bot):
     await state.update_data(reason_ban = message.text)
+
+    await state.set_state(None)
 
     data = await state.get_data()
     name_finder_user = data.get("tg_user_id")
@@ -112,11 +119,11 @@ async def find_name_r_ban(message: Message, state:FSMContext, bot):
 
         user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
 
-        print(f"Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!")
-        await message.answer(f"✅ Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!", reply_markup=kb.back_ban)
+        print(f'Пользователь "{user.name_user}" был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!')
+        await message.answer(f'✅ Пользователь "{user.name_user}" был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!', reply_markup=kb.back_ban)
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
-        message_text_send = f"<b>Дорогой игрок, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
+        message_text_send = f'<b>Дорогой игрок, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>'
 
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)

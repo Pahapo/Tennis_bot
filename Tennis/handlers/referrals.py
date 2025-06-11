@@ -157,6 +157,8 @@ async def use_coins(callback: CallbackQuery, state:FSMContext):
 async def register_age(message: Message, state:FSMContext):
     coins = message.text
 
+    await state.set_state(None)
+
     # Проверяем, корректно ли введено количество монет
     if not valid.validate_isdigit(coins):
         await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)

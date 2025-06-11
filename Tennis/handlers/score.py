@@ -40,6 +40,8 @@ async def find_users_for_score(callback: CallbackQuery, state:FSMContext):
 @router.message(cl.FindUser.name_score)
 async def find_name_score(message: Message, state:FSMContext):
 
+    await state.set_state(None)
+
     user_id = message.from_user.id
     link_finder_contestant = message.text.lower()
 
@@ -101,6 +103,8 @@ async def find_score(message: Message, state:FSMContext):
         remaining_chars = len(score) - 11
         await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов")
         return  # Останавливаем обработку
+    
+    await state.set_state(None)
 
     data = await state.get_data()
     user_id = message.from_user.id

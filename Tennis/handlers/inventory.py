@@ -1,10 +1,12 @@
-from aiogram.types import CallbackQuery, FSInputFile
+import os
+from aiogram.types import CallbackQuery, FSInputFile, Message
+from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 from aiogram import F, Router
-import os
 
 import keywords.kw_any as ka
 import handlers.functions as f
+import handlers.classes as cl
 
 from config.db import session
 from models.Inventory import Inventory
@@ -24,6 +26,26 @@ async def inventory(callback: CallbackQuery, bot):
             await callback.message.answer(f"<b>На барахолке ты найдёшь инвентарь, который выставили игроки 🛒 Хочешь продать? 🤔\nСоздай своё объявление!</b>\n\n🎾 <b>Хорошие новости</b>, ты можешь приобрести инвентарь для тенниса прямо в боте!\n\n🤖 <b>Что я могу предложить?</b>\n• Теннисные мячи (Babolat, Head)\n• Виброгасители (Wilson)\n• Намотки (Wilson, Tecnifibre)", parse_mode=ParseMode.HTML, reply_markup=ka.inventory)
     else:
         await f.check_subscription_message(callback)
+
+
+# Отправка сообщения inventory
+
+
+# @router.callback_query(F.data == 'adm')
+# async def register(callback: CallbackQuery, state:FSMContext):
+#     await callback.answer('')
+#     await state.set_state(cl.SendMessage.invent)
+#     await callback.message.answer('Введи сообщение, которое хочешь разослать (только текст) 👇')
+
+# @router.message(cl.SendMessage.invent)
+# async def sending_messages(message: Message, state:FSMContext):   
+# 
+#     await state.set_state(None) 
+
+#     check = Inventory(photo = 'img', description = message.html_text)
+#     session.add(check)
+#     session.commit()
+
 
 
 @router.callback_query(F.data == 'get_inventory1')

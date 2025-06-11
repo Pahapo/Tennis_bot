@@ -54,6 +54,8 @@ async def find_users_for_kassa(callback: CallbackQuery, state:FSMContext, bot):
 async def find_name_kassa(message: Message, state:FSMContext):
     link_finder_user = message.text.lower()
 
+    await state.set_state(None)
+
     if 'https://t.me/' not in link_finder_user:
         if '@' in link_finder_user:
             link_finder_user = link_finder_user.replace('@', '', 1)

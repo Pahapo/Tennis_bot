@@ -90,6 +90,7 @@ async def confirm_payment(callback: CallbackQuery, state:FSMContext, bot):
 async def save_photo_payment(message: types.Message, state: FSMContext, bot):
     
     await state.set_state(None)
+    
     await message.answer('<b>Спасибо за оплату!</b> 😎\n\n• Наши редакторы уже занимаются подтверждением Вашей транзакции! ⚡️ Ожидайте оповещения', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     
     data = await state.get_data()
@@ -247,7 +248,7 @@ async def success_payment(callback: CallbackQuery, state:FSMContext, bot):
         if selected_user.coins:
             if data.get("coins"):
                 selected_user.coins -= data.get("coins")
-                print(f"✅ Игрок с id {selected_user.tg_user_id} применил {data.get("coins")} монет для участия в турнире - '{selected_tournament.name_tournament}'!")
+                print(f'✅ Игрок с id {selected_user.tg_user_id} применил {data.get("coins")} монет для участия в турнире - "{selected_tournament.name_tournament}"!')
 
         session.commit()
         print(f"✅ Игрок с id {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")

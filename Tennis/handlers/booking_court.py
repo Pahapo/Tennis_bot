@@ -39,6 +39,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 # @router.message(cl.FindUser.name_ban)
 # async def find_name(message: Message, state:FSMContext):
 #     await state.update_data(name = message.text)
+#     await state.set_state(None)
 #     name_finder_user = message.text.lower()
 #     if 'https://t.me/' not in name_finder_user:
 #         if '@' in name_finder_user:
@@ -79,6 +80,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 # @router.message(cl.FindUser.period_ban)
 # async def find_name(message: Message, state:FSMContext):
 #     await state.update_data(period_ban = int(message.text))
+#     await state.set_state(None)
 #     await state.set_state(cl.FindUser.reason_ban)
 #     await message.answer('Опишите причину бана. (Этот текст увидит пользователь) 👇')
 
@@ -86,6 +88,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 # @router.message(cl.FindUser.reason_ban)
 # async def find_name(message: Message, state:FSMContext, bot):
 #     await state.update_data(reason_ban = message.text)
+#     await state.set_state(None)
 
 #     data = await state.get_data()
 #     name_finder_user = data.get("tg_user_id")

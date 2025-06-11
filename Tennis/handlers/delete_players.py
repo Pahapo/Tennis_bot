@@ -43,6 +43,8 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
 async def find_name_del_players(message: Message, state:FSMContext):
     await state.update_data(players_delete = message.text)
     name_finder_user = message.text
+
+    await state.set_state(None)
     
     if 'https://t.me/' not in name_finder_user:
         if '@' in name_finder_user:

@@ -9,6 +9,7 @@ from models.TournamentPlayers import TournamentPlayers
 
 class SendMessage(StatesGroup):
     message = State()
+    invent = State()
     payment_flag = State()
     message_flag = State()
 

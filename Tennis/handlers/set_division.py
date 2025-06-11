@@ -49,6 +49,8 @@ async def find_name_division(message: Message, state:FSMContext):
     await state.update_data(name = message.text)
     name_finder_user = message.text.lower()
 
+    await state.set_state(None)
+
     if 'https://t.me/' not in name_finder_user:
         if '@' in name_finder_user:
             name_finder_user = name_finder_user.replace('@', '', 1)

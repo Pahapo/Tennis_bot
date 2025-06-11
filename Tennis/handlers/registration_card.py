@@ -52,6 +52,8 @@ async def register_age(message: Message, state:FSMContext):
     if not valid.validate_age(user_age):
         await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+    
+    await state.set_state(None)
 
     await state.update_data(age = message.text)
     await message.answer('Выберите ваш пол 👇', reply_markup=kb.sex)
@@ -98,6 +100,8 @@ async def register_date(message: Message, state:FSMContext):
     user_id = message.from_user.id
     user = message.from_user
 
+    await state.set_state(None)
+
     if user.username:
         user_link = f"https://t.me/{user.username}"
     else:
@@ -120,6 +124,8 @@ async def register_date(message: Message, state:FSMContext):
 async def register_date(message: Message, state:FSMContext):
     user_id = message.from_user.id
     user = message.from_user
+
+    await state.set_state(None)
 
     if user.username:
         user_link = f"https://t.me/{user.username}"
@@ -155,10 +161,13 @@ async def register_comment_q(call: CallbackQuery, state: FSMContext):
 @router.message(cl.RegPlayerStates.comment)
 async def register_comment(message: Message, state: FSMContext):
     user_comment = message.text.strip()
+
     if not valid.validate_comment(user_comment):
         remaining_chars = len(user_comment) - 300
         await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов")
         return  # Останавливаем обработку
+    
+    await state.set_state(None)
     
     await state.update_data(comment = message.text)
     await register_card(None, message, state)
@@ -193,7 +202,7 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         user_match.date_without_booking = data.get("date_without_booking")
         user_match.comment = data.get("comment")
         
-        print(f"Игра пользователя с ID {data.get("user_id")} обновлена!")
+        print(f'Игра пользователя с ID {data.get("user_id")} обновлена!')
         if callback:
             await callback.message.answer('✅ Игра обновлена!')
         else:
@@ -202,7 +211,7 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), comment = data.get("comment"))
         session.add(new_match)
 
-        print(f"✅ Карточка игры создана пользователем с ID {data.get("user_id")}!")
+        print(f'✅ Карточка игры создана пользователем с ID {data.get("user_id")}!')
         if callback:
             await callback.message.answer('✅ Игра создана!')
         else:

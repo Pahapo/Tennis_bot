@@ -38,6 +38,7 @@ async def create_tournament(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.name)
 async def register_name(message: Message, state:FSMContext):
+    await state.set_state(None)
 
     # Инспектируем таблицу Tournament
     mapper = inspect(Tournament)    
@@ -162,8 +163,9 @@ async def register_age(message: Message, state:FSMContext):
         await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
-    
     await state.update_data(count = message.text)
+    await state.set_state(None)
+    
     form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=7)).strftime('%d.%m.%Y')
     
     await state.set_state(cl.RegTournamentsStates.time1)
@@ -177,8 +179,9 @@ async def register_age(message: Message, state:FSMContext):
         await message.answer("⚠ Ошибка! Формат даты должен быть <b>DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку
     
-    
     await state.update_data(time1 = message.text)
+    await state.set_state(None)
+    
     form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=37)).strftime('%d.%m.%Y')
 
     await state.set_state(cl.RegTournamentsStates.time2)
@@ -193,6 +196,8 @@ async def register_age(message: Message, state:FSMContext):
         return  # Останавливаем обработку
     
     await state.update_data(time2 = message.text)
+    await state.set_state(None)
+    
     await state.set_state(cl.RegTournamentsStates.price)
     await message.answer('Введите стоимость участия в турнире (только цифры) 👇')
 
@@ -205,6 +210,8 @@ async def register_age(message: Message, state:FSMContext):
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
     
     await state.update_data(price = message.text)
+    await state.set_state(None)
+
     await state.set_state(cl.RegTournamentsStates.regulations)
     await message.answer('Введите текст регламента 👇')
 
@@ -217,6 +224,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
     await state.update_data(regulations = message.html_text)
+    await state.set_state(None)
     
     data = await state.get_data()
     
@@ -252,7 +260,7 @@ async def register_age(message: Message, state:FSMContext, bot):
 
         link_sheet_tournament = tournament.link_table
 
-        print(f"Турнир '{old_name}' был обновлён редактором на '{data.get("name")}'!")
+        print(f'Турнир "{old_name}" был обновлён редактором на "{data.get("name")}"!')
         await message.answer('✅ Турнир обновлён!')
 
     else:
@@ -260,7 +268,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         await asyncio.sleep(2)
         await tournament_sms.edit_text("Создаём Excel таблицу... 📁")
         
-        type_tournament = f"Турнир {data.get("type")} (шаблон)"
+        type_tournament = f'Турнир {data.get("type")} (шаблон)'
         link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"), int(data.get("count")), type_tournament)
 
         await tournament_sms.edit_text("Добавляем участников... 🙋‍♂️")
@@ -270,7 +278,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         session.commit() # Сохраняем изменения (фиксируем транзакцию)
 
         await tournament_sms.edit_text('✅ Турнир создан!')
-        print(f"Создан новый турнир - '{data.get("name")}'")
+        print(f'Создан новый турнир - "{data.get("name")}"')
 
         await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot)
         
