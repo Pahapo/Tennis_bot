@@ -199,7 +199,7 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
             )
 
             if user_match:
-                if user_match.date_booking == None and user_match.date_without_booking == None:
+                if user_match.player_1 == None and user_match.player_2 == None:
                     print(f"✅ Игра подтверждена пользователем с id {user_id}!")
                     await callback.answer(f"✅ Игра объявлена!", show_alert=False)
                     await callback.message.answer("🏆")
