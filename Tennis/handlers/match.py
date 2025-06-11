@@ -276,8 +276,8 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
     expired_matches = [
         match for match in all_matches
         if (
-            (match.date_booking and datetime.strptime(match.date_booking, "%H:%M %d.%m.%Y") > datetime.now()) or
-            (match.date_without_booking and datetime.strptime(match.date_without_booking, "%H:%M %d.%m.%Y") > datetime.now())
+            (match.date_booking and datetime.strptime(match.date_booking, "%H:%M %d.%m.%Y") < datetime.now()) or
+            (match.date_without_booking and datetime.strptime(match.date_without_booking, "%H:%M %d.%m.%Y") < datetime.now())
         )
     ]
 

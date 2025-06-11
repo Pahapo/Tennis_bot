@@ -100,8 +100,6 @@ async def register_date(message: Message, state:FSMContext):
     user_id = message.from_user.id
     user = message.from_user
 
-    await state.set_state(None)
-
     if user.username:
         user_link = f"https://t.me/{user.username}"
     else:
@@ -115,6 +113,8 @@ async def register_date(message: Message, state:FSMContext):
         await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку
     
+    await state.set_state(None)
+
     await state.update_data(date_without_booking = message.text)
     await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
@@ -125,8 +125,6 @@ async def register_date(message: Message, state:FSMContext):
     user_id = message.from_user.id
     user = message.from_user
 
-    await state.set_state(None)
-
     if user.username:
         user_link = f"https://t.me/{user.username}"
     else:
@@ -139,6 +137,8 @@ async def register_date(message: Message, state:FSMContext):
     if not valid.validate_datetime(user_date):
         await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку
+    
+    await state.set_state(None)
     
     await state.update_data(date_booking = message.text)
     await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)

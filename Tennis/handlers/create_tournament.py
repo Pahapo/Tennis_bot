@@ -38,7 +38,6 @@ async def create_tournament(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.name)
 async def register_name(message: Message, state:FSMContext):
-    await state.set_state(None)
 
     # Инспектируем таблицу Tournament
     mapper = inspect(Tournament)    
@@ -49,6 +48,7 @@ async def register_name(message: Message, state:FSMContext):
         await message.answer(f"⚠ Ошибка! Текст превышает {name_tournament_length} символов")
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
+    await state.set_state(None)  
     await state.update_data(name = message.text)
 
     tournament = session.query(Tournament).filter(Tournament.name_tournament == message.text).first()
