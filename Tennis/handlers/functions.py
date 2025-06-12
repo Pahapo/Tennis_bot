@@ -160,7 +160,7 @@ async def register_skill(message: Message, state:FSMContext, bot):
         user.skill = user_skill
         session.commit()
     await state.clear()
-    await start_message(None, message, bot)
+    await start_message(message, bot)
 
 
 
@@ -204,7 +204,7 @@ async def check_ban_user(user_id):
 
 
 @router.callback_query(F.data == 'start_message')
-async def start_message(callback: Optional[CallbackQuery], message: Message, bot):
+async def start_message(callback: Optional[CallbackQuery] = None, message: Optional[Message] = None, bot = None):
     await callback.answer('')
 
     user_name = callback.from_user.full_name if callback.from_user.username else callback.from_user.username
@@ -215,15 +215,26 @@ async def start_message(callback: Optional[CallbackQuery], message: Message, bot
     )
 
     if user_id in ADMINS:
-        await callback.message.answer(adm_start_t, parse_mode=ParseMode.HTML, reply_markup=kb.main_admin_btn)
+        if callback:
+            await callback.message.answer(adm_start_t, parse_mode=ParseMode.HTML, reply_markup=kb.main_admin_btn)
+        elif message:
+            await message.answer(adm_start_t, parse_mode=ParseMode.HTML, reply_markup=kb.main_admin_btn)
     elif user_id in MAIN_EDITOR:
-        await callback.message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{m_edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.main_edit_btn)
+        if callback:
+            await callback.message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{m_edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.main_edit_btn)
+        elif message:
+            await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{m_edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.main_edit_btn)
     elif user_id in EDITOR:
-        await callback.message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
+        if callback:
+            await callback.message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
+        elif message:
+            await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
     else:
         keyboard = await create_tournament_table_keyboard_user(user_id)
-        await callback.message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=keyboard)
-
+        if callback:
+            await callback.message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+        elif message:
+            await message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
 
 # Вывод кнопок для user

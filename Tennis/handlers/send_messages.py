@@ -28,7 +28,7 @@ async def register(callback: CallbackQuery, state:FSMContext, bot):
         await callback.message.answer('Для начала выбери, какое сообщение ты хочешь отправить: с фото или без него?', reply_markup=kb.send_message_photo_q)
     else:
         await callback.message.answer('Функция недоступна! Вы не админ! ❌')
-        await f.start_message(callback, None, bot)
+        await f.start_message(callback, bot)
 
 
 
@@ -167,7 +167,7 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
 
     else:
         await callback.message.answer('Функция недоступна! Вы не админ! ❌', reply_markup=ka.exit)
-        await f.start_message(callback, None, bot)
+        await f.start_message(callback, bot)
     await state.clear()
 
 

@@ -41,7 +41,7 @@ async def find_users_for_division(callback: CallbackQuery, state:FSMContext, bot
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
         await callback.message.answer('Функция недоступна! Вы не главный редактор / редактор! ❌')
-        await f.start_message(callback, None, bot)
+        await f.start_message(callback, bot)
 
 
 @router.message(cl.FindUser.name_division)

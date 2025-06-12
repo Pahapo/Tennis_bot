@@ -71,7 +71,7 @@ async def search_match(callback: CallbackQuery, state:FSMContext, bot):
             await callback.message.answer(f"Нам жаль, но список 📂 турниров пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.tournaments_data_exit)
     else:
         await callback.message.answer('Функция недоступна! Вы не являетесь организатором! ❌')
-        await f.start_message(callback, None, bot)
+        await f.start_message(callback, bot)
     
 
 

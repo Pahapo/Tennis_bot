@@ -121,4 +121,4 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
         await state.clear()
     else:
         await callback.message.answer('Функция недоступна! Вы не организатор! ❌')
-        await f.start_message(callback, None, bot)
+        await f.start_message(callback, bot)
