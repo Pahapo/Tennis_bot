@@ -6,6 +6,9 @@ from models.Division import Division
 from models.Tournament import Tournament
 from models.TournamentPlayers import TournamentPlayers
 
+class SendSkill(StatesGroup):
+    name = State()
+    skill = State()
 
 class SendMessage(StatesGroup):
     message = State()

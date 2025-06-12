@@ -16,7 +16,7 @@ router = Router()  # Создаем роутер
 
 
 @router.message(CommandStart())  # Создали декоратор для обработки поступающих сообщений
-async def cmd_start(message: Message, bot):
+async def cmd_start(message: Message, state:FSMContext, bot):
 
     user_name = message.from_user.full_name if message.from_user.username else message.from_user.username
     user_id = message.from_user.id
@@ -34,7 +34,7 @@ async def cmd_start(message: Message, bot):
     args = message.text.split()
     await r.check_referral(args, user_id, bot) # реферальная система
     
-    await f.save_user(user_id, user_name, user_link.lower(), message)
+    await f.save_user(user_id, user_name, user_link.lower(), message, state)
 
     if user_id in ADMINS:
         await message.answer(adm_start_t, parse_mode=ParseMode.HTML, reply_markup=kb.main_admin_btn)

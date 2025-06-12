@@ -73,7 +73,7 @@ async def find_name_division(message: Message, state:FSMContext):
         else:
             division_lvl = 'Не определён'
         
-        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
+        await message.answer(f'<b>Найден пользователь 🙋‍♂️ {user.name_user}</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
     else:
         await message.answer('Пользователь с таким <b>username</b> не найден!',parse_mode=ParseMode.HTML, reply_markup=kb.back_division)
 

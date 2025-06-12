@@ -14,6 +14,7 @@ CREATE TABLE `users` (
   `ban_status` tinyint(1) DEFAULT NULL,
   `end_date_ban` varchar(10) DEFAULT NULL,
   `coins` varchar(10) DEFAULT NULL,
+  `skill` varchar(300) DEFAULT NULL,
   PRIMARY KEY (`tg_user_id`),
   UNIQUE KEY `tg_user_id` (`tg_user_id`),
   KEY `users_division_fk` (`division_level`),

@@ -17,10 +17,11 @@ class User(Base):
     ban_status = Column(Boolean)
     end_date_ban = Column(String(10))
     coins = Column(Integer)
+    skill = Column(Integer)
 
 
     # Конструктор __init__
-    def __init__(self, tg_user_id, name_user, link, age=None, sex=None, division_level=None, ban_status=None, end_date_ban=None, coins=None):
+    def __init__(self, tg_user_id, name_user, link, age=None, sex=None, division_level=None, ban_status=None, end_date_ban=None, coins=None, skill=None):
         self.tg_user_id = tg_user_id
         self.name_user = name_user
         self.link = link
@@ -30,6 +31,7 @@ class User(Base):
         self.ban_status = ban_status
         self.end_date_ban = end_date_ban
         self.coins = coins
+        self.skill = skill
 
 
     def __repr__(self):

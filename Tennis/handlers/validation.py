@@ -20,9 +20,12 @@ def validate_datetime(text: str) -> bool:
     except ValueError:
         return False  # Дата невозможная (например, 32 мая)
     
+def validate_name(name: str) -> bool:
+    """Проверяет, что текст не превышает 30 символов."""
+    return len(name) <= 30
 
 def validate_comment(comment: str) -> bool:
-    """Проверяет, что комментарий не превышает 300 символов."""
+    """Проверяет, что текст не превышает 300 символов."""
     return len(comment) <= 300
 
 

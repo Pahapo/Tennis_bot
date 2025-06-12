@@ -10,13 +10,16 @@ from sqlalchemy.exc import IntegrityError
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile
+from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile, Message
 from aiogram import F, Router
 from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_start as kb
 import keywords.kw_any as ka
+import handlers.classes as cl
+import handlers.validation as valid
 import handlers.btn_tournaments as bt
+
 
 from config.db import session
 from models.User import User
@@ -36,7 +39,7 @@ edit_start_t = "Мы рады приветствовать тебя в кома�
 all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперника;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Следи за телеграмм каналом <b><a href='{CHANNEL}'>Минск-Мир - Новости</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
-async def save_user(user_id, user_name, user_link, message): # Сохранение пользователей в список для рассылки
+async def save_user(user_id, user_name, user_link, message, state:FSMContext): # Сохранение пользователей в список для рассылки
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
     if not user:
@@ -81,9 +84,52 @@ async def save_user(user_id, user_name, user_link, message): # Сохранен�
 
         try:
             session.add(new_user)
-            session.commit() # Сохраняем изменения (фиксируем транзакцию)
+            session.commit()
         except IntegrityError as e:
             print(f"Пользователь {new_user} уже существует! Ошибка: {e}")
+
+        await state.update_data(user_id_skill = user_id)
+        await state.set_state(cl.SendSkill.name)
+        await message.answer('<b>Давай знакомиться!</b>\n\nЯ - 🤖 Бот по теннису. \nНапиши своё полное Имя и Фамилию 👇', parse_mode=ParseMode.HTML)
+
+
+
+@router.message(cl.SendSkill.name)
+async def register_age(message: Message, state:FSMContext):
+    user_name = message.text.strip()
+    # Проверяем, корректно ли введен текст
+    if not valid.validate_name(user_name):
+        remaining_chars = len(user_name) - 30
+        await message.answer(f"⚠ Ошибка! Длина ответа превышена на {remaining_chars} символов. Попробуйте снова 👇")
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+
+    await state.update_data(name_skill = message.text)
+    await state.set_state(None)
+    
+    await state.set_state(cl.SendSkill.skill)
+    await message.answer('<b>Для определения твоего уровня игры, ответь одним сообщением на несколько вопросов</b> 👇\n\n1. Сколько лет/месяцев в теннисе?\n2. Был ли опыт каких-то турниров до этого? ( если играл только в ракето, укажи сколько матчей и какой рейтинг)\n3. Занимался ли когда-то с тренером?\n4. Играл ли против кого-то из наших игроков, если да - то как сыграли?', parse_mode=ParseMode.HTML)
+
+
+
+@router.message(cl.SendSkill.skill)
+async def register_age(message: Message, state:FSMContext):
+    user_skill = message.text.strip()
+    data = await state.get_data()
+
+    # Проверяем, корректно ли введен текст
+    if not valid.validate_comment(user_skill):
+        remaining_chars = len(user_skill) - 300
+        await message.answer(f"⚠ Ошибка! Длина ответа превышена на {remaining_chars} символов. Попробуйте снова 👇")
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+    
+    await state.set_state(None)
+
+    user = session.query(User).filter(User.tg_user_id == data.get("user_id_skill")).first()
+    if user:
+        user.name_user = data.get("name_skill")
+        user.skill = user_skill
+        session.commit()
+    await state.clear()
 
 
 
