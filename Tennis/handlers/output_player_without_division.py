@@ -76,7 +76,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
     user.division_level = level
-    await f.safe_commit(session)
+    session.commit()
 
     print(f"Установлен дивизион для пользователя \"{user.name_user}\"!")
     await call.answer(f"Дивизион установлен! ✅", show_alert=False)

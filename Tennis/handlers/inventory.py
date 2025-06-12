@@ -43,7 +43,7 @@ async def inventory(callback: CallbackQuery, bot):
 
 #     check = Inventory(photo = 'img', description = message.html_text)
 #     session.add(check)
-#     await f.safe_commit(session)
+#     session.commit()
 
 
 

@@ -110,7 +110,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 
 #         print(f"Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!")
 #         await message.answer(f"✅ Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!", reply_markup=kb.back_ban)
-#         await f.safe_commit(session)
+#         session.commit()
 
 #         message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
 

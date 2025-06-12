@@ -94,7 +94,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
         
         # Удаление игрока из турнира
         session.query(TournamentPlayers).filter((TournamentPlayers.id_tg_user == user.tg_user_id) & (TournamentPlayers.id_tournament == selected_tournament.tournament_id)).delete()
-        await f.safe_commit(session)
+        session.commit()
 
         try:
             gs.delete_player_from_tournament(name_finder_tournament, name_finder_user, selected_division.name_division)

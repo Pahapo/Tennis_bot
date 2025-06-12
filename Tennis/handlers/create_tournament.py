@@ -161,7 +161,7 @@ async def save_photo_payment(message: types.Message, state: FSMContext):
 
     # Формируем базовое имя файла
     if data.get("id_tournament"):
-        file_name = f"{data.get("id_tournament")}.jpg"
+        file_name = f'{data.get("id_tournament")}.jpg'
     else:
         tournament_count = len(tournament)
         file_name = f"{tournament_count+1}.jpg"
@@ -286,7 +286,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         tournament.end_tournament = data.get("time2")
         tournament.price = int(data.get("price"))
         tournament.regulations = data.get("regulations")
-        await f.safe_commit(session)
+        session.commit()
 
         link_sheet_tournament = tournament.link_table
 
@@ -305,7 +305,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         
         new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), type = data.get("type"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
         session.add(new_tournament)  # Добавляем объект в сессию
-        await f.safe_commit(session)
+        session.commit()
 
         await tournament_sms.edit_text('✅ Турнир создан!')
         print(f'Создан новый турнир - "{data.get("name")}"')

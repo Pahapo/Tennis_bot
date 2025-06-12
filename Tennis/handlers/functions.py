@@ -84,8 +84,21 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
         
         session.add(new_user)
-        await safe_commit(session)
-
+        
+        for attempt in range(3):
+            try:
+                await session.commit()
+                return True
+            except OperationalError as e:
+                if "Deadlock" in str(e) and attempt < 3 - 1:
+                    await session.rollback()
+                    await asyncio.sleep(0.1 * (attempt + 1))
+                    continue
+                raise
+            except SQLAlchemyError as e:
+                await session.rollback()
+                print(f"Ошибка SQLAlchemy: {e}")
+                raise
 
         await state.update_data(user_id_skill = user_id)
         await state.set_state(cl.SendSkill.name)
@@ -127,29 +140,27 @@ async def register_age(message: Message, state:FSMContext):
     if user:
         user.name_user = data.get("name_skill")
         user.skill = user_skill
-        await safe_commit(session)
+        session.commit()
     await state.clear()
 
 
 
-async def safe_commit(session: AsyncSession):
-    retry_delay = 0.1
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            await session.commit()  # Важно: await!
-            return True
-        except OperationalError as e:
-            if "Deadlock" in str(e) and attempt < max_retries - 1:
-                await session.rollback()
-                await asyncio.sleep(retry_delay * (attempt + 1))  # Не блокирует event loop
-                continue
-            raise
-        except SQLAlchemyError as e:
-            await session.rollback()
-            print(f"Ошибка SQLAlchemy: {e}")
-            raise
-    return False
+# async def safe_commit(session):
+#     for attempt in range(3):
+#         try:
+#             await session.commit()  # Важно: await!
+#             return True
+#         except OperationalError as e:
+#             if "Deadlock" in str(e) and attempt < 3 - 1:
+#                 await session.rollback()
+#                 await asyncio.sleep(0.1 * (attempt + 1))  # Не блокирует event loop
+#                 continue
+#             raise
+#         except SQLAlchemyError as e:
+#             await session.rollback()
+#             print(f"Ошибка SQLAlchemy: {e}")
+#             raise
+#     return False
 
 
 
@@ -188,7 +199,7 @@ async def check_ban_user(user_id):
         if datetime.today() > end_date:
             user.end_date_ban = None
             user.ban_status = None
-            await safe_commit(session)
+            session.commit()
 
 
 

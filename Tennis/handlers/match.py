@@ -57,7 +57,7 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
     # Удаляем их
     for match in expired_matches:
         session.delete(match)
-        await f.safe_commit(session)
+        session.commit()
 
     tg_users_id = [row[0] for row in session.query(Match.id_tg_user).filter((Match.player_1 == None) & (Match.player_2 == None)).all()]
     count_users = len(tg_users_id)
@@ -218,7 +218,7 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
 
                     user_match.player_1 = user.tg_user_id
                     user_match.player_2 = contestant.tg_user_id
-                    await f.safe_commit(session)
+                    session.commit()
                 else:
                     confirm_contestant = session.query(User).filter(User.tg_user_id == user_match.player_2).first()
                     await callback.message.answer(f"❌ <b>Вы не можете принять эту игру, так как уже играете с <a href='{confirm_contestant.link}'>{confirm_contestant.name_user}</a> в это время!</b>", parse_mode=ParseMode.HTML, reply_markup=kb.confirm_match)
@@ -286,7 +286,7 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
     # Удаляем их
     for match in expired_matches:
         session.delete(match)
-    await f.safe_commit(session)
+    session.commit()
 
     matches = session.query(Match).filter((Match.player_1 == user_id) | (Match.player_2 == user_id)).all()
     sorted_matches = sorted(
