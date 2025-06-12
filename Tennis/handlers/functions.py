@@ -82,7 +82,8 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link, division_level = old_user.division_level)
         else:
             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
-
+        
+        session.add(new_user)
         await safe_commit(session)
 
 
