@@ -5,11 +5,13 @@ import asyncio
 from sqlalchemy import null
 from datetime import datetime
 from aiogram.enums import ParseMode
+from sqlalchemy.future import select
 from datetime import datetime, timedelta
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile, Message
 from aiogram import F, Router
@@ -40,15 +42,86 @@ edit_start_t = "Мы рады приветствовать тебя в кома�
 all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрирация на турнир;\n✅ Поиск соперника;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Следи за телеграмм каналом <b><a href='{CHANNEL}'>Минск-Мир - Новости</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
-async def save_user(user_id, user_name, user_link, message, state:FSMContext): # Сохранение пользователей в список для рассылки
+# async def save_user(user_id, user_name, user_link, message, state:FSMContext): # Сохранение пользователей в список для рассылки
 
-    user = session.query(User).filter(User.tg_user_id == user_id).first()
-    if not user:
+#     user = session.query(User).filter(User.tg_user_id == user_id).first()
+#     if not user:
+#         print(f"Новый пользователь нажал /start")
+
+#         # СКАЗКА (~30 секунд)
+
+#         story = await message.answer(f"Привет <b>{user_name}!</b> 👋", parse_mode=ParseMode.HTML)  # Сохраняем отправленное сообщение
+#         await asyncio.sleep(2)
+#         await story.edit_text("Давай я расскажу тебе 1 историю... 🎾")
+#         await asyncio.sleep(2.5)
+#         await story.edit_text("Где-то в далёком-придалёком королевстве 👑")
+#         await asyncio.sleep(2.5)
+#         await story.edit_text("Среди замков и драконов 🐉")
+#         await asyncio.sleep(1.9)
+#         await story.edit_text("Основался легендарный теннисный клуб! 🛡️")
+#         await asyncio.sleep(2.5)
+#         await story.edit_text("Только самые смелые выходили на корт ⚡️")
+#         await asyncio.sleep(2.5)
+#         await story.edit_text("Их ждали великие дуэли, турниры и таинственные награды...")
+#         await asyncio.sleep(3)
+#         await story.edit_text("Хочешь очутиться в далёком-придалёком королевстве? 👑")
+#         await asyncio.sleep(2.8)
+#         await story.edit_text("Сразиться с соперниками?!")
+#         await asyncio.sleep(2)
+#         await story.edit_text("Выиграть турнир?! 🏆")
+#         await asyncio.sleep(2)
+#         await story.edit_text("Стать теннисным лордом?! 👑")
+#         await asyncio.sleep(2.1)
+#         await story.edit_text("<b>Пора начинать наше приключение!</b> 🚀", parse_mode=ParseMode.HTML)
+#         await asyncio.sleep(2.3)
+#         await story.edit_text("Корт ждёт героя, готового вписать своё имя в историю! 🎾")
+#         await asyncio.sleep(3)
+#         await story.delete()
+
+#         old_user = session.query(OldUsers).filter(OldUsers.tg_old_users_id == user_id).first()
+
+#         if old_user:
+#             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link, division_level = old_user.division_level)
+#         else:
+#             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
+        
+#         session.add(new_user)
+        
+#         for attempt in range(3):
+#             try:
+#                 await session.commit()
+#                 return True
+#             except OperationalError as e:
+#                 if "Deadlock" in str(e) and attempt < 3 - 1:
+#                     await session.rollback()
+#                     await asyncio.sleep(0.1 * (attempt + 1))
+#                     continue
+#                 raise
+#             except SQLAlchemyError as e:
+#                 await session.rollback()
+#                 print(f"Ошибка SQLAlchemy: {e}")
+#                 raise
+
+#         await state.update_data(user_id_skill = user_id)
+#         await state.set_state(cl.SendSkill.name)
+#         await message.answer('<b>Давай знакомиться!</b>\n\nЯ - 🤖 Бот по теннису. \nНапиши своё полное Имя и Фамилию 👇', parse_mode=ParseMode.HTML)
+
+
+
+async def save_user(user_id, user_name, user_link, message, state: FSMContext):  # Сохранение пользователя
+    async with async_session() as session:  # Используем async сессию для исключения NoneType
+        # Проверяем, существует ли пользователь
+        existing_user = await session.execute(
+            select(User).where(User.tg_user_id == user_id)
+        )
+        if existing_user.scalar_one_or_none():  # Если уже есть в БД, просто выходим
+            return
+
         print(f"Новый пользователь нажал /start")
 
         # СКАЗКА (~30 секунд)
 
-        story = await message.answer(f"Привет <b>{user_name}!</b> 👋", parse_mode=ParseMode.HTML)  # Сохраняем отправленное сообщение
+        story = await message.answer(f"Привет <b>{user_name}!</b> 👋", parse_mode=ParseMode.HTML)
         await asyncio.sleep(2)
         await story.edit_text("Давай я расскажу тебе 1 историю... 🎾")
         await asyncio.sleep(2.5)
@@ -76,6 +149,7 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
         await asyncio.sleep(3)
         await story.delete()
 
+        # Проверяем, есть ли данные у старого пользователя
         old_user = session.query(OldUsers).filter(OldUsers.tg_old_users_id == user_id).first()
 
         if old_user:
@@ -84,21 +158,13 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
         
         session.add(new_user)
-        
-        for attempt in range(3):
-            try:
-                await session.commit()
-                return True
-            except OperationalError as e:
-                if "Deadlock" in str(e) and attempt < 3 - 1:
-                    await session.rollback()
-                    await asyncio.sleep(0.1 * (attempt + 1))
-                    continue
-                raise
-            except SQLAlchemyError as e:
-                await session.rollback()
-                print(f"Ошибка SQLAlchemy: {e}")
-                raise
+
+        try:
+            await session.commit()
+        except (OperationalError, SQLAlchemyError) as e:
+            await session.rollback()
+            print(f"Ошибка базы данных: {e}")
+            return False
 
         await state.update_data(user_id_skill = user_id)
         await state.set_state(cl.SendSkill.name)
