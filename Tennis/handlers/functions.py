@@ -205,10 +205,14 @@ async def check_ban_user(user_id):
 
 @router.callback_query(F.data == 'start_message')
 async def start_message(callback: Optional[CallbackQuery] = None, message: Optional[Message] = None, bot = None):
-    await callback.answer('')
+    if callback:
+        await callback.answer('')
 
-    user_name = callback.from_user.full_name if callback.from_user.username else callback.from_user.username
-    user_id = callback.from_user.id
+        user_name = callback.from_user.full_name if callback.from_user.username else callback.from_user.username
+        user_id = callback.from_user.id
+    elif message:
+        user_name = message.from_user.full_name if message.from_user.username else message.from_user.username
+        user_id = message.from_user.id
 
     options = LinkPreviewOptions(
         is_disabled=True
