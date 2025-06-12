@@ -3,6 +3,7 @@ import os
 import pytz
 import asyncio
 from sqlalchemy import null
+from typing import Optional
 from datetime import datetime
 from aiogram.enums import ParseMode
 from datetime import datetime, timedelta
@@ -124,7 +125,7 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
 
 
 @router.message(cl.SendSkill.name)
-async def register_age(message: Message, state:FSMContext):
+async def register_name(message: Message, state:FSMContext):
     user_name = message.text.strip()
     # Проверяем, корректно ли введен текст
     if not valid.validate_name(user_name):
@@ -141,7 +142,7 @@ async def register_age(message: Message, state:FSMContext):
 
 
 @router.message(cl.SendSkill.skill)
-async def register_age(callback: CallbackQuery, message: Message, state:FSMContext, bot):
+async def register_skill(message: Message, state:FSMContext, bot):
     user_skill = message.text.strip()
     data = await state.get_data()
 
@@ -159,26 +160,7 @@ async def register_age(callback: CallbackQuery, message: Message, state:FSMConte
         user.skill = user_skill
         session.commit()
     await state.clear()
-    await start_message(callback, bot)
-
-
-
-# async def safe_commit(session):
-#     for attempt in range(3):
-#         try:
-#             await session.commit()  # Важно: await!
-#             return True
-#         except OperationalError as e:
-#             if "Deadlock" in str(e) and attempt < 3 - 1:
-#                 await session.rollback()
-#                 await asyncio.sleep(0.1 * (attempt + 1))  # Не блокирует event loop
-#                 continue
-#             raise
-#         except SQLAlchemyError as e:
-#             await session.rollback()
-#             print(f"Ошибка SQLAlchemy: {e}")
-#             raise
-#     return False
+    await start_message(None, message, bot)
 
 
 
@@ -222,7 +204,7 @@ async def check_ban_user(user_id):
 
 
 @router.callback_query(F.data == 'start_message')
-async def start_message(callback: CallbackQuery, bot):
+async def start_message(callback: Optional[CallbackQuery], message: Message, bot):
     await callback.answer('')
 
     user_name = callback.from_user.full_name if callback.from_user.username else callback.from_user.username

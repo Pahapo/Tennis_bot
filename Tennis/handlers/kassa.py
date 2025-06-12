@@ -34,7 +34,7 @@ async def kassa(callback: CallbackQuery, state:FSMContext, bot):
         await callback.message.answer('<b>Тут вы можете внести в учёт наличную оплату игрока за турнир 💳</b>\n\nВведите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
         await callback.message.answer('Функция недоступна! Вы не главный редактор / редактор! ❌')
-        await f.start_message(callback, bot)
+        await f.start_message(callback, None, bot)
 
 
 @router.callback_query(F.data == 'find_users_for_kassa')
@@ -47,7 +47,7 @@ async def find_users_for_kassa(callback: CallbackQuery, state:FSMContext, bot):
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
         await callback.message.answer('Функция недоступна! Вы не главный редактор / редактор! ❌')
-        await f.start_message(callback, bot)
+        await f.start_message(callback, None, bot)
 
 
 @router.message(cl.FindUser.name_kassa)

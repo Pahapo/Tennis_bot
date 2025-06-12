@@ -21,7 +21,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
     if await f.check_fast_user(user_id):
         await callback.message.answer('<b>Быстрое бронирование 🎾</b>\n\nЕсли вы новичок, используйте \"Обычное бронирование\"\nЕсли Вы часто или профессионально играете, Вам подойдёт этот вариант\n\n<b>Автоматическое бронирование обеспечит Вас кортом в любое время</b>. Вы не столкнётесь с проблемой занятого корта, ведь бронирование мы берём на себя!\n\n<b>3 ПРОСТЫХ ШАГА:</b>\n• Выбери дату\n• Выбери корт\n• Выбери время\n\n⚡️ Чтобы использовать \"<b>Быстрое бронирование 🎾</b>\" необходима подписка \"<b>Tennis PRO</b>\"\n\n⚡️ Воспользуйтесь бесплатной версией, чтобы протестировать возможности (доступна 1 раз)', parse_mode=ParseMode.HTML, reply_markup=kb.fast_booking_court)
     else:
-        await f.start_message(callback, bot)
+        await f.start_message(callback, None, bot)
 
 # @router.callback_query(F.data == 'find_users_for_ban')
 # async def find_users_for_ban(callback: CallbackQuery, state:FSMContext, bot):
@@ -33,7 +33,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 #         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
 #     else:
 #         await callback.message.answer('Функция недоступна! Вы не главный редактор! ❌')
-#         await f.start_message(callback, bot)
+#         await f.start_message(callback, None, bot)
 
 
 # @router.message(cl.FindUser.name_ban)
