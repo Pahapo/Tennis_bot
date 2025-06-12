@@ -7,6 +7,7 @@ from config.config import ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_tournament as kb
 import keywords.kw_any as ka
+import handlers.functions as f
 
 from config.db import session
 from models.User import User
@@ -75,7 +76,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
     user.division_level = level
-    session.commit() # Сохраняем изменения (фиксируем транзакцию)
+    await f.safe_commit(session)
 
     print(f"Установлен дивизион для пользователя \"{user.name_user}\"!")
     await call.answer(f"Дивизион установлен! ✅", show_alert=False)

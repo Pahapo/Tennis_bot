@@ -213,7 +213,7 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
         if not user_payment:
             check = Payment(id_tournament = tournament_id, id_tg_user = user_id, price = price, coins = coins, photo = file_id, date = date)
             session.add(check)
-            session.commit()
+            await f.safe_commit(session)
 
             print(f"✅ Игрок с id {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
             await callback.answer(f"✅ Оплата подтверждена", show_alert=False)
@@ -249,7 +249,7 @@ async def success_payment(callback: CallbackQuery, state:FSMContext, bot):
                 selected_user.coins -= data.get("coins")
                 print(f'✅ Игрок с id {selected_user.tg_user_id} применил {data.get("coins")} монет для участия в турнире - "{selected_tournament.name_tournament}"!')
 
-        session.commit()
+        await f.safe_commit(session)
         print(f"✅ Игрок с id {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
 
     await callback.message.answer('✅ <b>Регистрация на турнир подтверждена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)

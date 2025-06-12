@@ -118,7 +118,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
 
         print(f"Дивизион пользователя \"{user.tg_user_id}\" был изменён на {division_lvl}!")
         await call.message.answer(f"✅ Дивизион пользователя \"{user.name_user}\" был изменён на {division_lvl}!", reply_markup=kb.back_division)
-        session.commit() # Сохраняем изменения (фиксируем транзакцию)
+        await f.safe_commit(session)
                    
         message_text_send = f"<b>Дорогой игрок, сообщаем Вам о том, что Ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉"
 

@@ -89,7 +89,7 @@ async def check_referral(args, user_id, bot):
                                 referrer_user.coins += 100
                                 coins += 100
 
-                            session.commit()
+                            await f.safe_commit(session)
                         else:
                             return
                     else:
@@ -102,7 +102,7 @@ async def check_referral(args, user_id, bot):
                             referrer_user.coins = 100
                             coins = 100
                         
-                        session.commit() # Сохраняем изменения (фиксируем транзакцию)
+                        await f.safe_commit(session)
                     
                     # Оповещаем реферреру о новом реферале
                     message_text_send = f"<b>По Вашей ссылке зарегистрировался новый реферал! 🚀</b>\n\n🙋‍♂️ <b>Реферал:</b> {check_new_user.name_user}\n💰 <b>Монеты:</b> {coins}"

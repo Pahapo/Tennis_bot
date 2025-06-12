@@ -6,9 +6,10 @@ from sqlalchemy import null
 from datetime import datetime
 from aiogram.enums import ParseMode
 from datetime import datetime, timedelta
-from sqlalchemy.exc import IntegrityError
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.exceptions import TelegramBadRequest
+from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile, Message
 from aiogram import F, Router
@@ -82,11 +83,8 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
         else:
             new_user = User(tg_user_id = user_id, name_user = user_name, link = user_link)
 
-        try:
-            session.add(new_user)
-            session.commit()
-        except IntegrityError as e:
-            print(f"Пользователь {new_user} уже существует! Ошибка: {e}")
+        await safe_commit(session)
+
 
         await state.update_data(user_id_skill = user_id)
         await state.set_state(cl.SendSkill.name)
@@ -128,8 +126,29 @@ async def register_age(message: Message, state:FSMContext):
     if user:
         user.name_user = data.get("name_skill")
         user.skill = user_skill
-        session.commit()
+        await safe_commit(session)
     await state.clear()
+
+
+
+async def safe_commit(session: AsyncSession):
+    retry_delay = 0.1
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            await session.commit()  # Важно: await!
+            return True
+        except OperationalError as e:
+            if "Deadlock" in str(e) and attempt < max_retries - 1:
+                await session.rollback()
+                await asyncio.sleep(retry_delay * (attempt + 1))  # Не блокирует event loop
+                continue
+            raise
+        except SQLAlchemyError as e:
+            await session.rollback()
+            print(f"Ошибка SQLAlchemy: {e}")
+            raise
+    return False
 
 
 
@@ -168,7 +187,7 @@ async def check_ban_user(user_id):
         if datetime.today() > end_date:
             user.end_date_ban = None
             user.ban_status = None
-            session.commit() # Сохраняем изменения (фиксируем транзакцию)
+            await safe_commit(session)
 
 
 

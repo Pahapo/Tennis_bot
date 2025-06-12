@@ -190,7 +190,7 @@ async def confirm_kassa(callback: CallbackQuery, state:FSMContext, bot):
             session.add(check)
             player = TournamentPlayers(id_tournament = tournament.tournament_id, id_tg_user = id_finder_user)
             session.add(player)
-            session.commit()
+            await f.safe_commit(session)
 
             print(f"Наличная оплата пользователя \"{id_finder_user}\" была внесена за турнир '{tournament.name_tournament}' в размере '{tournament.price}' бел.руб.")
             await callback.message.answer(f"✅ <b>Оплата подтверждена!</b>\n Пользователь стал участником турнира '{tournament.name_tournament}'!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)

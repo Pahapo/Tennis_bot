@@ -253,7 +253,7 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         else:
             await message.answer('✅ Игра создана!')
 
-    session.commit() # Сохраняем изменения (фиксируем транзакцию)
+        await f.safe_commit(session)
 
     await f.check_ban_user(data.get("user_id"))
 
@@ -323,7 +323,7 @@ async def delete_match(callback: types.CallbackQuery, state: FSMContext):
         user_match = session.query(Match).filter(Match.match_id == match_id).first()
         if user_match:
             session.delete(user_match)
-            session.commit()
+            await f.safe_commit(session)
 
         await callback.answer(f"✅ Карточка удалена!", show_alert=False)
         print(f"✅ Карточка игры удалена пользователем с id {user_id}!")

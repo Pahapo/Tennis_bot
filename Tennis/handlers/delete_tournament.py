@@ -48,7 +48,7 @@ async def delete_tournament_anyway(callback: CallbackQuery, state:FSMContext, bo
 
         if selected_tournament:
             session.delete(selected_tournament)  # Удаляем объект из базы
-            session.commit()
+            await f.safe_commit(session)
 
             print(f"Турнир '{name_tournament_delete}' был удалён редактором!")
             await callback.message.answer(f"✅ Турнир '{name_tournament_delete}' успешно удалён!", reply_markup=kb.exit)

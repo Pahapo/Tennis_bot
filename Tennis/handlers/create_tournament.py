@@ -286,7 +286,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         tournament.end_tournament = data.get("time2")
         tournament.price = int(data.get("price"))
         tournament.regulations = data.get("regulations")
-        session.commit()
+        await f.safe_commit(session)
 
         link_sheet_tournament = tournament.link_table
 
@@ -305,7 +305,7 @@ async def register_age(message: Message, state:FSMContext, bot):
         
         new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), type = data.get("type"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
         session.add(new_tournament)  # Добавляем объект в сессию
-        session.commit() # Сохраняем изменения (фиксируем транзакцию)
+        await f.safe_commit(session)
 
         await tournament_sms.edit_text('✅ Турнир создан!')
         print(f'Создан новый турнир - "{data.get("name")}"')
