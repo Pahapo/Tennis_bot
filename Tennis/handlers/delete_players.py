@@ -2,7 +2,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from aiogram import F, Router
-from config.config import EDITOR, ADMINS
+from config.config import EDITOR, MAIN_EDITOR, ADMINS
 
 import keywords.kw_any as kb
 import handlers.btn_tournaments as bt
@@ -82,7 +82,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
     await callback.answer('')
 
     user_id = callback.from_user.id
-    if user_id in EDITOR or user_id in ADMINS:
+    if user_id in EDITOR or user_id in MAIN_EDITOR or user_id in ADMINS:
 
         data = await state.get_data()
         name_finder_tournament = data.get("name_tournament_del_players")
@@ -122,17 +122,3 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
     else:
         await callback.message.answer('Функция недоступна! Вы не организатор! ❌')
         await f.start_message(callback, bot)
-
-
-
-
-
-
-
-    
-
-
-
-
-
-

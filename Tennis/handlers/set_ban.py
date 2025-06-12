@@ -85,7 +85,7 @@ async def set_new_ban(callback: CallbackQuery, state:FSMContext):
 async def find_name_p_ban(message: Message, state:FSMContext):
 
     if not valid.validate_isdigit(message.text):
-        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
     
     await state.set_state(None)

@@ -7,7 +7,7 @@ class Match(Base):
     id_tg_user = Column(Integer, nullable=False)
     date_booking = Column(String(40), nullable=False)
     date_without_booking = Column(String(40), nullable=False)
-    name_court = Column(String(500), nullable=False)
+    name_court = Column(String(50), nullable=False)
     comment = Column(String(300), nullable=False)
     player_1 = Column(Integer, nullable=False)
     player_2 = Column(Integer, nullable=False)

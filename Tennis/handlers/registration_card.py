@@ -1,10 +1,11 @@
 import re
 import pytz
+import dateparser
 from aiogram import F, Router, types
-from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from aiogram.enums import ParseMode
+from aiogram.types import Message, CallbackQuery
 from datetime import datetime, timedelta
+from aiogram.enums import ParseMode
 from typing import Optional
 
 import keywords.kw_user as kb
@@ -51,7 +52,7 @@ async def register_age(message: Message, state:FSMContext):
 
     # Проверяем, корректно ли введен возраст
     if not valid.validate_age(user_age):
-        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
     
     await state.set_state(None)
@@ -81,7 +82,7 @@ async def register_date_q(call: CallbackQuery, state: FSMContext):
         form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=1)).strftime('%d.%m.%Y')
 
         await state.set_state(cl.RegPlayerStates.date_booking)
-        await call.message.answer(f'Укажите время и дату в формате (<code>12:00 {form_date}</code>) 👇', parse_mode=ParseMode.HTML) 
+        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>/n<blockquote>- "завтра в 18:00"/n- "воскресенье, 3 часа дня"/n- "25 декабря, 19:00"/n- "через 2 недели в 10 утра"/n- "14:00, 5 октября"/n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
 
     if call.data == "no_b_c":
         await state.update_data(booking = 'Нет')
@@ -91,7 +92,7 @@ async def register_date_q(call: CallbackQuery, state: FSMContext):
         form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=1)).strftime('%d.%m.%Y')
 
         await state.set_state(cl.RegPlayerStates.date_without_booking)
-        await call.message.answer(f'Укажите время и дату, когда хотели бы поиграть в формате (<code>12:00 {form_date}</code>) 👇', parse_mode=ParseMode.HTML) 
+        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>/n<blockquote>- "завтра в 18:00"/n- "воскресенье, 3 часа дня"/n- "25 декабря, 19:00"/n- "через 2 недели в 10 утра"/n- "14:00, 5 октября"/n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
 
 
 
@@ -109,14 +110,22 @@ async def register_date(message: Message, state:FSMContext):
     await state.update_data(link = user_link)
 
     user_date = message.text.strip()
-    if not valid.validate_datetime(user_date):
-        await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
-        return  # Останавливаем обработку
-    
-    await state.set_state(None)
-    await state.update_data(date_without_booking = message.text)
 
-    await message.answer('Выберите забронированный корт 👇', reply_markup=ka.name_booking_court)
+    date = dateparser.parse(user_date, languages=['ru'], settings={'TIMEZONE': 'Europe/Moscow', 'TO_TIMEZONE': 'Europe/Moscow'})
+    if not date:
+        await message.reply("⚠ Не понял дату, попробуйте ещё раз 👇")
+        return # Останавливаем обработку
+    else:
+    # Сохраняем date в БД
+    # if not valid.validate_datetime(user_date):
+    #     await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
+    #     return  # Останавливаем обработку
+        # Преобразуем в строку перед записью в БД 
+        date_str = date.strftime("%H:%M %d.%m.%Y")
+        await state.set_state(None)
+        await state.update_data(date_without_booking = date_str)
+
+        await message.answer('Выберите забронированный корт 👇', reply_markup=ka.name_booking_court)
 
 
 @router.callback_query(F.data.in_(["name_court_1", "name_court_2", "name_court_3", "name_court_4", "name_court_5", "name_court_6"]))
@@ -153,14 +162,22 @@ async def register_date(message: Message, state:FSMContext):
     await state.update_data(link = user_link)
 
     user_date = message.text.strip()
-    if not valid.validate_datetime(user_date):
-        await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
-        return  # Останавливаем обработку
-    
-    await state.set_state(None)
-    
-    await state.update_data(date_booking = message.text)
-    await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
+
+    date = dateparser.parse(user_date, languages=['ru'], settings={'TIMEZONE': 'Europe/Moscow', 'TO_TIMEZONE': 'Europe/Moscow'})
+    if not date:
+        await message.reply("⚠ Не понял дату, попробуйте ещё раз 👇")
+        return # Останавливаем обработку
+    else:
+    # Сохраняем date в БД
+    # if not valid.validate_datetime(user_date):
+    #     await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
+    #     return  # Останавливаем обработку
+        # Преобразуем в строку перед записью в БД 
+        date_str = date.strftime("%H:%M %d.%m.%Y")
+        await state.set_state(None)
+        await state.update_data(date_booking = date_str)
+
+        await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
 
 
@@ -183,7 +200,7 @@ async def register_comment(message: Message, state: FSMContext):
 
     if not valid.validate_comment(user_comment):
         remaining_chars = len(user_comment) - 300
-        await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов")
+        await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов. Попробуйте снова 👇")
         return  # Останавливаем обработку
     
     await state.set_state(None)

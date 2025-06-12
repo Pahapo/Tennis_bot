@@ -169,6 +169,7 @@ class RegTournamentsStates(StatesGroup):
     name = State()
     level = State()
     type = State()
+    img_flag = State()
     count = State()
     time1 = State()
     time2 = State()

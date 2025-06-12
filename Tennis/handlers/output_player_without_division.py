@@ -1,6 +1,7 @@
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, LinkPreviewOptions
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.enums import ParseMode
 from config.config import ADMINS, MAIN_EDITOR, EDITOR
 
@@ -33,20 +34,25 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext):
 
         await callback.answer(f'Всего игроков без дивизиона {count_users} чел.')
 
-        if users_without_division:
-            if len(users_without_division) > count:
-                user = users_without_division[count]
-                await state.update_data(pl_id_without_div = user.tg_user_id)
+        try:
+            if users_without_division:
+                if len(users_without_division) > count:
+                    user = users_without_division[count]
+                    await state.update_data(pl_id_without_div = user.tg_user_id)
 
-                if len(users_without_division) == count + 1:
-                    await callback.message.edit_text(f'<b>Игрок 🙋‍♂️ {user.name_user} ожидает выбора дивизиона</b>\n\nСсылка: {user.link}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ka.pl_without_div_end)
+                    if len(users_without_division) == count + 1:
+                        await callback.message.edit_text(f'<b>Игрок 🙋‍♂️ {user.name_user} ожидает выбора дивизиона</b>\n\nСсылка: {user.link}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ka.pl_without_div_end)
+                    else:
+                        await callback.message.edit_text(f'<b>Игрок 🙋‍♂️ {user.name_user} ожидает выбора дивизиона</b>\n\nСсылка: {user.link}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ka.pl_without_div)
                 else:
-                    await callback.message.edit_text(f'<b>Игрок 🙋‍♂️ {user.name_user} ожидает выбора дивизиона</b>\n\nСсылка: {user.link}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=ka.pl_without_div)
+                    await callback.message.edit_text(f'<b>Все игроки теперь имеют дивизион!</b>\nОтличная работа! 👍🏻', parse_mode=ParseMode.HTML, reply_markup=ka.exit)
             else:
                 await callback.message.edit_text(f'<b>Все игроки теперь имеют дивизион!</b>\nОтличная работа! 👍🏻', parse_mode=ParseMode.HTML, reply_markup=ka.exit)
-        else:
-            await callback.message.edit_text(f'<b>Все игроки теперь имеют дивизион!</b>\nОтличная работа! 👍🏻', parse_mode=ParseMode.HTML, reply_markup=ka.exit)
-
+        except TelegramBadRequest as e:
+            if "message is not modified" in str(e):
+                print("Сообщение не изменилось, пропускаем...")
+            else:
+                raise  # Перебрасываем другие ошибки
 
 @router.callback_query(F.data.in_(["lvl_wd_1", "lvl_wd_2", "lvl_wd_3", "lvl_wd_4", "lvl_wd_5"]))
 async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):

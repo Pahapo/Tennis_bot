@@ -88,7 +88,12 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     # Запрос "зареган ли юзер на выбранный им турнир?"
     user_in_tournament = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id, TournamentPlayers.id_tournament == tournament_data.tournament_id).all()
     # Запрос для подсчёта количества игроков
-    player_count = session.query(func.count()).filter(TournamentPlayers.id_tournament == tournament_data.tournament_id).scalar()
+    # player_count = session.query(func.count()).filter(TournamentPlayers.id_tournament == tournament_data.tournament_id).scalar()
+    # Считаем, сколько всего мест в турнире с учетом количества дивизионов
+    # if tournament_data.division.count(',') == 0:
+    #     quantity_person = 1
+    # else:
+    #     quantity_person = (tournament_data.division.count(',') + 1) * int(tournament_data.quantity_person)
 
     user = session.query(User).filter_by(tg_user_id = user_id).first()
 
@@ -101,9 +106,9 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
 
     tournament_lvl = ", ".join(levelTournament_names)
 
-    if int(player_count) >= int(tournament_data.quantity_person):            
-        await callback.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-    elif user_in_tournament:
+    # if int(player_count) >= int(quantity_person):            
+        # await callback.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    if user_in_tournament:
         await callback.message.answer(f'✅ <b>Вы уже участвуете в турнире!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.ban_status == True:
         await callback.message.answer(f'❌ <b>Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)

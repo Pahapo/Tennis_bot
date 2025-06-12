@@ -1,6 +1,5 @@
 import os
 from aiogram.types import CallbackQuery, FSInputFile, Message
-from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 from aiogram import F, Router
 

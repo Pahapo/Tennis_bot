@@ -101,7 +101,7 @@ async def find_score(message: Message, state:FSMContext):
 
     if not valid.validate_score(score):
         remaining_chars = len(score) - 11
-        await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов")
+        await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов. Попробуйте снова 👇")
         return  # Останавливаем обработку
     
     await state.set_state(None)

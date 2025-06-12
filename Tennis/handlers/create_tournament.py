@@ -1,22 +1,25 @@
+import os
 import pytz
 import asyncio
-from aiogram import F, Router
+import aiohttp
+from aiogram import F, Router, types
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from aiogram.enums import ParseMode
 from datetime import datetime, timedelta
+from aiogram.filters import StateFilter
+from aiogram.enums import ParseMode
 from sqlalchemy import inspect
 from config.config import EDITOR
 
 import handlers.classes as cl
 import handlers.functions as f
 import keywords.kw_tournament as kb
+import googleSheet.googleSheet as gs
 import handlers.validation as valid
 
 from config.db import session
 from models.Tournament import Tournament
 
-import googleSheet.googleSheet as gs
 
 router = Router()
 
@@ -45,7 +48,7 @@ async def register_name(message: Message, state:FSMContext):
     name_tournament_length = mapper.columns["name_tournament"].type.length
 
     if len(message.text) > name_tournament_length:
-        await message.answer(f"⚠ Ошибка! Текст превышает {name_tournament_length} символов")
+        await message.answer(f"⚠ Ошибка! Текст превышает {name_tournament_length} символов. Попробуйте снова 👇")
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
     await state.set_state(None)  
@@ -56,15 +59,8 @@ async def register_name(message: Message, state:FSMContext):
         await state.set_state(cl.RegTournamentsStates.name)
         await message.answer('Турнир с таким именем уже существует! Придумайте другое имя 👇')
     else:  
-        data = await state.get_data()
-        tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
-        if tournament:
-            await state.set_state(cl.RegTournamentsStates.count)
-            await message.answer('Введите количество участников в 1 дивизионе 👇')
-            await state.update_data(level = tournament.division)
-        else:
-            await state.set_state(cl.RegTournamentsStates.level)
-            await message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
+        await state.set_state(cl.RegTournamentsStates.level)
+        await message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
 
 
 @router.callback_query(F.data.in_(["lvl_t_1", "lvl_t_2", "lvl_t_3", "lvl_t_4", "lvl_t_5", "lvl_t_all"]))
@@ -151,8 +147,42 @@ async def handle_types_buttons(call: CallbackQuery, state: FSMContext):
 
     await state.update_data(type = type)
 
+    await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
+    await call.message.answer('Отправьте фото турнира в формте .jpg 👇')
+
+
+@router.message(F.content_type == types.ContentType.PHOTO, StateFilter(cl.RegTournamentsStates.img_flag))
+async def save_photo_payment(message: types.Message, state: FSMContext):
+    
+    await state.set_state(None)
+
+    data = await state.get_data()
+    tournament = session.query(Tournament).all()
+
+    # Формируем базовое имя файла
+    if data.get("id_tournament"):
+        file_name = f"{data.get("id_tournament")}.jpg"
+    else:
+        tournament_count = len(tournament)
+        file_name = f"{tournament_count+1}.jpg"
+
+    base_path = "Tennis/img/tournament/"
+    save_path = os.path.join(base_path, file_name)
+
+    file = await message.bot.get_file(message.photo[-1].file_id)  # Получаем информацию о файле
+    file_path = file.file_path  # Теперь `file_path` определён
+
+    print(f"Редактор добавил фото при создании или редактировании турнира!")
+
+    # Загружаем файл
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
+            if resp.status == 200:
+                with open(save_path, "wb") as f:
+                    f.write(await resp.read())
+
     await state.set_state(cl.RegTournamentsStates.count)
-    await call.message.answer('Введите количество участников в каждом дивизионе 👇')
+    await message.answer('Введите количество участников в каждом дивизионе 👇')
 
 
 @router.message(cl.RegTournamentsStates.count)
@@ -160,7 +190,7 @@ async def register_age(message: Message, state:FSMContext):
 
     # Проверяем, корректно ли введено количество участников
     if not valid.validate_isdigit(message.text):
-        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
     await state.update_data(count = message.text)
@@ -176,7 +206,7 @@ async def register_age(message: Message, state:FSMContext):
 async def register_age(message: Message, state:FSMContext):
 
     if not valid.validate_date(message.text):
-        await message.answer("⚠ Ошибка! Формат даты должен быть <b>DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
+        await message.answer("⚠ Ошибка! Формат даты должен быть <b>DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку
     
     await state.update_data(time1 = message.text)
@@ -192,7 +222,7 @@ async def register_age(message: Message, state:FSMContext):
 async def register_age(message: Message, state:FSMContext):
 
     if not valid.validate_date(message.text):
-        await message.answer("⚠ Ошибка! Формат даты должен быть <b>DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова", parse_mode=ParseMode.HTML)
+        await message.answer("⚠ Ошибка! Формат даты должен быть <b>DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку
     
     await state.update_data(time2 = message.text)
@@ -206,7 +236,7 @@ async def register_age(message: Message, state:FSMContext):
 async def register_age(message: Message, state:FSMContext):
 
     if not valid.validate_isdigit(message.text):
-        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>", parse_mode=ParseMode.HTML)
+        await message.answer("⚠ Ошибка! Введите <b>целое положительное число</b>. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
     
     await state.update_data(price = message.text)
@@ -220,7 +250,7 @@ async def register_age(message: Message, state:FSMContext):
 async def register_age(message: Message, state:FSMContext, bot):
 
     if len(message.text) > 2500:
-        await message.answer(f"⚠ Ошибка! Текст превышает 2500 символов")
+        await message.answer(f"⚠ Ошибка! Текст превышает 2500 символов. Попробуйте снова 👇")
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
     await state.update_data(regulations = message.html_text)

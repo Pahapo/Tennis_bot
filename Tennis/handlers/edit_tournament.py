@@ -1,11 +1,12 @@
+import os
+from aiogram.types import FSInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.enums import ParseMode
 from aiogram import F, Router
 
-import keywords.kw_tournament as kt
 import handlers.btn_tournaments as bt
-import handlers.create_tournament as ct
+import handlers.classes as cl
 
 from config.db import session
 from models.Tournament import Tournament
@@ -27,9 +28,18 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')       
     selected_tournament = callback.data.replace("tournament_edit_", "").replace("_edit", "")  # Получаем название выбранного турнира
     tournament = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
+    
     await state.update_data(id_tournament = tournament.tournament_id)
+    await state.update_data(level = tournament.division)
 
-    try:
-        await ct.create_tournament(callback, state)
+    if os.path.exists(f"Tennis/img/tournament/{tournament.tournament_id}.jpg"):
+        pyth_photo = f"Tennis/img/tournament/{tournament.tournament_id}.jpg"
+    
+    try:        
+        # Удаляем фото после успешной отправки
+        os.remove(pyth_photo)
     except Exception as e:
-        print(f"Ошибка в create_tournament! Подробнее: {e}")
+        print(f"Ошибка при удалении турнирного фото. Ошибка: {e}")
+
+    await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
+    await callback.message.answer('Отправьте фото турнира в формте .jpg 👇')

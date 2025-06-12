@@ -9,8 +9,8 @@ from models.TournamentPlayers import TournamentPlayers
 class User(Base):
     __tablename__ = "users"
     tg_user_id = Column(BigInteger, primary_key=True, unique=True)
-    name_user = Column(String(20), nullable=True)
-    link = Column(String(30), nullable=False)
+    name_user = Column(String(100), nullable=True)
+    link = Column(String(100), nullable=False)
     age = Column(Integer, nullable=True)
     sex = Column(String(10), nullable=True)
     division_level = Column(Integer)

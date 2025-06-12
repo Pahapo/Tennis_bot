@@ -6,8 +6,8 @@ CREATE TABLE `division` (
 
 CREATE TABLE `users` (
   `tg_user_id` bigint NOT NULL,
-  `name_user` varchar(20) DEFAULT NULL,
-  `link` varchar(30) DEFAULT NULL,
+  `name_user` varchar(100) DEFAULT NULL,
+  `link` varchar(100) DEFAULT NULL,
   `age` int DEFAULT NULL,
   `sex` varchar(10) DEFAULT NULL,
   `division_level` int DEFAULT NULL,

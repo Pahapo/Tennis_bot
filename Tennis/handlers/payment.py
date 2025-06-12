@@ -3,10 +3,9 @@ import re
 import pytz
 import asyncio
 import aiohttp
-from aiogram.types import CallbackQuery, LinkPreviewOptions
+from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import FSInputFile
 from aiogram.filters import StateFilter
 from aiogram import F, Router, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup

@@ -1,4 +1,5 @@
 import re
+import os
 import pytz
 import asyncio
 from sqlalchemy import null
@@ -6,9 +7,10 @@ from datetime import datetime
 from aiogram.enums import ParseMode
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
+from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.types import CallbackQuery, LinkPreviewOptions
+from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile
 from aiogram import F, Router
 from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR
 
@@ -125,8 +127,9 @@ async def check_ban_user(user_id):
 
 
 @router.callback_query(F.data == 'start_message')
-async def start_message(callback: CallbackQuery, bot):
+async def start_message(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
+    await state.set_state(None)
 
     user_name = callback.from_user.full_name if callback.from_user.username else callback.from_user.username
     user_id = callback.from_user.id
@@ -177,24 +180,32 @@ async def user_tournament_keyboard(callback: CallbackQuery):
     await callback.answer('')
     user_id = callback.from_user.id
 
-    keyboard = await create_tournament_table_keyboard(user_id)
-    await callback.message.answer(f"<b>Тут собрана вся полезная информация касающаяся турнира</b>, в котором Вы участвуете! 🏆\n\n😎 \"Только упорные тренировки сделают из тебя чемпиона!\"", parse_mode=ParseMode.HTML, reply_markup=keyboard)
-
-
-async def create_tournament_table_keyboard(user_id):
-    last_toutnament_id = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()).first()    # протестировать на вывод последнего элемента
+    last_toutnament_id = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()).first()
     
     if last_toutnament_id is not None:
         last_toutnament = session.query(Tournament).filter(Tournament.tournament_id == last_toutnament_id.id_tournament).first()
 
-        buttons = [
-            [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
-            [InlineKeyboardButton(text = 'Турнирная таблица 📋', url=last_toutnament.link_table)],
-            [InlineKeyboardButton(text = 'Записать счёт 🙋‍♂️', callback_data='score')],
-            [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
-        ]
-    else:
-        return
+        link_table = last_toutnament.link_table
+        keyboard = await create_tournament_table_keyboard(link_table)
+        
+        if os.path.exists(f"Tennis/img/tournament/{last_toutnament.tournament_id}.jpg"):
+            pyth_photo = f"Tennis/img/tournament/{last_toutnament.tournament_id}.jpg"
+            
+            photo = FSInputFile(pyth_photo)
+            await callback.message.answer_photo(photo, caption=f"<b>Тут собрана вся полезная информация касающаяся турнира</b>, в котором Вы участвуете! 🏆\n\n😎 \"Только упорные тренировки сделают из тебя чемпиона!\"", parse_mode=ParseMode.HTML, reply_markup=keyboard)
+        
+        else:
+            await callback.message.answer(f"<b>Тут собрана вся полезная информация касающаяся турнира</b>, в котором Вы участвуете! 🏆\n\n😎 \"Только упорные тренировки сделают из тебя чемпиона!\"", parse_mode=ParseMode.HTML, reply_markup=keyboard)
+
+
+async def create_tournament_table_keyboard(link_table):
+
+    buttons = [
+        [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
+        [InlineKeyboardButton(text = 'Турнирная таблица 📋', url=link_table)],
+        [InlineKeyboardButton(text = 'Записать счёт 🙋‍♂️', callback_data='score')],
+        [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
