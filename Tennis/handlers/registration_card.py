@@ -79,20 +79,14 @@ async def register_date_q(call: CallbackQuery, state: FSMContext):
     if call.data == "yes_b_c":
         await state.update_data(booking = 'Да')
 
-        form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=1)).strftime('%d.%m.%Y')
-
         await state.set_state(cl.RegPlayerStates.date_booking)
-        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>/n<blockquote>- "завтра в 18:00"/n- "воскресенье, 3 часа дня"/n- "25 декабря, 19:00"/n- "через 2 недели в 10 утра"/n- "14:00, 5 октября"/n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
+        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>\n<blockquote>- "завтра в 18:00"\n- "воскресенье, 3 часа дня"\n- "25 декабря, 19:00"\n- "через 2 недели в 10 утра"\n- "14:00, 5 октября"\n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
 
     if call.data == "no_b_c":
         await state.update_data(booking = 'Нет')
 
-        # now = datetime.now(tz=pytz.utc).astimezone(pytz.timezone('Europe/Moscow'))
-        # form_date = now.strftime("%H:%M %d.%m.%Y")
-        form_date = (datetime.now(tz=MOSCOW_TZ) + timedelta(days=1)).strftime('%d.%m.%Y')
-
         await state.set_state(cl.RegPlayerStates.date_without_booking)
-        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>/n<blockquote>- "завтра в 18:00"/n- "воскресенье, 3 часа дня"/n- "25 декабря, 19:00"/n- "через 2 недели в 10 утра"/n- "14:00, 5 октября"/n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
+        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>\n<blockquote>- "завтра в 18:00"\n- "воскресенье, 3 часа дня"\n- "25 декабря, 19:00"\n- "через 2 недели в 10 утра"\n- "14:00, 5 октября"\n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
 
 
 
@@ -125,26 +119,7 @@ async def register_date(message: Message, state:FSMContext):
         await state.set_state(None)
         await state.update_data(date_without_booking = date_str)
 
-        await message.answer('Выберите забронированный корт 👇', reply_markup=ka.name_booking_court)
-
-
-@router.callback_query(F.data.in_(["name_court_1", "name_court_2", "name_court_3", "name_court_4", "name_court_5", "name_court_6"]))
-async def register_date_q(call: CallbackQuery, state: FSMContext):
-    await call.answer('')
-    if call.data == "name_court_1":
-        await state.update_data(name_court = 'Северная Америка - Кижеватова 3Б')
-    if call.data == "name_court_2":
-        await state.update_data(name_court = 'Африка - Теслы 6')
-    if call.data == "name_court_3":
-        await state.update_data(name_court = 'Центральная Европа - Теслы 16')
-    if call.data == "name_court_4":
-        await state.update_data(name_court = 'Средиземноморский - Теслы 24')
-    if call.data == "name_court_5":
-        await state.update_data(name_court = 'Тропические острова - Лученка 24')
-    if call.data == "name_court_6":
-        await state.update_data(name_court = 'Евразия - Лученка 1')
-
-    await call.message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
+        await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
 
 
@@ -177,7 +152,27 @@ async def register_date(message: Message, state:FSMContext):
         await state.set_state(None)
         await state.update_data(date_booking = date_str)
 
-        await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
+        await message.answer('Выберите забронированный корт 👇', reply_markup=ka.name_booking_court)
+
+
+
+@router.callback_query(F.data.in_(["name_court_1", "name_court_2", "name_court_3", "name_court_4", "name_court_5", "name_court_6"]))
+async def register_date_q(call: CallbackQuery, state: FSMContext):
+    await call.answer('')
+    if call.data == "name_court_1":
+        await state.update_data(name_court = 'Северная Америка - Кижеватова 3Б')
+    if call.data == "name_court_2":
+        await state.update_data(name_court = 'Африка - Теслы 6')
+    if call.data == "name_court_3":
+        await state.update_data(name_court = 'Центральная Европа - Теслы 16')
+    if call.data == "name_court_4":
+        await state.update_data(name_court = 'Средиземноморский - Теслы 24')
+    if call.data == "name_court_5":
+        await state.update_data(name_court = 'Тропические острова - Лученка 24')
+    if call.data == "name_court_6":
+        await state.update_data(name_court = 'Евразия - Лученка 1')
+
+    await call.message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
 
 
@@ -221,6 +216,7 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         sex=data.get("sex"),
         date_booking=data.get("date_booking"),
         date_without_booking=data.get("date_without_booking"),
+        name_court=data.get("name_court"),
         comment=data.get("comment")
     )
 
@@ -236,6 +232,7 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
     if user_match:
         user_match.date_booking = data.get("date_booking")
         user_match.date_without_booking = data.get("date_without_booking")
+        user_match.name_court = data.get("name_court")
         user_match.comment = data.get("comment")
         
         print(f'Игра пользователя с ID {data.get("user_id")} обновлена!')
@@ -244,7 +241,7 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         else:
             await message.answer('✅ Игра обновлена!')
     else:
-        new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), comment = data.get("comment"))
+        new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), name_court = data.get("name_court"), comment = data.get("comment"))
         session.add(new_match)
 
         print(f'✅ Карточка игры создана пользователем с ID {data.get("user_id")}!')

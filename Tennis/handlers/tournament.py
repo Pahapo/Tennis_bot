@@ -107,8 +107,12 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     tournament_lvl = ", ".join(levelTournament_names)
 
     # if int(player_count) >= int(quantity_person):            
-        # await callback.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-    if user_in_tournament:
+    #     await callback.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+   
+    # временное первое условие
+    if int(user.division_level) == 3:      
+        await callback.message.answer(f'<b>Мест больше нет</b> 🥲\n\nНам жаль, но на турнир уже записаться нельзя...\nПроверь другие доступные турниры или дождись нового 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+    elif user_in_tournament:
         await callback.message.answer(f'✅ <b>Вы уже участвуете в турнире!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.ban_status == True:
         await callback.message.answer(f'❌ <b>Вы не можете участвовать в турнире из-за бана</b>\n\nНам жаль, но на этот турнир записаться нельзя...\nБан будет снят {user.end_date_ban} 😎', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
