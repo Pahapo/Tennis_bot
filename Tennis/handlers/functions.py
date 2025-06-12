@@ -103,6 +103,24 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
         await state.update_data(user_id_skill = user_id)
         await state.set_state(cl.SendSkill.name)
         await message.answer('<b>Давай знакомиться!</b>\n\nЯ - 🤖 Бот по теннису. \nНапиши своё полное Имя и Фамилию 👇', parse_mode=ParseMode.HTML)
+    
+    else:
+
+        options = LinkPreviewOptions(
+            url=CHANNEL,
+            prefer_small_media=True
+        )
+            
+        if user_id in ADMINS:
+            await message.answer(adm_start_t, parse_mode=ParseMode.HTML, reply_markup=kb.main_admin_btn)
+        elif user_id in MAIN_EDITOR:
+            await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{m_edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.main_edit_btn)
+        elif user_id in EDITOR:
+            await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
+        else:
+            keyboard = await create_tournament_table_keyboard_user(user_id)
+            await message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", parse_mode=ParseMode.HTML, link_preview_options=options, reply_markup=keyboard)
+
 
 
 @router.message(cl.SendSkill.name)
@@ -123,7 +141,7 @@ async def register_age(message: Message, state:FSMContext):
 
 
 @router.message(cl.SendSkill.skill)
-async def register_age(message: Message, state:FSMContext):
+async def register_age(callback: CallbackQuery, message: Message, state:FSMContext, bot):
     user_skill = message.text.strip()
     data = await state.get_data()
 
@@ -141,6 +159,7 @@ async def register_age(message: Message, state:FSMContext):
         user.skill = user_skill
         session.commit()
     await state.clear()
+    await start_message(callback, bot)
 
 
 
@@ -203,9 +222,8 @@ async def check_ban_user(user_id):
 
 
 @router.callback_query(F.data == 'start_message')
-async def start_message(callback: CallbackQuery, state:FSMContext):
+async def start_message(callback: CallbackQuery, bot):
     await callback.answer('')
-    await state.set_state(None)
 
     user_name = callback.from_user.full_name if callback.from_user.username else callback.from_user.username
     user_id = callback.from_user.id
