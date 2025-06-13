@@ -228,6 +228,7 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
 
 @router.callback_query(F.data == 'success_payment')
 async def success_payment(callback: CallbackQuery, state:FSMContext, bot):
+    await callback.answer('')
 
     data = await state.get_data()
     user_id = callback.from_user.id

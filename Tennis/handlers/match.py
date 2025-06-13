@@ -123,8 +123,8 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
             
                         if users_match.date_booking:
                             list_matches += f'\nБронь корта: {users_match.date_booking}\n'
-                            if users_match.name_court:
-                                list_matches += f'Корт: {users_match.name_court}\n'
+                        if users_match.name_court:
+                            list_matches += f'Корт: {users_match.name_court}\n'
                         else:
                             list_matches += f'\nБрони нет! Предлагаю поиграть: {users_match.date_without_booking}\n'
 
