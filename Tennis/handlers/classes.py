@@ -13,6 +13,8 @@ class SendSkill(StatesGroup):
 class SendMessage(StatesGroup):
     message = State()
     invent = State()
+    callback = State()
+    link = State()
     payment_flag = State()
     message_flag = State()
 

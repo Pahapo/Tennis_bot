@@ -318,6 +318,6 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
                 if match.date_without_booking != None:
                     date = match.date_without_booking
 
-                await notification_sms.edit_text(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\n\nГотовьтесь к встрече на корте! ⚡️", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
+                await notification_sms.edit_text(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\nКорт: {match.name_court}\n\nГотовьтесь к встрече на корте! ⚡️", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
     else:
         await notification_sms.edit_text(f"Список 📂 подтверждённых игр пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)

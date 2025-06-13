@@ -133,6 +133,11 @@ async def register_name(message: Message, state:FSMContext):
         await message.answer(f"⚠ Ошибка! Длина ответа превышена на {remaining_chars} символов. Попробуйте снова 👇")
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
+    # Проверяем, корректно ли введен текст
+    if not valid.validate_start(user_name):
+        await message.answer(f"⚠ Ошибка! Имя и Фамилия не могут быть /start. Попробуйте снова 👇")
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+
     await state.update_data(name_skill = message.text)
     await state.set_state(None)
     
@@ -152,6 +157,11 @@ async def register_skill(message: Message, state:FSMContext, bot):
         await message.answer(f"⚠ Ошибка! Длина ответа превышена на {remaining_chars} символов. Попробуйте снова 👇")
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
     
+    # Проверяем, корректно ли введен текст
+    if not valid.validate_start(user_skill):
+        await message.answer(f"⚠ Ошибка! Ответ не может быть /start. Попробуйте снова 👇")
+        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+
     await state.set_state(None)
 
     user = session.query(User).filter(User.tg_user_id == data.get("user_id_skill")).first()
@@ -293,10 +303,10 @@ async def user_tournament_keyboard(callback: CallbackQuery):
 async def create_tournament_table_keyboard(link_table):
 
     buttons = [
-        [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
-        [InlineKeyboardButton(text = 'Турнирная таблица 📋', url=link_table)],
-        [InlineKeyboardButton(text = 'Записать счёт 🙋‍♂️', callback_data='score')],
-        [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
+        [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data = 'tournament_info')],
+        [InlineKeyboardButton(text = 'Турнирная таблица 📋', url = link_table)],
+        [InlineKeyboardButton(text = 'Записать счёт 🙋‍♂️', callback_data = 'score')],
+        [InlineKeyboardButton(text = 'Назад', callback_data = 'start_message')]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 

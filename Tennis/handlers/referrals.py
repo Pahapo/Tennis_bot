@@ -1,8 +1,9 @@
 import os
 from aiogram import F, Router, Bot
 from aiogram.types import Message, CallbackQuery, FSInputFile
-from aiogram.enums import ParseMode
+from sqlalchemy.exc import IntegrityError, OperationalError, DatabaseError
 from aiogram.fsm.context import FSMContext
+from aiogram.enums import ParseMode
 from config.config import BOT_USERNAME
 
 import keywords.kw_any as ka
@@ -89,7 +90,23 @@ async def check_referral(args, user_id, bot):
                                 referrer_user.coins += 100
                                 coins += 100
 
-                            session.commit()
+                            try:
+                                session.commit()
+                            except IntegrityError as e:
+                                session.rollback()
+                                if "unique constraint" in str(e).lower():
+                                    print(f"Ошибка: дубликат данных (пользователь {user_id} или ссылка уже существуют)")
+                                else:
+                                    print(f"Неизвестная IntegrityError: {e}")
+                            except OperationalError as e:
+                                session.rollback()
+                                print(f"Ошибка подключения к БД: {e}")
+                            except DatabaseError as e:
+                                session.rollback()
+                                print(f"Общая ошибка БД: {e}")
+                            except Exception as e:
+                                session.rollback()
+                                print(f"Ошибка в БД. Подробнее: {e}")
                         else:
                             return
                     else:
@@ -102,7 +119,23 @@ async def check_referral(args, user_id, bot):
                             referrer_user.coins = 100
                             coins = 100
                         
-                        session.commit()
+                        try:
+                            session.commit()
+                        except IntegrityError as e:
+                            session.rollback()
+                            if "unique constraint" in str(e).lower():
+                                print(f"Ошибка: дубликат данных (пользователь {user_id} или ссылка уже существуют)")
+                            else:
+                                print(f"Неизвестная IntegrityError: {e}")
+                        except OperationalError as e:
+                            session.rollback()
+                            print(f"Ошибка подключения к БД: {e}")
+                        except DatabaseError as e:
+                            session.rollback()
+                            print(f"Общая ошибка БД: {e}")
+                        except Exception as e:
+                            session.rollback()
+                            print(f"Ошибка в БД. Подробнее: {e}")
                     
                     # Оповещаем реферреру о новом реферале
                     message_text_send = f"<b>По Вашей ссылке зарегистрировался новый реферал! 🚀</b>\n\n🙋‍♂️ <b>Реферал:</b> {check_new_user.name_user}\n💰 <b>Монеты:</b> {coins}"

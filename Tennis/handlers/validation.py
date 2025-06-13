@@ -28,6 +28,9 @@ def validate_comment(comment: str) -> bool:
     """Проверяет, что текст не превышает 300 символов."""
     return len(comment) <= 300
 
+def validate_start(text: str) -> bool:
+    """Проверяет, что текст не равен."""
+    return text == '/start'
 
 def validate_date(text: str) -> bool:
     """Проверяет, что дата соответствует формату DD.MM.YYYY и является реальной."""

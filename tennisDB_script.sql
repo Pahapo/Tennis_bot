@@ -103,10 +103,9 @@ CREATE TABLE `old_users` (
   PRIMARY KEY (`tg_old_users_id`)
 );
 
-CREATE TABLE `referals` (
+CREATE TABLE `referrals` (
   `tg_users_id` bigint NOT NULL,
-  `referals` varchar(250) DEFAULT NULL,
-  `referals` varchar(250) DEFAULT NULL,
+  `referrals` varchar(250) DEFAULT NULL,
   `count` int DEFAULT NULL,
   PRIMARY KEY (`tg_users_id`)
 );

@@ -1,11 +1,12 @@
 import os
 import aiohttp
 from aiogram import F, Router, types
-from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
 from aiogram.fsm.context import FSMContext
-from aiogram.enums import ParseMode
-from aiogram.types import FSInputFile
+from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import StateFilter
+from aiogram.types import FSInputFile
+from aiogram.enums import ParseMode
 from config.config import ADMINS
 
 import keywords.kw_send_message as kb
@@ -27,7 +28,7 @@ async def register(callback: CallbackQuery, state:FSMContext, bot):
     if user_id in ADMINS:
         await callback.message.answer('Для начала выбери, какое сообщение ты хочешь отправить: с фото или без него?', reply_markup=kb.send_message_photo_q)
     else:
-        await callback.message.answer('Функция недоступна! Вы не админ! ❌')
+        await callback.message.answer('Функция недоступна! Вы не администратор! ❌')
         await f.start_message(callback, bot)
 
 
@@ -100,11 +101,38 @@ async def save_photo_payment(message: types.Message, state: FSMContext):
     options = LinkPreviewOptions(
         is_disabled=True
     )
-    
     if message.caption:
         await message.answer_photo(photo, caption=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.send_message_war)
     else:
         await message.answer_photo(photo, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.send_message_war)
+
+
+@router.callback_query(F.data == 'add_btn_callback')
+async def add_btn_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer('')
+    await state.set_state(cl.SendMessage.callback)
+    await callback.message.answer("Введи текст для кнопки 👇\n\nФормат: Текст - Callback", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+
+
+@router.message(cl.SendMessage.callback)
+async def sending_callback(message: Message, state:FSMContext):    
+    await state.update_data(message_callback = message.text)
+
+    await state.set_state(None)
+
+
+@router.callback_query(F.data == 'add_btn_link')
+async def add_btn_link(callback: CallbackQuery, state: FSMContext):
+    await callback.answer('')
+    await state.set_state(cl.SendMessage.link)
+    await callback.message.answer("Введи текст для кнопки 👇\n\nФормат: <code>Текст - Ссылка</code>", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+
+
+@router.message(cl.SendMessage.link)
+async def sending_clink(message: Message, state:FSMContext):    
+    await state.update_data(message_link = message.text)
+
+    await state.set_state(None)
 
 
 # Подтверждение для начала рассылки
@@ -113,12 +141,13 @@ async def save_photo_payment(message: types.Message, state: FSMContext):
 @router.callback_query(F.data == 'send_war')
 async def send_war(callback: CallbackQuery, bot):
     await callback.answer('')
-    await callback.message.answer("<b>Подтверди</b>, чтобы начать рассылку 👇", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+    await callback.message.edit_text("<b>Подтверди</b>, чтобы начать рассылку 👇", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
 
 
 @router.callback_query(F.data == 'send')
 async def send(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
+    await callback.message.edit_text(f"⏰ Идёт рассылка по пользователям...")
 
     options = LinkPreviewOptions(
         is_disabled=True
@@ -129,8 +158,10 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
 
         data = await state.get_data()
         message_text_send = data.get("message_text_send")
+        message_callback = data.get("message_callback")
+        message_link = data.get("message_link")
 
-        users = [row[0] for row in session.query(User.tg_user_id).all()]
+        users = [row[0] for row in session.query(User.tg_user_id).filter(User.tg_user_id != user_id).all()]
         count_send_message = 0
 
         # Проверяем файл Tennis/img/message/message.jpg
@@ -141,23 +172,58 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
         if users:            
             for user_id in users:
                 try:
-                    # Проверяем, есть ли фото
-                    if os.path.exists(save_path):
-                        if message_text_send:
-                            photo = FSInputFile(save_path)  # Локальный файл
-                            await bot.send_photo(chat_id=user_id, photo=photo, caption=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+                    if message_callback:
+                        message = message_callback.split(" - ")
+                        keyboard = await create_callback_message_keyboard(message[0], message[1])
+
+                        # Проверяем, есть ли фото
+                        if os.path.exists(save_path):
+                            if message_text_send:
+                                photo = FSInputFile(save_path)  # Локальный файл
+                                await bot.send_photo(chat_id=user_id, photo=photo, caption=message_text_send, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                            else:
+                                photo = FSInputFile(save_path)  # Локальный файл
+                                await bot.send_photo(chat_id=user_id, photo=photo, parse_mode=ParseMode.HTML, reply_markup=keyboard)
                         else:
-                            photo = FSInputFile(save_path)  # Локальный файл
-                            await bot.send_photo(chat_id=user_id, photo=photo, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+                            await bot.send_message(chat_id=user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                        
+                        count_send_message += 1
+
+                    elif message_link:
+                        message = message_link.split(" - ")
+                        keyboard = await create_link_message_keyboard(message[0], message[1])
+
+                        # Проверяем, есть ли фото
+                        if os.path.exists(save_path):
+                            if message_text_send:
+                                photo = FSInputFile(save_path)  # Локальный файл
+                                await bot.send_photo(chat_id=user_id, photo=photo, caption=message_text_send, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                            else:
+                                photo = FSInputFile(save_path)  # Локальный файл
+                                await bot.send_photo(chat_id=user_id, photo=photo, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                        else:
+                            await bot.send_message(chat_id=user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=keyboard)
+                        
+                        count_send_message += 1
+
                     else:
-                        await bot.send_message(chat_id=user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
-                    
-                    count_send_message += 1
+                        # Проверяем, есть ли фото
+                        if os.path.exists(save_path):
+                            if message_text_send:
+                                photo = FSInputFile(save_path)  # Локальный файл
+                                await bot.send_photo(chat_id=user_id, photo=photo, caption=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+                            else:
+                                photo = FSInputFile(save_path)  # Локальный файл
+                                await bot.send_photo(chat_id=user_id, photo=photo, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+                        else:
+                            await bot.send_message(chat_id=user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+                        
+                        count_send_message += 1
 
                 except Exception as e:
                     print(f"❌ Не удалось отправить сообщение при рассылке пользователю с id: {user_id} из-за ошибки: {e}")
             
-            await callback.message.answer(f"✅ <b>Рассылка завершена!</b>\n\nСообщение получило {count_send_message} чел.", parse_mode=ParseMode.HTML, reply_markup=ka.exit)
+            await callback.message.edit_text(f"✅ <b>Рассылка завершена!</b>\n\nСообщение получило {count_send_message} чел.", parse_mode=ParseMode.HTML, reply_markup=ka.exit)
         else:
             await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного для теста!", reply_markup=ka.exit)
 
@@ -166,9 +232,27 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
             os.remove(save_path)
 
     else:
-        await callback.message.answer('Функция недоступна! Вы не админ! ❌', reply_markup=ka.exit)
+        await callback.message.answer('Функция недоступна! Вы не администратор! ❌', reply_markup=ka.exit)
         await f.start_message(callback, bot)
     await state.clear()
+
+
+async def create_callback_message_keyboard(text_message, callback_message):
+
+    buttons = [
+        [InlineKeyboardButton(text = text_message, callback_data = callback_message)],
+        [InlineKeyboardButton(text = 'Главное меню', callback_data = 'start_message')]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+async def create_link_message_keyboard(text_message, link_message):
+
+    buttons = [
+        [InlineKeyboardButton(text = text_message, url = link_message)],
+        [InlineKeyboardButton(text = 'Главное меню', callback_data = 'start_message')]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 
 
 @router.callback_query(F.data == 'send_winners')
@@ -206,4 +290,4 @@ async def send_winner(callback: CallbackQuery, bot):
     #     except FileNotFoundError:
     #         await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного!")
     # else:
-    #     await callback.message.answer('Функция недоступна! Вы не админ! ❌')
+    #     await callback.message.answer('Функция недоступна! Вы не администратор! ❌')

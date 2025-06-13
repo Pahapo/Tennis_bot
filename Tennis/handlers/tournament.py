@@ -91,7 +91,7 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     user_in_tournament = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id, TournamentPlayers.id_tournament == tournament_data.tournament_id).all()
     # Запрос для подсчёта количества игроков в дивизионе игрока
     player_count = session.query(func.count()).select_from(TournamentPlayers).join(User, TournamentPlayers.id_tg_user == User.tg_user_id).filter(TournamentPlayers.id_tournament == tournament_data.tournament_id, User.division_level == user.division_level).scalar()
-    print("player_count = ", player_count)
+
     levelTournament_list = list(map(int, tournament_data.division.split(",")))
     name_division = session.query(Division).all()
     # Создаём словарь {division_id: name}, чтобы быстрее искать названия
