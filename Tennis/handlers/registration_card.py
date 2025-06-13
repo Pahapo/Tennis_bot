@@ -287,9 +287,7 @@ async def match_requests(callback: CallbackQuery):
                 text = ''
 
                 if user_match.date_booking:
-                    text += f'\n\nБронь корта: {user_match.date_booking}'
-                    if user_match.name_court:
-                        text += f'\nКорт: {user_match.name_court}'
+                    text += f'\n\nБронь корта: {user_match.date_booking}\nКорт: {user_match.name_court}'
                     
                 if user_match.date_without_booking:
                     text += f'\n\nБрони нет! Предлагаю поиграть: {user_match.date_without_booking}'

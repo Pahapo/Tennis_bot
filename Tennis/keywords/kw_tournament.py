@@ -18,7 +18,7 @@ tournaments_data_edit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardBut
                                                               [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
                                                               ])
 
-table_list = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')],
+table_list_main_editor = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')],
                                                     [InlineKeyboardButton(text = 'Архив 📚', callback_data='history_tournament_table')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='main_edit_tournament')]
                                                     ])
@@ -26,6 +26,11 @@ table_list = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 
 table_list_edit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')],
                                                     [InlineKeyboardButton(text = 'Архив 📚', callback_data='history_tournament_table')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
+                                                    ])
+
+table_list = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')],
+                                                    [InlineKeyboardButton(text = 'Архив 📚', callback_data='history_tournament_table')],
+                                                    [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                     ])
 
 table_list_back = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='tournament_table')]])

@@ -180,7 +180,6 @@ async def register_skill(message: Message, state:FSMContext, bot):
 
 
 
-
 async def check_subscription(user_id: int, bot) -> bool: # Проверяет, подписан ли пользователь на канал
     try:
         for channel in CHANNELS_SUB:
@@ -252,6 +251,7 @@ async def create_tournament_table_keyboard_user(user_id):
             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
             [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
             [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+            [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
             [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
             # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
         ]

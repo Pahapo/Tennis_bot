@@ -80,9 +80,7 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
             text_card += f"Дивизион: Не определён\n" # Добавить выбор дивизиона
             
         if self.date_booking:
-            text_card += f"\nБронь корта: на {self.date_booking}\n"
-            if self.name_court:
-                text_card += f"Корт: {self.name_court}\n"
+            text_card += f"\nБронь корта: на {self.date_booking}\nКорт: {self.name_court}\n"
         else:
             text_card += f"\nБрони нет! Предлагаю поиграть: {self.date_without_booking}\n"
 

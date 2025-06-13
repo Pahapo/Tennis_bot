@@ -23,13 +23,13 @@ router = Router()
 
 @router.callback_query(F.data == 'edit_tournament')
 async def edit_tournament(callback: CallbackQuery):
-    await callback.answer('')  # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
     await callback.message.answer(f"<b>Тут происходит работа над турнирами начиная с их создания</b>\n\n• Создание турнира\n• Просмотр турниров\n• Просмотр/удаление участников\n• Редактировние турнира\n• Удаление турнира\n\nВыбери нужное 👇", parse_mode=ParseMode.HTML, reply_markup=ks.edit_tournament)
     
 
 @router.callback_query(F.data == 'main_edit_tournament')
 async def tournament_main_edit(callback: CallbackQuery):
-    await callback.answer('')  # нужно отвечать чисто callback, иначе выбранная кнопка продолжить мигать
+    await callback.answer('')
 
     options = LinkPreviewOptions(
         is_disabled=True
@@ -83,15 +83,15 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     selected_tournament = callback.data.replace("tournament_out_bnt_", "")
     await state.update_data(selected_tournament = selected_tournament)  # Сохраняем выбранный турнир в состояние
 
+    user = session.query(User).filter_by(tg_user_id = user_id).first()
+
     # Получаем турнир
     tournament_data = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
     # Запрос "зарегистрирован ли пользователь на выбранный им турнир?"
     user_in_tournament = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id, TournamentPlayers.id_tournament == tournament_data.tournament_id).all()
     # Запрос для подсчёта количества игроков в дивизионе игрока
-    player_count = session.query(func.count()).join(User, TournamentPlayers.id_tg_user == User.tg_user_id).filter(TournamentPlayers.id_tournament == tournament_data.tournament_id).scalar()
-
-    user = session.query(User).filter_by(tg_user_id = user_id).first()
-
+    player_count = session.query(func.count()).select_from(TournamentPlayers).join(User, TournamentPlayers.id_tg_user == User.tg_user_id).filter(TournamentPlayers.id_tournament == tournament_data.tournament_id, User.division_level == user.division_level).scalar()
+    print("player_count = ", player_count)
     levelTournament_list = list(map(int, tournament_data.division.split(",")))
     name_division = session.query(Division).all()
     # Создаём словарь {division_id: name}, чтобы быстрее искать названия
