@@ -28,8 +28,11 @@ CREATE TABLE `match` (
   `date_without_booking` varchar(40) DEFAULT NULL,
   `name_court` varchar(50) DEFAULT NULL,
   `comment` varchar(300) DEFAULT NULL,
+  `type` varchar(15) DEFAULT NULL,
   `player_1` bigint DEFAULT NULL,
   `player_2` bigint DEFAULT NULL,
+  `player_3` bigint DEFAULT NULL,
+  `player_4` bigint DEFAULT NULL,
   PRIMARY KEY (`match_id`),
   KEY `match_users_fk` (`id_tg_user`),
   CONSTRAINT `match_users_fk` FOREIGN KEY (`id_tg_user`) REFERENCES `users` (`tg_user_id`)

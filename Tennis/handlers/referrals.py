@@ -98,15 +98,19 @@ async def check_referral(args, user_id, bot):
                                     print(f"Ошибка: дубликат данных (пользователь {user_id} или ссылка уже существуют)")
                                 else:
                                     print(f"Неизвестная IntegrityError: {e}")
+                                raise
                             except OperationalError as e:
                                 session.rollback()
                                 print(f"Ошибка подключения к БД: {e}")
+                                raise
                             except DatabaseError as e:
                                 session.rollback()
                                 print(f"Общая ошибка БД: {e}")
+                                raise
                             except Exception as e:
                                 session.rollback()
                                 print(f"Ошибка в БД. Подробнее: {e}")
+                                raise
                         else:
                             return
                     else:

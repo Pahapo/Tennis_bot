@@ -110,7 +110,11 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 
 #         print(f"Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!")
 #         await message.answer(f"✅ Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!", reply_markup=kb.back_ban)
-#         session.commit()
+#         try:
+#             session.commit()
+#         except Exception as e:
+#             session.rollback()
+#             raise e
 
 #         message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
 
@@ -119,5 +123,6 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 #         except Exception as e:
 #             print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
 #     else:
-#         print(f"ОШИБКА! Пользователя '{user.name_user}' не был забанен!")  
+#         await message.answer(f"✅ Пользователь '{user.name_user}' не был забанен!", reply_markup=kb.back_ban)
+#         print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  
 #     await state.clear()

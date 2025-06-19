@@ -27,11 +27,12 @@ class RegPlayerStates(StatesGroup):
     date_booking = State()
     date_without_booking = State()
     name_court = State()
+    type_match = State()
     skills = State()
     comment = State()
 
 class PlayerData:     # НЕ ТРОГАТЬ !!!
-    def __init__(self, id=None, link=None, age=None, sex=None, date_booking=None, date_without_booking=None, name_court=None, skills=None, comment=None, ban=None, tournaments_list=None):
+    def __init__(self, id=None, link=None, age=None, sex=None, date_booking=None, date_without_booking=None, name_court=None, type_match=None, skills=None, comment=None, ban=None, tournaments_list=None):
         self.id = id
         self.link = link
         self.age = age
@@ -39,6 +40,7 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
         self.date_booking = date_booking
         self.date_without_booking = date_without_booking
         self.name_court = name_court
+        self.type_match = type_match
         self.skills = skills
         self.comment = comment
         self.ban = ban
@@ -86,6 +88,9 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
         else:
             text_card += f"\nБрони нет! Предлагаю поиграть: {self.date_without_booking}\n"
 
+        if self.type_match:
+            text_card += f"Тип игры: {self.type_match}\n"
+
         if self.comment:
             text_card += f"Комментарий: <blockquote>{self.comment}</blockquote>\n"
         return text_card
@@ -111,6 +116,7 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
                 "Дивизион": tournament_lvl,
                 "Бронь корта": self.date_booking,
                 "Корт": self.name_court,
+                "Тип игры": self.type_match,
                 "Предложение о дате игры": self.date_without_booking,
                 "Комментарий": self.comment
             }
@@ -239,6 +245,7 @@ class FindUser(StatesGroup):
     tg_user_id = State()
     name_score = State()
     name_ban = State()
+    name_rename = State()
     name_kassa = State()
     name_division = State()
     name_division_del_players = State()
@@ -246,6 +253,7 @@ class FindUser(StatesGroup):
     link = State()
     level = State()
     score = State()
+    rename = State()
     period_ban = State()
     reason_ban = State()
 

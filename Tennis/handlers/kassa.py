@@ -186,21 +186,27 @@ async def confirm_kassa(callback: CallbackQuery, state:FSMContext, bot):
             now_UTC = datetime.now(tz=pytz.utc)
             date = now_UTC + timedelta(minutes=180)
 
-            check = Payment(id_tournament = tournament.tournament_id, id_tg_user = id_finder_user, price = tournament.price, salesman = user_id, date = date)
-            session.add(check)
-            player = TournamentPlayers(id_tournament = tournament.tournament_id, id_tg_user = id_finder_user)
-            session.add(player)
-            session.commit()
-
-            print(f"Наличная оплата пользователя \"{id_finder_user}\" была внесена за турнир '{tournament.name_tournament}' в размере '{tournament.price}' бел.руб.")
-            await callback.message.answer(f"✅ <b>Оплата подтверждена!</b>\n Пользователь стал участником турнира '{tournament.name_tournament}'!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-
-            message_text_send = f'<b>Спасибо за наличную оплату!</b> 💰\n\n🏆 <b>Турнир:</b> {tournament.name_tournament}\n💰 <b>Стоимость участия:</b> {tournament.price} бел.руб.'
-
             try:
-                await bot.send_message(chat_id=id_finder_user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                check = Payment(id_tournament = tournament.tournament_id, id_tg_user = id_finder_user, price = tournament.price, salesman = user_id, date = date)
+                session.add(check)
+                player = TournamentPlayers(id_tournament = tournament.tournament_id, id_tg_user = id_finder_user)
+                session.add(player)
+                session.commit()
+
+                print(f"Наличная оплата пользователя \"{id_finder_user}\" была внесена за турнир '{tournament.name_tournament}' в размере '{tournament.price}' бел.руб.")
+                await callback.message.answer(f"✅ <b>Оплата подтверждена!</b>\n Пользователь стал участником турнира '{tournament.name_tournament}'!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                
+                message_text_send = f'<b>Спасибо за наличную оплату!</b> 💰\n\n🏆 <b>Турнир:</b> {tournament.name_tournament}\n💰 <b>Стоимость участия:</b> {tournament.price} бел.руб.'
+
+                try:
+                    await bot.send_message(chat_id=id_finder_user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                except Exception as e:
+                    print(f"❌ Не удалось отправить сообщение о наличной оплате пользователю с id: {id_finder_user} из-за ошибки: {e}")
             except Exception as e:
-                print(f"❌ Не удалось отправить сообщение о наличной оплате пользователю с id: {id_finder_user} из-за ошибки: {e}")
+                session.rollback()
+                await message.answer("<b>Произошла критическая ошибка!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup, мы устраним её!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                raise e
+
         else:
             await callback.message.answer(f"❌ Пользователь уже зарегистрирован на турнир '{tournament.name_tournament}'!", reply_markup=kb.exit)
     else:

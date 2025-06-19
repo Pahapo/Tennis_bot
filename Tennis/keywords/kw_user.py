@@ -2,14 +2,11 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]])
 
-player = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='match'),
-                                                InlineKeyboardButton(text = 'Изменить данные', callback_data='register_player')]
-                                                ])
+player = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='match')]])
 
-player_get_card = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='match'),
-                                                InlineKeyboardButton(text = 'Изменить данные', callback_data='register_player')],
-                                                [InlineKeyboardButton(text = '❌ Удалить', callback_data='delete_match')]
-                                                ])
+player_get_card = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '❌ Удалить', callback_data='delete_match')],
+                                                        [InlineKeyboardButton(text = 'Назад', callback_data='match')]
+                                                        ])
 
 players = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Найти соперника 🙋‍♂️', callback_data='search_match')],
                                                 [InlineKeyboardButton(text = 'Создать запрос / Мои запросы 📋', callback_data='match_requests')],
@@ -57,8 +54,12 @@ booking_court_q = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(te
                                                         ])
 
 comment_q = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Да', callback_data='yes_c')],
-                                                        [InlineKeyboardButton(text = 'Нет', callback_data='no_c')]
-                                                        ])
+                                                    [InlineKeyboardButton(text = 'Нет', callback_data='no_c')]
+                                                    ])
+
+type_match = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Одиночный', callback_data='type_match_1')],
+                                                    [InlineKeyboardButton(text = 'Парный', callback_data='type_match_2')]
+                                                    ])
 
 add_card_q = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='match'),
                                                     InlineKeyboardButton(text = 'Создать 📋', callback_data='register_player')]

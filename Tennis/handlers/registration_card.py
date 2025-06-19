@@ -67,7 +67,7 @@ async def register_sex(call: CallbackQuery, state: FSMContext):
     await call.answer('')
     if call.data == "men":
         await state.update_data(sex = 'Мужчина')
-    if call.data == "women":
+    elif call.data == "women":
         await state.update_data(sex = 'Женщина')
     await call.message.answer('Вы уже забронировали корт? 🎾', reply_markup=kb.booking_court_q)
 
@@ -77,49 +77,31 @@ async def register_sex(call: CallbackQuery, state: FSMContext):
 async def register_date_q(call: CallbackQuery, state: FSMContext):
     await call.answer('')
     if call.data == "yes_b_c":
-        await state.update_data(booking = 'Да')
-
-        await state.set_state(cl.RegPlayerStates.date_booking)
-        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>\n<blockquote>- "завтра в 18:00"\n- "воскресенье, 3 часа дня"\n- "25 декабря, 19:00"\n- "через 2 недели в 10 утра"\n- "14:00, 5 октября"\n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
-
-    if call.data == "no_b_c":
-        await state.update_data(booking = 'Нет')
-
+        await call.message.answer('Выберите забронированный корт 👇', reply_markup=ka.name_booking_court)
+    elif call.data == "no_b_c":
         await state.set_state(cl.RegPlayerStates.date_without_booking)
-        await call.message.answer(f'<b>Указывать дату стало ещё проще!</b> 🔥 Просто напишите дату и время так, как вам удобно, а мы постараемся их понять!\n\n<b>Вот несколько примеров 👇</b>\n<blockquote>- "завтра в 18:00"\n- "воскресенье, 3 часа дня"\n- "25 декабря, 19:00"\n- "через 2 недели в 10 утра"\n- "14:00, 5 октября"\n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
+        await call.message.answer(f'<b>Укажите дату!</b> 🔥 Просто напишите дату и время так, как вам удобно!\n\n<b>Вот несколько примеров 👇</b>\n<blockquote>- "завтра в 18:00"\n- "воскресенье, 3 часа дня"\n- "25 декабря, 19:00"\n- "через 2 недели в 10 утра"\n- "14:00, 5 октября"\n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
 
 
 
-@router.message(cl.RegPlayerStates.date_without_booking)
-async def register_date(message: Message, state:FSMContext):
-    user_id = message.from_user.id
-    user = message.from_user
+@router.callback_query(F.data.in_(["name_court_1", "name_court_2", "name_court_3", "name_court_4", "name_court_5", "name_court_6"]))
+async def register_date_q(call: CallbackQuery, state: FSMContext):
+    await call.answer('')
+    if call.data == "name_court_1":
+        await state.update_data(name_court = 'Северная Америка - Кижеватова 3Б')
+    if call.data == "name_court_2":
+        await state.update_data(name_court = 'Африка - Теслы 6')
+    if call.data == "name_court_3":
+        await state.update_data(name_court = 'Центральная Европа - Теслы 16')
+    if call.data == "name_court_4":
+        await state.update_data(name_court = 'Средиземноморский - Теслы 24')
+    if call.data == "name_court_5":
+        await state.update_data(name_court = 'Тропические острова - Лученка 24')
+    if call.data == "name_court_6":
+        await state.update_data(name_court = 'Евразия - Лученка 1')
 
-    if user.username:
-        user_link = f"https://t.me/{user.username}"
-    else:
-        user_link = ""
-    
-    await state.update_data(user_id = user_id)
-    await state.update_data(link = user_link)
-
-    user_date = message.text.strip()
-
-    date = dateparser.parse(user_date, languages=['ru'], settings={'TIMEZONE': 'Europe/Moscow', 'TO_TIMEZONE': 'Europe/Moscow'})
-    if not date:
-        await message.reply("⚠ Не понял дату, попробуйте ещё раз 👇")
-        return # Останавливаем обработку
-    else:
-    # Сохраняем date в БД
-    # if not valid.validate_datetime(user_date):
-    #     await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
-    #     return  # Останавливаем обработку
-        # Преобразуем в строку перед записью в БД 
-        date_str = date.strftime("%H:%M %d.%m.%Y")
-        await state.set_state(None)
-        await state.update_data(date_without_booking = date_str)
-
-        await message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
+    await state.set_state(cl.RegPlayerStates.date_booking)
+    await call.message.answer(f'<b>Укажите дату 👇</b> \n\n🔥 Просто напишите дату и время так, как вам удобно!\n\n<b>Вот несколько примеров 👇</b>\n<blockquote>- "завтра в 18:00"\n- "воскресенье, 3 часа дня"\n- "25 декабря, 19:00"\n- "через 2 недели в 10 утра"\n- "14:00, 5 октября"\n- "10 июня 2025 года 14:30"</blockquote>', parse_mode=ParseMode.HTML) 
 
 
 
@@ -143,36 +125,52 @@ async def register_date(message: Message, state:FSMContext):
         await message.reply("⚠ Не понял дату, попробуйте ещё раз 👇")
         return # Останавливаем обработку
     else:
-    # Сохраняем date в БД
-    # if not valid.validate_datetime(user_date):
-    #     await message.answer("⚠ Ошибка! Формат даты должен быть <b>HH:MM DD.MM.YYYY</b>, и дата в будущем времени. Попробуйте снова 👇", parse_mode=ParseMode.HTML)
-    #     return  # Останавливаем обработку
-        # Преобразуем в строку перед записью в БД 
         date_str = date.strftime("%H:%M %d.%m.%Y")
         await state.set_state(None)
         await state.update_data(date_booking = date_str)
 
-        await message.answer('Выберите забронированный корт 👇', reply_markup=ka.name_booking_court)
+        await message.answer('Укажите тип игры 👇', reply_markup=kb.type_match)
 
 
 
-@router.callback_query(F.data.in_(["name_court_1", "name_court_2", "name_court_3", "name_court_4", "name_court_5", "name_court_6"]))
-async def register_date_q(call: CallbackQuery, state: FSMContext):
+@router.message(cl.RegPlayerStates.date_without_booking)
+async def register_date(message: Message, state:FSMContext):
+    user_id = message.from_user.id
+    user = message.from_user
+
+    if user.username:
+        user_link = f"https://t.me/{user.username}"
+    else:
+        user_link = ""
+    
+    await state.update_data(user_id = user_id)
+    await state.update_data(link = user_link)
+
+    user_date = message.text.strip()
+
+    date = dateparser.parse(user_date, languages=['ru'], settings={'TIMEZONE': 'Europe/Moscow', 'TO_TIMEZONE': 'Europe/Moscow'})
+    if not date:
+        await message.reply("⚠ Не понял дату, попробуйте ещё раз 👇")
+        return # Останавливаем обработку
+    else:
+        date_str = date.strftime("%H:%M %d.%m.%Y")
+        await state.set_state(None)
+        await state.update_data(date_without_booking = date_str)
+
+        await message.answer('Укажите тип игры 👇', reply_markup=kb.type_match)
+
+
+
+@router.callback_query(F.data.in_(["type_match_1", "type_match_2"]))
+async def type_match(call: CallbackQuery, state: FSMContext):
     await call.answer('')
-    if call.data == "name_court_1":
-        await state.update_data(name_court = 'Северная Америка - Кижеватова 3Б')
-    if call.data == "name_court_2":
-        await state.update_data(name_court = 'Африка - Теслы 6')
-    if call.data == "name_court_3":
-        await state.update_data(name_court = 'Центральная Европа - Теслы 16')
-    if call.data == "name_court_4":
-        await state.update_data(name_court = 'Средиземноморский - Теслы 24')
-    if call.data == "name_court_5":
-        await state.update_data(name_court = 'Тропические острова - Лученка 24')
-    if call.data == "name_court_6":
-        await state.update_data(name_court = 'Евразия - Лученка 1')
+    if call.data == "type_match_1":
+        await state.update_data(type_match = 'Одиночный')
+        await call.message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
-    await call.message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
+    elif call.data == "type_match_2":
+        await state.update_data(type_match = 'Парный')
+        await call.message.answer('Хотите оставить комментарий?', reply_markup=kb.comment_q)
 
 
 
@@ -217,31 +215,12 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         date_booking=data.get("date_booking"),
         date_without_booking=data.get("date_without_booking"),
         name_court=data.get("name_court"),
+        type_match=data.get("type_match"),
         comment=data.get("comment")
     )
 
-    user = session.query(User).filter(User.tg_user_id == data.get("user_id")).first()
-    user_match = session.query(Match).filter((Match.id_tg_user == data.get("user_id")) & ((Match.date_booking == data.get("date_booking")) | (Match.date_without_booking == data.get("date_booking")))).first()
-
-    if user:
-        if not user.age:
-            user.age = data.get("age")
-        if not user.sex:
-            user.sex = data.get("sex")
-
-    if user_match:
-        user_match.date_booking = data.get("date_booking")
-        user_match.date_without_booking = data.get("date_without_booking")
-        user_match.name_court = data.get("name_court")
-        user_match.comment = data.get("comment")
-        
-        print(f'Игра пользователя с ID {data.get("user_id")} обновлена!')
-        if callback:
-            await callback.message.answer('✅ Игра обновлена!')
-        else:
-            await message.answer('✅ Игра обновлена!')
-    else:
-        new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), name_court = data.get("name_court"), comment = data.get("comment"))
+    try:
+        new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), name_court = data.get("name_court"), type = data.get("type_match"), comment = data.get("comment"), player_1 = data.get("user_id"))
         session.add(new_match)
 
         print(f'✅ Карточка игры создана пользователем с ID {data.get("user_id")}!')
@@ -251,6 +230,10 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
             await message.answer('✅ Игра создана!')
 
         session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+
 
     await f.check_ban_user(data.get("user_id"))
 
@@ -274,7 +257,7 @@ async def match_requests(callback: CallbackQuery):
     await f.check_ban_user(user_id)
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
-    user_matches = session.query(Match).filter((Match.id_tg_user == user_id) & ((Match.player_1 == None) & (Match.player_2 == None))).all()
+    user_matches = session.query(Match).filter((Match.id_tg_user == user_id) & (Match.player_2 == None)).all()
 
     if user_matches:
         if len(user_matches) == 1:
@@ -291,7 +274,10 @@ async def match_requests(callback: CallbackQuery):
                     
                 if user_match.date_without_booking:
                     text += f'\n\nБрони нет! Предлагаю поиграть: {user_match.date_without_booking}'
-
+                
+                if user_match.type:
+                    text += f'\nТип игры: {user_match.type}'
+                
                 if user_match.comment:
                     text += f'\nКомментарий: <blockquote>{user_match.comment}</blockquote>'
                 
@@ -317,11 +303,16 @@ async def delete_match(callback: types.CallbackQuery, state: FSMContext):
         
         user_match = session.query(Match).filter(Match.match_id == match_id).first()
         if user_match:
-            session.delete(user_match)
-            session.commit()
+            try:
+                session.delete(user_match)
+                session.commit()
+                
+                await callback.answer(f"✅ Карточка удалена!", show_alert=False)
+                print(f"✅ Карточка игры удалена пользователем с id {user_id}!")
+            except Exception as e:
+                session.rollback()
+                raise e
 
-        await callback.answer(f"✅ Карточка удалена!", show_alert=False)
-        print(f"✅ Карточка игры удалена пользователем с id {user_id}!")
     else:
         print("❌ При попытке удалить карточку игры произошла ошибка!")
 

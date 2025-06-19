@@ -175,8 +175,8 @@ async def save_photo_payment(message: types.Message, state: FSMContext):
     print(f"Редактор добавил фото при создании или редактировании турнира!")
 
     # Загружаем файл
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
+    async with aiohttp.ClientSession() as session_http:
+        async with session_http.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
             if resp.status == 200:
                 with open(save_path, "wb") as f:
                     f.write(await resp.read())
@@ -277,21 +277,27 @@ async def register_age(message: Message, state:FSMContext, bot):
 
         gs.edit_name_tournament(tournament.name_tournament, data.get("name"))
         
-        old_name = tournament.name_tournament
+        try:
+            old_name = tournament.name_tournament
 
-        tournament.name_tournament = data.get("name")
-        tournament.type = data.get("type")
-        tournament.quantity_person = int(data.get("count"))
-        tournament.start_tournament = data.get("time1")
-        tournament.end_tournament = data.get("time2")
-        tournament.price = int(data.get("price"))
-        tournament.regulations = data.get("regulations")
-        session.commit()
+            tournament.name_tournament = data.get("name")
+            tournament.type = data.get("type")
+            tournament.quantity_person = int(data.get("count"))
+            tournament.start_tournament = data.get("time1")
+            tournament.end_tournament = data.get("time2")
+            tournament.price = int(data.get("price"))
+            tournament.regulations = data.get("regulations")
+            session.commit()
+
+            print(f'Турнир "{old_name}" был обновлён редактором на "{data.get("name")}"!')
+            await message.answer('✅ Турнир обновлён!')
+        except Exception as e:
+            session.rollback()
+            await message.answer("<b>Произошла критическая ошибка!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup, мы устраним её!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+            raise e
+
 
         link_sheet_tournament = tournament.link_table
-
-        print(f'Турнир "{old_name}" был обновлён редактором на "{data.get("name")}"!')
-        await message.answer('✅ Турнир обновлён!')
 
     else:
         tournament_sms = await message.answer('⏰ Начинаем создавать турнир')
@@ -304,14 +310,21 @@ async def register_age(message: Message, state:FSMContext, bot):
         await tournament_sms.edit_text("Добавляем участников... 🙋‍♂️")
         
         new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), type = data.get("type"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
-        session.add(new_tournament)  # Добавляем объект в сессию
-        session.commit()
-
-        await tournament_sms.edit_text('✅ Турнир создан!')
-        print(f'Создан новый турнир - "{data.get("name")}"')
-
-        await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot)
         
+        try:
+            session.add(new_tournament)  # Добавляем объект в сессию
+            session.commit()
+
+            await tournament_sms.edit_text('✅ Турнир создан!')
+            print(f'Создан новый турнир - "{data.get("name")}"')
+
+            await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot)
+        except Exception as e:
+            session.rollback()
+            await message.answer("<b>Произошла критическая ошибка!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup, мы устраним её!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+            raise e
+
+
     try:
         await message.answer(f"<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}Ссылка на турнир: {link_sheet_tournament}\n\n• Ссылки на турниры находятся в разделе \"Турнирные таблицы 📋\"", parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
     except Exception as e:

@@ -206,7 +206,7 @@ def edit_name_tournament(old_name_tournament, new_name_tournament):
 
 
 
-def delete_player_from_tournament(nameTournament, person, user_division):
+def delete_player_from_tournament(nameTournament, person, user_division, organizer):
     person = '@' + person.replace("https://t.me/", "")
 
     # ----- Открытие исходной таблицы -----
@@ -219,5 +219,6 @@ def delete_player_from_tournament(nameTournament, person, user_division):
     if matches:
         # Очистка ячейки с найденным значением
         sheet.update_cell(matches[0], 2, "")  # 2 — это номер колонки (B)
+        print(f"✅ Игрок {person} удалён из Excel из турнира - '{nameTournament}' дивизиона '{user_division}' организатором {organizer}!")
     else:
         print("При удалении из Excel пользователь не был найден!")

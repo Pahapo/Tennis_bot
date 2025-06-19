@@ -15,9 +15,7 @@ MAIN_EDITOR = list(map(int, os.getenv('MAIN_EDITOR').split(',')))       # Рас
                                                                         # Задают дивизион игрокам
                                                                         # Выдают бан
 EDITOR = list(map(int, os.getenv('EDITOR').split(',')))                 # Создаёт и контролирует турнир
+DIVISION_EDITOR = os.getenv('DIVISION_EDITOR')                          # Задаёт дивизион игрокам
 
 EMAILS = list(map(str, os.getenv('EMAILS').split(',')))
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-
-# PG_LINK=postgresql://USER_LOGIN:USER_PASSWORD@HOST_API:PORT/NAME_BD #Ссылка подключения к базе данных PostgreSQL   
+DATABASE_URL = os.getenv('DATABASE_URL')  

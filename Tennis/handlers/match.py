@@ -56,25 +56,32 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
 
     # Удаляем их
     for match in expired_matches:
-        session.delete(match)
-        session.commit()
+        try:
+            session.delete(match)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
 
-    tg_users_id = [row[0] for row in session.query(Match.id_tg_user).filter((Match.player_1 == None) & (Match.player_2 == None)).all()]
-    count_users = len(tg_users_id)
-    
+
+    tg_users_id_1 = [row[0] for row in session.query(Match.id_tg_user).filter((Match.type == "Одиночный") & (Match.player_2 == None)).all()]
+    tg_users_id_2 = [row[0] for row in session.query(Match.id_tg_user).filter((Match.type == "Парный") & (Match.player_4 == None)).all()]
+    count_users = len(tg_users_id_1) + len(tg_users_id_2)
+    tg_users_id = tg_users_id_1 + tg_users_id_2
+
     for user_tg in tg_users_id:
         if user_id == user_tg:
             count_users -= 1
 
     if count_users >= 1:
-        await callback.message.answer(f"<b>Список доступных соперников</b> 👇", parse_mode=ParseMode.HTML) # сделать список отфильтрованным по уровню вашего дивизиона (если None у человека дивизион, то пусть видит все карточки соперников)
+        await callback.message.answer(f"<b>Список доступных игр</b> 👇", parse_mode=ParseMode.HTML) # сделать список отфильтрованным по уровню дивизиона
     
         options = LinkPreviewOptions(
             is_disabled=True
         )
 
         users = session.query(User).all()  # Получаем список объектов User
-        users_matches = session.query(Match).filter((Match.player_1 == None) & (Match.player_2 == None)).all()
+        users_matches = session.query(Match).filter(((Match.type == "Одиночный") & (Match.player_2 == None)) | ((Match.type == "Парный") & (Match.player_4 == None))).all()
         sorted_matches = sorted(
             users_matches,
             key=lambda x: datetime.strptime(
@@ -125,6 +132,9 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
                             list_matches += f'\nБронь корта: {users_match.date_booking}\nКорт: {users_match.name_court}\n'
                         else:
                             list_matches += f'\nБрони нет! Предлагаю поиграть: {users_match.date_without_booking}\n'
+
+                        if users_match.type:
+                            list_matches += f'Тип игры: {users_match.type}\n'
 
                         if users_match.comment:
                             list_matches += f'Комментарий: <blockquote>{users_match.comment}</blockquote>'
@@ -185,6 +195,9 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
     # Поиск даты
     date_match = re.search(r'Дата игры:\s*(\d{2}:\d{2} \d{2}\.\d{2}\.\d{4})', message_text)
 
+    # Удаляем сообщение после нажатия на кнопку
+    await callback.message.delete()
+
     if link_match and date_match:
         link = link_match.group(1)
         date = date_match.group(1)
@@ -199,60 +212,128 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
             )
 
             if user_match:
-                if user_match.player_1 == None and user_match.player_2 == None:
-                    print(f"✅ Игра подтверждена пользователем с id {user_id}!")
-                    await callback.answer(f"✅ Игра объявлена!", show_alert=False)
-                    await callback.message.answer("🏆")
-                    await callback.message.answer(f"✅ <b>Игра объявлена!</b>\n\n• Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре\n\nГотовьтесь к встрече на корте {date}! ⚡️", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-                    
-                    message_text_send2 = f"✅ <b>Игра подтверждёна пользователем 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}\n\n<blockquote>Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре</blockquote>\n\nГотовьтесь к встрече на корте! ⚡️"
-                    try:
+                if user_match.type == "Одиночный" and user_match.player_2 == None:
+                    if user_match.player_2 != contestant.tg_user_id:
+                        type_match = 'одиночной'
+                        try:
+                            print(f"✅ Игра подтверждена пользователем с id {user_id} с игроком с id {contestant.tg_user_id}!")
+                            await callback.answer(f"✅ Игра объявлена!", show_alert=False)
+                            await callback.message.answer("🏆")
+                            await callback.message.answer(f"✅ <b>Игра объявлена!</b>\n\n• Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре\n\nГотовьтесь к встрече на корте {date}! ⚡️", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                            
+                            message_text_send2 = f"✅ <b>Игра подтверждёна пользователем 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}\n\n<blockquote>Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре</blockquote>\n\nГотовьтесь к встрече на корте! ⚡️"
+                            
+                            if user_match.player_2 == None:
+                                user_match.player_2 = contestant.tg_user_id
+                            session.commit()
+                        except Exception as e:
+                            session.rollback()
+                            raise e
+                        
+                        try:
+                            await bot.send_message(chat_id=contestant.tg_user_id, text="🏆")
+                            await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send2, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                        except Exception as e:
+                            print(f"❌ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
 
-                        await bot.send_message(chat_id=contestant.tg_user_id, text="🏆")
-                        await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send2, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                        print("Подтверждение игры отправленно сопернику для информирования")
-                    except Exception as e:
-                        print(f"❌ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
+                        # напоминание о игре
+                        time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
+                        time_before_match = time_before_match.total_seconds()
 
-                    user_match.player_1 = user.tg_user_id
-                    user_match.player_2 = contestant.tg_user_id
-                    session.commit()
+                        if time_before_match > 0:  # Проверяем, чтобы время было положительным
+                            await asyncio.sleep(time_before_match - 7200) # напоминание за 2 часа до начала
+
+                            options = LinkPreviewOptions(
+                                is_disabled=True
+                            )
+
+                            text_notification = f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с <a href='{user.link}'><b>{user.name_user}</b></a> осталось 2 часа"
+                            try:
+                                await bot.send_message(chat_id=contestant.tg_user_id, text=text_notification, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                                print("Отправлено напоминание пользователям о предстоящей игре")
+                            except Exception as e:
+                                print(f"Не удалось отправить напоминания пользователям об игре из-за ошибки: {e}")
+
+                            await callback.message.answer(f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                            return
+                    else:
+                        await callback.message.answer(f"❌ <b>Вы не можете принять эту игру</b>\n\nВы уже приняли приглашение от этого пользователя! Проверьте Ваши 'подтверждённые игры 🎾'</b>", parse_mode=ParseMode.HTML, reply_markup=kb.confirm_match)
+
+                if user_match.type == "Парный" and user_match.player_4 == None:
+                    type_match = 'парной'
+                    if user_match.player_2 != contestant.tg_user_id or user_match.player_3 != contestant.tg_user_id:
+                        try:
+                            print(f"✅ Игра подтверждена пользователем с id {user_id} с игроком с id {contestant.tg_user_id}!")
+                            await callback.answer(f"✅ Игра объявлена!", show_alert=False)
+                            await callback.message.answer("🏆")
+                            await callback.message.answer(f"✅ <b>Игра объявлена!</b>\n\n• Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре\n\nГотовьтесь к встрече на корте {date}! ⚡️", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                            
+                            message_text_send2 = f"✅ <b>Игра подтверждёна пользователем 🙋‍♂️ <a href='{user.link}'>{user.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{user.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{user}\n\n<blockquote>Ваша игра теперь доступна в разделе \"Мои подтверждённые игры 🎾\" для удобного поиска. Ваш соперник также получил уведомление о предстоящей игре</blockquote>\n\nГотовьтесь к встрече на корте! ⚡️"
+                            
+                            if user_match.player_2 == None:
+                                user_match.player_2 = contestant.tg_user_id
+                            elif user_match.player_3 == None:
+                                user_match.player_3 = contestant.tg_user_id
+                            elif user_match.player_4 == None:
+                                user_match.player_4 = contestant.tg_user_id
+                            session.commit()
+                        except Exception as e:
+                            session.rollback()
+                            raise e
+
+                        try:
+                            await bot.send_message(chat_id=contestant.tg_user_id, text="🏆")
+                            await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send2, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                        except Exception as e:
+                            print(f"❌ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
+
+                        # напоминание о игре
+                        if user_match.player_3 != None:
+                            time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
+                            time_before_match = time_before_match.total_seconds()
+
+                            if time_before_match > 0:  # Проверяем, чтобы время было положительным
+                                await asyncio.sleep(time_before_match - 7200) # напоминание за 2 часа до начала
+
+                                options = LinkPreviewOptions(
+                                    is_disabled=True
+                                )
+
+                                try:
+                                    user_id_player = [user_match.player_2, user_match.player_3]
+                                    contestants = []
+                                    for i in range(len(user_id_player)):
+                                        contestants.append(session.query(User).filter(User.tg_user_id == user_id_player[i]).first())
+                                    contestants.append(contestant)
+
+                                    contestant_links = ""
+                                    for contestant in contestants:
+                                        contestant_links += f" <a href='{contestant.link}'><b>{contestant.name_user}</b></a>"
+                                        
+                                    text_notification = f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с{contestant_links} осталось 2 часа"
+                                    
+                                    for contestant in contestants:
+                                        await bot.send_message(chat_id=contestant.tg_user_id, text=text_notification, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                                    print("Отправлено напоминание пользователям о предстоящей игре")
+                                except Exception as e:
+                                    print(f"Не удалось отправить напоминания пользователям об игре из-за ошибки: {e}")
+
+                                await callback.message.answer(f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+                                return
+                    else:
+                        await callback.message.answer(f"❌ <b>Вы не можете принять эту игру</b>\n\nВы уже приняли приглашение от этого пользователя! Проверьте Ваши 'подтверждённые игры 🎾'</b>", parse_mode=ParseMode.HTML, reply_markup=kb.confirm_match)
+
                 else:
-                    confirm_contestant = session.query(User).filter(User.tg_user_id == user_match.player_2).first()
-                    await callback.message.answer(f"❌ <b>Вы не можете принять эту игру, так как уже играете с <a href='{confirm_contestant.link}'>{confirm_contestant.name_user}</a> в это время!</b>", parse_mode=ParseMode.HTML, reply_markup=kb.confirm_match)
+                    await callback.message.answer(f"❌ <b>Вы не можете принять эту игру, так как уже играете с другими игроками!</b>", parse_mode=ParseMode.HTML, reply_markup=kb.confirm_match)
             else:
                 print(f"❌ Матч не был найден в БД пользователя с id {user_id} и датой {date}!")
-
-
-            # напоминание о игре
-            time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
-            time_before_match = time_before_match.total_seconds()
-
-            if time_before_match > 0:  # Проверяем, чтобы время было положительным
-                await asyncio.sleep(time_before_match - 7200) # напоминание за 2 часа до начала
-
-                options = LinkPreviewOptions(
-                    is_disabled=True
-                )
-
-                text_notification = f"<b>Напоминание!</b>\n⚡️До игры с <a href='{user.link}'><b>{user.name_user}</b></a> осталось 2 часа"
-                try:
-                    await bot.send_message(chat_id=contestant.tg_user_id, text=text_notification, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                    print("Отправлено напоминания пользователям об игре")
-                except Exception as e:
-                    print(f"Не удалось отправить напоминания пользователям об игре из-за ошибки: {e}")
-
-                await callback.message.answer(f"<b>Напоминание!</b>\n⚡️До игры с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-        
+       
         else:
             print("❌ При попытке отправки подтверждения игры произошла ошибка! Ссылка игрока некорректная или игрока с такой ссылкой не существует!")
 
     else:
         print("❌ При попытке подтверждения игры произошла ошибка! Он не был найден из-за ошибки с ссылкой или датой!")
         await callback.answer('')
-
-    # Удаляем сообщение после нажатия на кнопку
-    await callback.message.delete()
 
 
 
@@ -270,8 +351,6 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
 
     user_id = callback.from_user.id
     
-    notification_sms = await callback.message.answer('⏰ Обновляем данные...')
-
     all_matches = session.query(Match).all()
     expired_matches = [
         match for match in all_matches
@@ -282,11 +361,15 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
     ]
 
     # Удаляем их
-    for match in expired_matches:
-        session.delete(match)
-    session.commit()
+    try:
+        for match in expired_matches:
+            session.delete(match)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
 
-    matches = session.query(Match).filter((Match.player_1 == user_id) | (Match.player_2 == user_id)).all()
+    matches = session.query(Match).filter(((Match.type == 'Одиночный') & (Match.player_1 == user_id) & (Match.player_2 != None)) | ((Match.type == 'Одиночный') & (Match.player_1 != None) & (Match.player_2 == user_id)) | ((Match.type == 'Парный') & (Match.player_1 == user_id) & (Match.player_2 != None)) | ((Match.type == 'Парный') & (Match.player_2 == user_id) & (Match.player_1 != None)) | ((Match.type == 'Парный') & (Match.player_3 == user_id) & (Match.player_1 != None) & (Match.player_2 != None)) | ((Match.type == 'Парный') & (Match.player_4 == user_id) & (Match.player_1 != None) & (Match.player_2 != None) & (Match.player_3 != None))).all()
     sorted_matches = sorted(
             matches,
             key=lambda x: datetime.strptime(
@@ -297,16 +380,21 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
 
     if sorted_matches:
         for match in sorted_matches:
-            user_id_player = ''
+            user_id_player = []
 
-            if match.player_1 != user_id:
-                user_id_player = match.player_1
-
-            if match.player_2 != user_id:
-                user_id_player = match.player_2
+            if match.player_1 != user_id and match.player_1 != None:
+                user_id_player.append(match.player_1)
+            if match.player_2 != user_id and match.player_2 != None:
+                user_id_player.append(match.player_2)
+            if match.player_3 != user_id and match.player_3 != None:
+                user_id_player.append(match.player_3)
+            if match.player_4 != user_id and match.player_4 != None:
+                user_id_player.append(match.player_4)
 
             if user_id_player:
-                contestant = session.query(User).filter(User.tg_user_id == user_id_player).first()
+                contestants = []
+                for i in range(len(user_id_player)):
+                    contestants.append(session.query(User).filter(User.tg_user_id == user_id_player[i]).first())
 
                 options = LinkPreviewOptions(
                     is_disabled=True
@@ -318,6 +406,22 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
                 if match.date_without_booking != None:
                     date = match.date_without_booking
 
-                await notification_sms.edit_text(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestant.link}'>{contestant.name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestant.link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestant}\nКорт: {match.name_court}\n\nГотовьтесь к встрече на корте! ⚡️", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
+                if match.type == 'Одиночный':
+                    await callback.message.answer(f"✅ <b>Игра с пользователем 🙋‍♂️ <a href='{contestants[0].link}'>{contestants[0].name_user}</a>!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️ Соперник: <tg-spoiler>{contestants[0].link}</tg-spoiler>\n\n<b>СОПЕРНИК:</b>\n{contestants[0]}\n\n📍 Корт: {match.name_court}\n🔗 Тип игры: {match.type}\n\nГотовьтесь к встрече на корте! ⚡️", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
+                else:
+                    users_name_list = ''
+                    for contestant in contestants:
+                        users_name_list += f" <a href='{contestant.link}'>{contestant.name_user}</a>"
+
+                    users_list = ''
+                    for contestant in contestants:
+                        users_list += f"\n🙋‍♂️ {contestant}\n"
+
+                    users_link_list = ''
+                    for contestant in contestants:
+                        users_link_list += f"\n<tg-spoiler>{contestant.link}</tg-spoiler>"
+
+                    await callback.message.answer(f"✅ <b>Игра с пользователями 🙋‍♂️🙋‍♂️{users_name_list}!</b>\n\n<b>ДЕТАЛИ ИГРЫ:</b>\n⏰ Дата игры: {date}\n🙋‍♂️🙋‍♂️ Соперники: {users_link_list}\n\n<b>СОПЕРНИКИ:</b>{users_list}\n📍 Корт: {match.name_court}\n🔗 Тип игры: {match.type}\n\nГотовьтесь к встрече на корте! ⚡️", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.my_matches)
+
     else:
-        await notification_sms.edit_text(f"Список 📂 подтверждённых игр пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)
+        await callback.message.answer(f"Список 📂 подтверждённых игр пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.my_matches)

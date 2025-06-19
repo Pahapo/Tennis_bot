@@ -13,7 +13,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy.exc import IntegrityError, OperationalError, DatabaseError
 from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile, Message
 from aiogram import F, Router
-from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR
+from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR, DIVISION_EDITOR
 
 import keywords.kw_start as kb
 import keywords.kw_any as ka
@@ -91,15 +91,20 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
                 print(f"Ошибка: дубликат данных (пользователь {user_id} или ссылка уже существуют)")
             else:
                 print(f"Неизвестная IntegrityError: {e}")
+            raise
         except OperationalError as e:
             session.rollback()
             print(f"Ошибка подключения к БД: {e}")
+            raise
         except DatabaseError as e:
             session.rollback()
             print(f"Общая ошибка БД: {e}")
+            raise
         except Exception as e:
             session.rollback()
             print(f"Ошибка в БД. Подробнее: {e}")
+            raise
+
 
         await state.update_data(user_id_skill = user_id)
         await state.set_state(cl.SendSkill.name)
@@ -129,7 +134,7 @@ async def register_name(message: Message, state:FSMContext):
     user_name = message.text.strip()
     # Проверяем, корректно ли введен текст
     if not valid.validate_name(user_name):
-        remaining_chars = len(user_name) - 30
+        remaining_chars = len(user_name) - 64
         await message.answer(f"⚠ Ошибка! Длина ответа превышена на {remaining_chars} символов. Попробуйте снова 👇")
         return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
@@ -166,9 +171,15 @@ async def register_skill(message: Message, state:FSMContext, bot):
 
     user = session.query(User).filter(User.tg_user_id == data.get("user_id_skill")).first()
     if user:
-        user.name_user = data.get("name_skill")
-        user.skill = user_skill
-        session.commit()
+        try:
+            user.name_user = data.get("name_skill")
+            user.skill = user_skill
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+
+
     await state.clear()
     
     user_name = message.from_user.full_name if message.from_user.username else message.from_user.username
@@ -223,9 +234,13 @@ async def check_ban_user(user_id):
         end_date = datetime.strptime(user.end_date_ban, "%d.%m.%Y")
 
         if datetime.today() > end_date:
-            user.end_date_ban = None
-            user.ban_status = None
-            session.commit()
+            try:
+                user.end_date_ban = None
+                user.ban_status = None
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                raise e
 
 
 
@@ -256,23 +271,44 @@ async def start_message(callback: Optional[CallbackQuery] = None, message: Optio
 async def create_tournament_table_keyboard_user(user_id):
     last_toutnament_id = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()).first()    # протестировать на вывод последнего элемента
     
-    if last_toutnament_id is None:
-        buttons = [
-            [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
-            [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
-            [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-            [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
-            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
-            # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
-        ]
+    if str(user_id) != DIVISION_EDITOR:
+        if last_toutnament_id is None:
+            buttons = [
+                [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
+                [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
+                [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
+            ]
+        else:
+            buttons = [
+                [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
+                [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
+                [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
+            ]
     else:
-        buttons = [
-            [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
-            [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
-            [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-            [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
-            # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
-        ]
+        if last_toutnament_id is None:
+            buttons = [
+                [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
+                [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
+                [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
+                [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
+            ]
+        else:
+            buttons = [
+                [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
+                [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
+                [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
+            ]
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 

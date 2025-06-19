@@ -90,8 +90,8 @@ async def save_photo_payment(message: types.Message, state: FSMContext):
     file_path = file.file_path
 
     # Загружаем файл
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
+    async with aiohttp.ClientSession() as session_http:
+        async with session_http.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
             if resp.status == 200:
                 with open(save_path, "wb") as f:
                     f.write(await resp.read())

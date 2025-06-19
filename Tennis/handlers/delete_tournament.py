@@ -47,11 +47,16 @@ async def delete_tournament_anyway(callback: CallbackQuery, state:FSMContext, bo
         selected_tournament = session.query(Tournament).filter(Tournament.name_tournament == name_tournament_delete).first()
 
         if selected_tournament:
-            session.delete(selected_tournament)  # Удаляем объект из базы
-            session.commit()
+            try:
+                session.delete(selected_tournament)  # Удаляем объект из базы
+                session.commit()
+                print(f"Турнир '{name_tournament_delete}' был удалён редактором!")
+                await callback.message.answer(f"✅ Турнир '{name_tournament_delete}' успешно удалён!", reply_markup=kb.exit)
+            except Exception as e:
+                session.rollback()
+                await message.answer("<b>Произошла критическая ошибка!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup, мы устраним её!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                raise e
 
-            print(f"Турнир '{name_tournament_delete}' был удалён редактором!")
-            await callback.message.answer(f"✅ Турнир '{name_tournament_delete}' успешно удалён!", reply_markup=kb.exit)
         else:
             await callback.message.answer(f"Что-то пошло не так! Турнир '{name_tournament_delete}' не был найден\n\nХочешь узнать больше об ошибке? Обратись в поддержку\n🙋‍♂️ Поддержка @sup_MM", reply_markup=kb.exit)
     else:

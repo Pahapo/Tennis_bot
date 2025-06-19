@@ -98,6 +98,7 @@ async def find_name_p_ban(message: Message, state:FSMContext):
 @router.message(cl.FindUser.reason_ban)
 async def find_name_r_ban(message: Message, state:FSMContext, bot):
     await state.update_data(reason_ban = message.text)
+    user_id = message.from_user.id
 
     await state.set_state(None)
 
@@ -116,19 +117,23 @@ async def find_name_r_ban(message: Message, state:FSMContext, bot):
         if user.end_date_ban != None:
             end_date_ban = datetime.strptime(user.end_date_ban, "%d.%m.%Y") + timedelta(days = period_ban)
             user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
+        try:
+            user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
 
-        user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
+            print(f'Пользователь "{user.name_user}" был забанен на {period_ban} дн. (до {end_date_ban.strftime("%d.%m.%Y")})! Бан выдал организатор: {user_id}')
+            await message.answer(f'✅ Пользователь "{user.name_user}" был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!', reply_markup=kb.back_ban)
+            session.commit()
 
-        print(f'Пользователь "{user.name_user}" был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!')
-        await message.answer(f'✅ Пользователь "{user.name_user}" был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!', reply_markup=kb.back_ban)
-        session.commit()
-
-        message_text_send = f'<b>Дорогой игрок, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>'
+            message_text_send = f'<b>Дорогой игрок, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>'
+        except Exception as e:
+            session.rollback()
+            raise e
 
         try:
             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         except Exception as e:
             print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
     else:
-        print(f"ОШИБКА! Пользователя '{user.name_user}' не был забанен!")  
+        await callback.message.answer(f"❌ <b>Пользователь не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+        print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  
     await state.clear()

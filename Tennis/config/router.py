@@ -23,6 +23,8 @@ from handlers.booking_court import router as booking_court
 from handlers.referrals import router as referrals
 from handlers.kassa import router as kassa
 from handlers.score import router as score
+from handlers.rename_user import router as rename_user
+# from handlers.create_chats import router as create_chats
 
 
 router = Router()
@@ -53,3 +55,5 @@ router.include_router(booking_court)
 router.include_router(referrals)
 router.include_router(kassa)
 router.include_router(score)
+router.include_router(rename_user)
+# router.include_router(create_chats)

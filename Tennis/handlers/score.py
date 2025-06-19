@@ -100,8 +100,12 @@ async def find_score(message: Message, state:FSMContext):
     score = message.text
 
     if not valid.validate_score(score):
-        remaining_chars = len(score) - 11
-        await message.answer(f"⚠ Ошибка! Длина комментария превышена на {remaining_chars} символов. Попробуйте снова 👇")
+        remaining_chars = len(score) - 30
+        await message.answer(f"⚠ Ошибка! Длина текста превышена на {remaining_chars} символов. Попробуйте снова 👇")
+        return  # Останавливаем обработку
+
+    if not valid.contains_link(score):
+        await message.answer(f"⚠ Ошибка! Текст содержит ссылку. Попробуйте снова 👇")
         return  # Останавливаем обработку
     
     await state.set_state(None)
@@ -159,7 +163,8 @@ async def confirm_score(callback: CallbackQuery, state:FSMContext, bot):
             print(f"❌ Не удалось отправить сообщение о счёте на турнире пользователю с id: {contestant.tg_user_id} из-за ошибки: {e}")
             await callback.message.answer(f'<b>Произошла ошибка при отправке счёта!</b>\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     else:
-        print(f"ОШИБКА! Пользователь с ссылкой '{link_finder_contestant}' не был наёден в БД. Счёт не может быть отправлен сопернику!")  
+        await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+        print(f"ОШИБКА! Пользователь с ссылкой '{link_finder_contestant}' не был найден в БД. Счёт не может быть отправлено сопернику!")  
     await state.clear()
 
 
@@ -204,7 +209,8 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
             except Exception as e:
                 print(f"❌ Не удалось отправить сообщение о положительном ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
         else:
-            print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был наёден в БД. Подтверждение счёта не может быть отправлен сопернику!")  
+            await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+            print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД. Подтверждение счёта не может быть отправлено сопернику!")  
     else:
         print("❌ Данные не были обработаны при поиске данных при внесении счёта соперниками!")
 
@@ -240,7 +246,8 @@ async def unconfirm_score_contestant(callback: types.CallbackQuery, bot):
             except Exception as e:
                 print(f"❌ Не удалось отправить сообщение о отрицательным ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
         else:
-            print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был наёден в БД")  
+            await callback.message.answer(f"<b>Соперник не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+            print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД")  
     else:
         print("❌ Данные не были обработаны при поиске данных при внесении счёта соперниками!")
     

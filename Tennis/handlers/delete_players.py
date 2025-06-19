@@ -42,7 +42,7 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
 @router.message(cl.FindUser.players_delete)
 async def find_name_del_players(message: Message, state:FSMContext):
     await state.update_data(players_delete = message.text)
-    name_finder_user = message.text
+    name_finder_user = message.text.lower()
 
     await state.set_state(None)
     
@@ -83,6 +83,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
 
     user_id = callback.from_user.id
     if user_id in EDITOR or user_id in MAIN_EDITOR or user_id in ADMINS:
+        await callback.message.answer(f"⏰ Идёт удаление пользователя...")
 
         data = await state.get_data()
         name_finder_tournament = data.get("name_tournament_del_players")
@@ -93,14 +94,23 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
         selected_tournament = session.query(Tournament).filter(Tournament.name_tournament == name_finder_tournament).first()
         
         # Удаление игрока из турнира
-        session.query(TournamentPlayers).filter((TournamentPlayers.id_tg_user == user.tg_user_id) & (TournamentPlayers.id_tournament == selected_tournament.tournament_id)).delete()
-        session.commit()
+        try:
+            del_user = session.query(TournamentPlayers).filter((TournamentPlayers.id_tg_user == user.tg_user_id) & (TournamentPlayers.id_tournament == selected_tournament.tournament_id)).first()
+            if del_user:
+                session.delete(del_user)
+                session.commit()
+            else: 
+                await callback.message.answer(f"Вы пытаетесь удалить пользователя, которого нет в турнире!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        except Exception as e:
+            session.rollback()
+            raise e
+
 
         try:
-            gs.delete_player_from_tournament(name_finder_tournament, name_finder_user, selected_division.name_division)
-            print(f"✅ Игрок удалён из Excel из турнира - '{selected_tournament.name_tournament}' дивизиона '{selected_division.name_division}'!")
+            gs.delete_player_from_tournament(name_finder_tournament, name_finder_user, selected_division.name_division, user_id)
             
-            await callback.message.answer(f"✅ Пользователь {user.name_user} был исключён из турнира {name_finder_tournament}!", reply_markup=kb.exit)
+            await callback.message.edit_text(f"✅ Пользователь {user.name_user} был исключён из турнира {name_finder_tournament}!", reply_markup=kb.exit)
+            print(f"✅ Игрок удалён из Excel из турнира - '{selected_tournament.name_tournament}' дивизиона '{selected_division.name_division}'!")
 
             editors_list = await f.output_edits_list()
             message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вы были исключены из турнира {name_finder_tournament}</b> ❌\n\n<i>• Если это ошибка, пожалуйста, свяжитесь с редактором(-ами) турнира!</i> {editors_list}"

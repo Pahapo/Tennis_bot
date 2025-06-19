@@ -42,9 +42,12 @@ async def inventory(callback: CallbackQuery, bot):
 #     await state.set_state(None) 
 
 #     check = Inventory(photo = 'img', description = message.html_text)
-#     session.add(check)
-#     session.commit()
-
+#     try:
+#         session.add(check)
+#         session.commit()
+#     except Exception as e:
+#         session.rollback()
+#         raise e
 
 
 @router.callback_query(F.data == 'get_inventory1')

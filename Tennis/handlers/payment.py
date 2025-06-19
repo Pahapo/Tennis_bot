@@ -124,8 +124,8 @@ async def save_photo_payment(message: types.Message, state: FSMContext, bot):
     print(f"✅ Игроком с id {user_id} отправлен чек об оплате для участия в турнире {selected_tournament}. Чек: '{save_path}'")
 
     # Загружаем файл
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
+    async with aiohttp.ClientSession() as session_http:
+        async with session_http.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
             if resp.status == 200:
                 with open(save_path, "wb") as f:
                     f.write(await resp.read())
@@ -212,11 +212,16 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
 
         if not user_payment:
             check = Payment(id_tournament = tournament_id, id_tg_user = user_id, price = price, coins = coins, photo = file_id, date = date)
-            session.add(check)
-            session.commit()
+            try:
+                session.add(check)
+                session.commit()
 
-            print(f"✅ Игрок с id {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
-            await callback.answer(f"✅ Оплата подтверждена", show_alert=False)
+                print(f"✅ Игрок с id {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
+                await callback.answer(f"✅ Оплата подтверждена", show_alert=False)
+            except Exception as e:
+                session.rollback()
+                raise e
+
         await callback.answer(f"⚠️ Оплата уже была подтверждена другим редактором!", show_alert=False)
     else:
         print("❌ Данные не были обработаны при отправке сообщения с оплатой редактору за турнир!")
@@ -242,16 +247,22 @@ async def success_payment(callback: CallbackQuery, state:FSMContext, bot):
     user_division = session.query(Division).filter(Division.division_id == selected_user.division_level).first()
 
     if not user_in_tournament:
-        user = TournamentPlayers(id_tournament = selected_tournament.tournament_id, id_tg_user = user_id)
-        session.add(user)
+        try:
+            user = TournamentPlayers(id_tournament = selected_tournament.tournament_id, id_tg_user = user_id)
+            session.add(user)
 
-        if selected_user.coins:
-            if data.get("coins"):
-                selected_user.coins -= data.get("coins")
-                print(f'✅ Игрок с id {selected_user.tg_user_id} применил {data.get("coins")} монет для участия в турнире - "{selected_tournament.name_tournament}"!')
+            if selected_user.coins:
+                if data.get("coins"):
+                    selected_user.coins -= data.get("coins")
+                    print(f'✅ Игрок с id {selected_user.tg_user_id} применил {data.get("coins")} монет для участия в турнире - "{selected_tournament.name_tournament}"!')
 
-        session.commit()
-        print(f"✅ Игрок с id {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
+            session.commit()
+            
+            print(f"✅ Игрок с id {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
+        except Exception as e:
+            session.rollback()
+            raise e
+
 
     await callback.message.answer('✅ <b>Регистрация на турнир подтверждена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     

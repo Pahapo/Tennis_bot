@@ -25,6 +25,7 @@ table_list_main_editor = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardBu
 
 table_list_edit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='active_tournament_table')],
                                                     [InlineKeyboardButton(text = 'Архив 📚', callback_data='history_tournament_table')],
+                                                    [InlineKeyboardButton(text = 'Удалить турнир ❌', callback_data='delete_tournament')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament')]
                                                     ])
 

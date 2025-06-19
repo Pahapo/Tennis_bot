@@ -21,8 +21,8 @@ def validate_datetime(text: str) -> bool:
         return False  # Дата невозможная (например, 32 мая)
     
 def validate_name(name: str) -> bool:
-    """Проверяет, что текст не превышает 30 символов."""
-    return len(name) <= 30
+    """Проверяет, что текст не превышает 64 символов."""
+    return len(name) <= 64
 
 def validate_comment(comment: str) -> bool:
     """Проверяет, что текст не превышает 300 символов."""
@@ -30,7 +30,7 @@ def validate_comment(comment: str) -> bool:
 
 def validate_start(text: str) -> bool:
     """Проверяет, что текст не равен."""
-    return text == '/start'
+    return text != '/start'
 
 def validate_date(text: str) -> bool:
     """Проверяет, что дата соответствует формату DD.MM.YYYY и является реальной."""
@@ -52,4 +52,8 @@ def validate_isdigit(number: str) -> bool:
 
 def validate_score(score: str) -> bool:
     """Проверяет, что комментарий не превышает 11 символов."""
-    return len(score) <= 11
+    return len(score) <= 30
+
+def contains_link(text: str) -> bool:
+    """Проверяет, что комментарий не содержит ссылок."""
+    return not 'http' in text

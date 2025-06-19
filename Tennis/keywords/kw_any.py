@@ -4,7 +4,7 @@ exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Гл�
 
 # division
 
-set_division = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Игроки без дивизиона 🙋‍♂️', callback_data='player_without_division')], # сделать!
+set_division = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Игроки без дивизиона 🙋‍♂️', callback_data='player_without_division')],
                                                     [InlineKeyboardButton(text = 'Поиск игрока 🔍', callback_data='find_users_for_division')],
                                                     [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                     ])
@@ -78,6 +78,20 @@ back_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '�
 
 edit_ban = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Забанить ❌', callback_data='set_new_ban')],
                                                 [InlineKeyboardButton(text = 'Назад', callback_data='set_ban')]
+                                                ])
+
+# rename user
+
+rename_user = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Поиск игрока 🔍', callback_data='find_users_for_rename')],
+                                                [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
+                                                ])
+
+back_rename = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Найти другого игрока 🔍', callback_data='find_users_for_rename')],
+                                                [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                ])
+
+edit_rename = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Переименовать 🙋‍♂️', callback_data='set_new_name_user')],
+                                                [InlineKeyboardButton(text = 'Назад', callback_data='rename_user')]
                                                 ])
 
 # delete from tournament

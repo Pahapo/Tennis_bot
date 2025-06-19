@@ -75,16 +75,20 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
         level = '5'
 
     user = session.query(User).filter(User.tg_user_id == user_id).first()
-    user.division_level = level
-    session.commit()
+    try:
+        user.division_level = level
+        session.commit()
 
-    print(f"Установлен дивизион для пользователя \"{user.name_user}\"!")
-    await call.answer(f"Дивизион установлен! ✅", show_alert=False)
+        print(f"Установлен дивизион для пользователя \"{user.name_user}\"!")
+        await call.answer(f"Дивизион установлен! ✅", show_alert=False)
 
-    name_division = session.query(Division).filter(Division.division_id == int(level)).first()
-    division_lvl = name_division.name_division
- 
-    message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что Вам установлен дивизион!</b> 🏆\n\nДивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉 Теперь вы можете принять участие в турнирах!"
+        name_division = session.query(Division).filter(Division.division_id == int(level)).first()
+        division_lvl = name_division.name_division
+    
+        message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что Вам установлен дивизион!</b> 🏆\n\nДивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉 Теперь вы можете принять участие в турнирах!"
+    except Exception as e:
+        session.rollback()
+        raise e
 
     try:
         await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
