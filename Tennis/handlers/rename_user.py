@@ -98,10 +98,11 @@ async def find_name_rename(message: Message, state:FSMContext):
     
     if user:
         try:
+            old_name = user.name_user
             user.name_user = rename
 
-            print(f'Пользователь "{user.name_user}" был переименован на {rename}!')
-            await message.answer(f'✅ Пользователь "{user.name_user}" был переименован на {rename}!', reply_markup=kb.back_rename)
+            print(f'Пользователь "{old_name}" был переименован на {rename}!')
+            await message.answer(f'✅ Пользователь "{old_name}" был переименован на {rename}!', reply_markup=kb.back_rename)
             session.commit()
         except Exception as e:
             session.rollback()

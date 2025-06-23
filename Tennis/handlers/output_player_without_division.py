@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.enums import ParseMode
-from config.config import ADMINS, MAIN_EDITOR, EDITOR
+from config.config import ADMINS, MAIN_EDITOR, EDITOR, DIVISION_EDITOR
 
 import keywords.kw_tournament as kb
 import keywords.kw_any as ka
@@ -17,7 +17,7 @@ from models.Division import Division
 router = Router()
 
 @router.callback_query(F.data == 'player_without_division')
-async def player_without_division(callback: CallbackQuery, state: FSMContext):
+async def player_without_division(callback: CallbackQuery, state: FSMContext, bot):
     await callback.answer('')
 
     data = await state.get_data()
@@ -28,7 +28,7 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext):
     )
 
     user_id = callback.from_user.id
-    if user_id in ADMINS or user_id in MAIN_EDITOR or user_id in EDITOR:
+    if user_id in ADMINS or user_id in MAIN_EDITOR or user_id in EDITOR or str(user_id) == DIVISION_EDITOR:
                         
         users_without_division = session.query(User).filter(User.division_level == None).all()
         count_users = len(users_without_division)
@@ -54,6 +54,11 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext):
                 print("Сообщение не изменилось, пропускаем...")
             else:
                 raise  # Перебрасываем другие ошибки
+    else:
+        await callback.message.answer('Функция недоступна! Вы не главный редактор / редактор! ❌')
+        await f.start_message(callback, bot)
+
+
 
 @router.callback_query(F.data.in_(["lvl_wd_1", "lvl_wd_2", "lvl_wd_3", "lvl_wd_4", "lvl_wd_5"]))
 async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):

@@ -202,8 +202,6 @@ def edit_name_tournament(old_name_tournament, new_name_tournament):
 
         # Отправляем запрос в Google Sheets API
         service_sheets.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=update_request).execute()
-        print(f"✅ Название таблицы '{old_name_tournament}' изменено на '{new_name_tournament}'!")
-
 
 
 def delete_player_from_tournament(nameTournament, person, user_division, organizer):

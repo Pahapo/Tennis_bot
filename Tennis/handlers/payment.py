@@ -244,9 +244,16 @@ async def success_payment(callback: CallbackQuery, state:FSMContext, bot):
     user_in_tournament = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id, TournamentPlayers.id_tournament == selected_tournament.tournament_id).all()
 
     selected_user = session.query(User).filter(User.tg_user_id == user_id).first()
-    user_division = session.query(Division).filter(Division.division_id == selected_user.division_level).first()
 
-    if not user_in_tournament:
+    if data.get("one_else_division"):
+        division_level = int(data.get("one_else_division"))
+        await state.update_data(one_else_division = None)
+    else:
+        division_level = selected_user.division_level
+        
+    user_division = session.query(Division).filter(Division.division_id == division_level).first()
+
+    if len(user_in_tournament) < 2:
         try:
             user = TournamentPlayers(id_tournament = selected_tournament.tournament_id, id_tg_user = user_id)
             session.add(user)

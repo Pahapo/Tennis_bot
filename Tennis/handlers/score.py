@@ -60,10 +60,11 @@ async def find_name_score(message: Message, state:FSMContext):
     user = session.query(User).filter(User.tg_user_id == user_id).first()
     user_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).all()
 
-    tournament_ids = [tournament.id_tournament for tournament in user_tournaments]
+    if user_tournaments:
+        tournament_ids = [tournament.id_tournament for tournament in user_tournaments]
 
     if user and tournament_ids:
-        list_finder_user = [row[0] for row in session.query(User.link).join(TournamentPlayers, TournamentPlayers.id_tg_user == User.tg_user_id).filter(User.division_level == user.division_level, TournamentPlayers.id_tournament.in_(tournament_ids), User.tg_user_id != user_id).all()]
+        list_finder_user = [row[0] for row in session.query(User.link).join(TournamentPlayers, TournamentPlayers.id_tg_user == User.tg_user_id).filter(TournamentPlayers.id_tournament.in_(tournament_ids), User.tg_user_id != user_id).all()]
 
         if link_finder_contestant in list_finder_user:
             user = session.query(User).filter_by(link = link_finder_contestant).first()
@@ -197,13 +198,13 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
         # отправка сообщения в группу
         group_chat_id = CHANNEL_SCORES  
         try:
-            message_text_send = f"<b>Турнир:</b> {contestant_tournament.name_tournament}\n<b>Дивизион:</b> {contestant_division.name_division}\n\n<b>Игроки:</b> <a href='{user.link}'>{user.name_user}</a> vs <a href='{contestant.link}'>{contestant.name_user}</a>\n<b>Счёт:</b> {score}"
+            message_text_send = f"<b>Турнир:</b> {contestant_tournament.name_tournament}\n<b>Дивизион:</b> {contestant_division.name_division}\n\n<b>Игроки:</b> <a href='{contestant.link}'>{contestant.name_user}</a> vs <a href='{user.link}'>{user.name_user}</a>\n<b>Счёт:</b> {score}"
             await bot.send_message(chat_id=group_chat_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True)
         except TelegramAPIError as e:
             print(f"Ошибка Telegram API: {e}")
 
         if contestant:
-            message_text_send = f"<b>Соперник подтвердил счёт Вашей с ним игры в турнире {contestant_tournament.name_tournament}!</b> 🙋‍♂️🎾"
+            message_text_send = f"<b><a href='{user.link}'>Соперник</a> подтвердил счёт Вашей с ним игры в турнире {contestant_tournament.name_tournament}!</b> 🙋‍♂️🎾"
             try:
                 await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
             except Exception as e:

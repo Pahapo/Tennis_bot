@@ -118,7 +118,7 @@ def create_tournaments_edit_keyboard(tournaments_data):
         [InlineKeyboardButton(text=name.replace("_edit", ""), callback_data=f"tournament_edit_{name}")]
         for name in tournaments_data
     ]
-    buttons.append([InlineKeyboardButton(text='Назад', callback_data='tournament_edit')])
+    buttons.append([InlineKeyboardButton(text='Назад', callback_data='edit_tournament')])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 

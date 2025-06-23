@@ -76,6 +76,11 @@ reg_tournament_lvl = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton
                                                             [InlineKeyboardButton(text = 'Не знаю свой дивизион', callback_data='lvl_p_6')]
                                                             ])
 
+one_else_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Записаться ⚡️', callback_data='one_else_tournament')],
+                                                            [InlineKeyboardButton(text = 'Другие турниры 🎾', callback_data='tournament_info')],
+                                                            [InlineKeyboardButton(text = 'Главное меню', callback_data='start_message')]
+                                                            ])
+
 # реферальная система
 
 use_coins_q = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Да, использовать 💰', callback_data='use_coins')],

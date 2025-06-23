@@ -25,6 +25,7 @@ main_edit_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text
 main_edit_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
                                                             [InlineKeyboardButton(text = 'Список турниров/участников 📖', callback_data='tournament_lists')],
                                                             [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
+                                                            [InlineKeyboardButton(text = 'Записать счёт 🙋‍♂️', callback_data = 'score')],
                                                             [InlineKeyboardButton(text = 'Касса 💳', callback_data='kassa')],
                                                             [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                             ])
@@ -50,11 +51,12 @@ edit_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(te
                                                         [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
                                                         [InlineKeyboardButton(text = 'Список турниров/участников 📖', callback_data='tournament_lists')],
                                                         [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
+                                                        [InlineKeyboardButton(text = 'Записать счёт 🙋‍♂️', callback_data = 'score')],
                                                         # [InlineKeyboardButton(text = 'Касса 💳', callback_data='kassa')],
                                                         [InlineKeyboardButton(text = 'Назад', callback_data='start_message')]
                                                         ])
 
-builder = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Подписаться на ММ", url=CHANNEL),
-                                                InlineKeyboardButton(text="Подписаться на чат", url=CHANNEL_CHAT)],
+builder = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Минск Мир 🗞", url=CHANNEL),
+                                                InlineKeyboardButton(text="ЧАТ 🎾", url=CHANNEL_CHAT)],
                                                 [InlineKeyboardButton(text="Я подписался ✅", callback_data="check_subscription")]
                                                 ])

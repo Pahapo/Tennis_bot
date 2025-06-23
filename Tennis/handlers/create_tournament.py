@@ -32,8 +32,6 @@ MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 @router.callback_query(F.data == 'create_tournament')
 async def create_tournament(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    user_id = callback.from_user.id
-    await state.update_data(id_editor = user_id) # записали id редактора в состояние
 
     await state.set_state(cl.RegTournamentsStates.name)
     await callback.message.answer('Введите название турнира 👇')
@@ -147,8 +145,11 @@ async def handle_types_buttons(call: CallbackQuery, state: FSMContext):
 
     await state.update_data(type = type)
 
-    await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
-    await call.message.answer('Отправьте фото турнира в формте .jpg 👇')
+    # await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
+    # await call.message.answer('Отправьте фото турнира в формте .jpg 👇')
+
+    await state.set_state(cl.RegTournamentsStates.count)
+    await call.message.answer('Введите количество участников в каждом дивизионе 👇')
 
 
 @router.message(F.content_type == types.ContentType.PHOTO, StateFilter(cl.RegTournamentsStates.img_flag))
@@ -248,6 +249,7 @@ async def register_age(message: Message, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.regulations)
 async def register_age(message: Message, state:FSMContext, bot):
+    user_id = message.from_user.id
 
     if len(message.text) > 2500:
         await message.answer(f"⚠ Ошибка! Текст превышает 2500 символов. Попробуйте снова 👇")
@@ -258,7 +260,7 @@ async def register_age(message: Message, state:FSMContext, bot):
     
     data = await state.get_data()
     
-    if data.get("id_editor") in EDITOR:
+    if user_id in EDITOR:
 
         # Создаём объект PlayerData
         tournament_data = cl.TournamentsData(
@@ -289,7 +291,7 @@ async def register_age(message: Message, state:FSMContext, bot):
             tournament.regulations = data.get("regulations")
             session.commit()
 
-            print(f'Турнир "{old_name}" был обновлён редактором на "{data.get("name")}"!')
+            print(f'✅ Турнир "{old_name}" был обновлён редактором на "{data.get("name")}"!')
             await message.answer('✅ Турнир обновлён!')
         except Exception as e:
             session.rollback()
@@ -316,7 +318,7 @@ async def register_age(message: Message, state:FSMContext, bot):
             session.commit()
 
             await tournament_sms.edit_text('✅ Турнир создан!')
-            print(f'Создан новый турнир - "{data.get("name")}"')
+            print(f'✅ Создан новый турнир - "{data.get("name")}"')
 
             await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot)
         except Exception as e:

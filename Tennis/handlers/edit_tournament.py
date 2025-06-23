@@ -30,16 +30,21 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     tournament = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
     
     await state.update_data(id_tournament = tournament.tournament_id)
+    await state.update_data(name = tournament.name_tournament)
+    await state.update_data(type = tournament.type)
     await state.update_data(level = tournament.division)
 
-    if os.path.exists(f"Tennis/img/tournament/{tournament.tournament_id}.jpg"):
-        pyth_photo = f"Tennis/img/tournament/{tournament.tournament_id}.jpg"
-    
-    try:        
-        # Удаляем фото после успешной отправки
-        os.remove(pyth_photo)
-    except Exception as e:
-        print(f"Ошибка при удалении турнирного фото. Ошибка: {e}")
+    await state.set_state(cl.RegTournamentsStates.count)
+    await callback.message.answer('Введите количество участников в каждом дивизионе 👇')
 
-    await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
-    await callback.message.answer('Отправьте фото турнира в формте .jpg 👇')
+    # if os.path.exists(f"Tennis/img/tournament/{tournament.tournament_id}.jpg"):
+    #     pyth_photo = f"Tennis/img/tournament/{tournament.tournament_id}.jpg"
+    
+    # try:        
+    #     # Удаляем фото после успешной отправки
+    #     os.remove(pyth_photo)
+    # except Exception as e:
+    #     print(f"Ошибка при удалении турнирного фото. Ошибка: {e}")
+
+    # await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
+    # await callback.message.answer('Отправьте фото турнира в формте .jpg 👇')

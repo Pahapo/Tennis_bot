@@ -27,7 +27,6 @@ async def search_match(callback: CallbackQuery, state:FSMContext, bot):
         
         tournaments = session.query(Tournament).all()
         if tournaments:
-            await callback.message.answer(f"Список доступных турниров 👇", parse_mode=ParseMode.HTML)
         
             options = LinkPreviewOptions(
                 is_disabled=True
@@ -48,8 +47,8 @@ async def search_match(callback: CallbackQuery, state:FSMContext, bot):
                 # Преобразуем список ID в список названий
                 levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
                 
-                count_users_div = 0
-                list_players_div = []
+                count_users_div = [0, 0, 0, 0, 0]
+                list_players_div = ["", "", "", "", ""]
 
                 for user_in_tournament in users_in_tournament:
                     if user_in_tournament.division_level == 1:
@@ -88,10 +87,14 @@ async def search_match(callback: CallbackQuery, state:FSMContext, bot):
                 if end_tournament >= end_date:
                     list_tournaments += f"\n\n🏆 <b>Турнир {tournament.name_tournament.upper()}</b>\n\nДивизион(-ы) турнира: {tournament_lvl}\nМаксимальное кол-во участников: {tournament.quantity_person} чел.\nНачало: {tournament.start_tournament}\nОкончание: {tournament.end_tournament}\nСтоимость участия: {tournament.price} бел.руб.\n\n🙋‍♂️ <b>СПИСОК УЧАСТНИКОВ:</b>\n\n{list_players}"
             
-            if user_id in ADMINS or user_id in MAIN_EDITOR:
-                await callback.message.answer(list_tournaments, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.tournaments_data)
-            if user_id in EDITOR:
-                await callback.message.answer(list_tournaments, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.tournaments_data_edit)
+            if list_tournaments:
+                await callback.message.answer(f"Список доступных турниров 👇", parse_mode=ParseMode.HTML)
+                if user_id in ADMINS or user_id in MAIN_EDITOR:
+                    await callback.message.answer(list_tournaments, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.tournaments_data)
+                if user_id in EDITOR:
+                    await callback.message.answer(list_tournaments, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.tournaments_data_edit)
+            else:
+                await callback.message.answer(f"Нам жаль, но список 📂 турниров пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.tournaments_data_exit)
         else:
             await callback.message.answer(f"Нам жаль, но список 📂 турниров пока пуст", parse_mode=ParseMode.HTML, reply_markup=kb.tournaments_data_exit)
     else:

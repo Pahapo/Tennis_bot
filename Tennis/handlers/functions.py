@@ -271,13 +271,14 @@ async def start_message(callback: Optional[CallbackQuery] = None, message: Optio
 async def create_tournament_table_keyboard_user(user_id):
     last_toutnament_id = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()).first()    # протестировать на вывод последнего элемента
     
-    if str(user_id) != DIVISION_EDITOR:
+    if str(user_id) == DIVISION_EDITOR:
         if last_toutnament_id is None:
             buttons = [
                 [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],
                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                 [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
+                [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
                 [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
@@ -286,6 +287,7 @@ async def create_tournament_table_keyboard_user(user_id):
                 [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
+                [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
                 [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
@@ -296,7 +298,6 @@ async def create_tournament_table_keyboard_user(user_id):
                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                 [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
-                [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
                 [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
@@ -305,7 +306,6 @@ async def create_tournament_table_keyboard_user(user_id):
                 [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-                [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
                 [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
