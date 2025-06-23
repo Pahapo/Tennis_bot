@@ -121,7 +121,10 @@ async def registration_on_tournarents(callback: CallbackQuery, state: FSMContext
     elif user_in_tournament and not data.get("division_level_user"):
         if len(user_in_tournament) == 1:
             await state.update_data(division_level_user = user.division_level)
-            await callback.message.answer(f'🚀 <b>Вы уже участвуете в турнире!</b>\n\nХотите записаться на этот же турнир и сыграть в ещё одном дивизионе? 🤔', parse_mode=ParseMode.HTML, reply_markup=kb.one_else_tournament)
+            if user.division_level > 1:
+                await callback.message.answer(f'🚀 <b>Вы уже участвуете в турнире!</b>\n\nХотите записаться на этот же турнир и сыграть в ещё одном дивизионе? 🤔', parse_mode=ParseMode.HTML, reply_markup=kb.one_else_tournament)
+            else:
+                await callback.message.answer(f'✅ <b>Вы уже участвуете в турнире!</b>\n\nОжидайте завершения регистрации других участников!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         else:
             await callback.message.answer(f'✅ <b>Вы уже участвуете в турнире!</b>\n\nОжидайте завершения регистрации других участников!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
     elif user.ban_status == True:
@@ -151,27 +154,33 @@ async def one_else_tournament(callback: CallbackQuery, state: FSMContext):
 
 async def register_one_else_tournament_keyboard(division):
     division = int(division)
-    if division == 1:
-        division += 1
-        else_division = session.query(Division).filter(Division.division_id == division).first()
-        buttons = [
-            [InlineKeyboardButton(text = else_division.name_division, callback_data = f'division_{else_division.division_id}')]
-        ]
-    elif division == 5:
+    # if division == 1:
+    #     division += 1
+    #     else_division = session.query(Division).filter(Division.division_id == division).first()
+    #     buttons = [
+    #         [InlineKeyboardButton(text = else_division.name_division, callback_data = f'division_{else_division.division_id}')]
+    #     ]
+    # elif division == 5:
+    #     division -= 1
+    #     else_division = session.query(Division).filter(Division.division_id == division).first()
+    #     buttons = [
+    #         [InlineKeyboardButton(text = else_division.name_division, callback_data = f'division_{else_division.division_id}')]
+    #     ]
+    # else: 
+    #     division_low = division - 1
+    #     else_division_low = session.query(Division).filter(Division.division_id == division_low).first()
+    #     division_hight = division + 1
+    #     else_division_hight = session.query(Division).filter(Division.division_id == division_hight).first()
+
+    #     buttons = [
+    #         [InlineKeyboardButton(text = else_division_low.name_division, callback_data = f'division_{else_division_low.division_id}')],
+    #         [InlineKeyboardButton(text = else_division_hight.name_division, callback_data = f'division_{else_division_hight.division_id}')]
+    #     ]
+    if division > 1:
         division -= 1
         else_division = session.query(Division).filter(Division.division_id == division).first()
         buttons = [
             [InlineKeyboardButton(text = else_division.name_division, callback_data = f'division_{else_division.division_id}')]
-        ]
-    else: 
-        division_low = division - 1
-        else_division_low = session.query(Division).filter(Division.division_id == division_low).first()
-        division_hight = division + 1
-        else_division_hight = session.query(Division).filter(Division.division_id == division_hight).first()
-
-        buttons = [
-            [InlineKeyboardButton(text = else_division_low.name_division, callback_data = f'division_{else_division_low.division_id}')],
-            [InlineKeyboardButton(text = else_division_hight.name_division, callback_data = f'division_{else_division_hight.division_id}')]
         ]
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
