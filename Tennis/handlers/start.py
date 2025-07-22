@@ -14,15 +14,19 @@ router = Router()  # Создаем роутер
 
 @router.message(CommandStart())  # Создали декоратор для обработки поступающих сообщений
 async def cmd_start(message: Message, state:FSMContext, bot):
+    try:
 
-    user_name = message.from_user.full_name if message.from_user.username else message.from_user.username
-    user_id = message.from_user.id
-    user = message.from_user
-    if user.username:
-        user_link = f"https://t.me/{user.username}"
-    else:
-        user_link = ""
+        user_name = message.from_user.full_name if message.from_user.username else message.from_user.username
+        user_id = message.from_user.id
+        user = message.from_user
+        if user.username:
+            user_link = f"https://t.me/{user.username}"
+        else:
+            user_link = ""
 
-    args = message.text.split()
-    await r.check_referral(args, user_id, bot) # реферальная система
-    await f.save_user(user_id, user_name, user_link.lower(), message, state)
+        args = message.text.split()
+
+        await r.check_referral(args, user_id, bot) # реферальная система
+        await f.save_user(user_id, user_name, user_link.lower(), message, state)
+    except Exception as e:
+        print(f"Ошибка в обработчике start: {e}")

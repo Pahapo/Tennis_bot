@@ -17,11 +17,14 @@ import keywords.kw_tournament as kb
 import googleSheet.googleSheet as gs
 import handlers.validation as valid
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.Tournament import Tournament
+from models.Division import Division
 
 
 router = Router()
+
 
 user_data = {}  # Ключ: username, значение: PlayerData
 MOSCOW_TZ = pytz.timezone('Europe/Moscow')
@@ -39,26 +42,29 @@ async def create_tournament(callback: CallbackQuery, state:FSMContext):
 
 @router.message(cl.RegTournamentsStates.name)
 async def register_name(message: Message, state:FSMContext):
+    
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    # Инспектируем таблицу Tournament
-    mapper = inspect(Tournament)    
-    # Получаем размер `name_tournament`
-    name_tournament_length = mapper.columns["name_tournament"].type.length
+        # Инспектируем таблицу Tournament
+        mapper = inspect(Tournament)    
+        # Получаем размер `name_tournament`
+        name_tournament_length = mapper.columns["name_tournament"].type.length
 
-    if len(message.text) > name_tournament_length:
-        await message.answer(f"⚠ Ошибка! Текст превышает {name_tournament_length} символов. Попробуйте снова 👇")
-        return  # Останавливаем обработку, чтобы пользователь ввел данные снова
+        if len(message.text) > name_tournament_length:
+            await message.answer(f"⚠ Ошибка! Текст превышает {name_tournament_length} символов. Попробуйте снова 👇")
+            return  # Останавливаем обработку, чтобы пользователь ввел данные снова
 
-    await state.set_state(None)  
-    await state.update_data(name = message.text)
+        await state.set_state(None)  
+        await state.update_data(name = message.text)
 
-    tournament = session.query(Tournament).filter(Tournament.name_tournament == message.text).first()
-    if tournament:
-        await state.set_state(cl.RegTournamentsStates.name)
-        await message.answer('Турнир с таким именем уже существует! Придумайте другое имя 👇')
-    else:  
-        await state.set_state(cl.RegTournamentsStates.level)
-        await message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
+        tournament = (await session.scalars(select(Tournament).where(Tournament.name_tournament == message.text))).first()
+        
+        if tournament:
+            await state.set_state(cl.RegTournamentsStates.name)
+            await message.answer('Турнир с таким именем уже существует! Придумайте другое имя 👇')
+        else:  
+            await state.set_state(cl.RegTournamentsStates.level)
+            await message.answer('Выберите дивизион турнира 👇', reply_markup=kb.level_tournament)
 
 
 @router.callback_query(F.data.in_(["lvl_t_1", "lvl_t_2", "lvl_t_3", "lvl_t_4", "lvl_t_5", "lvl_t_all"]))
@@ -146,7 +152,7 @@ async def handle_types_buttons(call: CallbackQuery, state: FSMContext):
     await state.update_data(type = type)
 
     # await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
-    # await call.message.answer('Отправьте фото турнира в формте .jpg 👇')
+    # await call.message.answer('Отправьте фото турнира в формате .jpg 👇')
 
     await state.set_state(cl.RegTournamentsStates.count)
     await call.message.answer('Введите количество участников в каждом дивизионе 👇')
@@ -155,10 +161,12 @@ async def handle_types_buttons(call: CallbackQuery, state: FSMContext):
 @router.message(F.content_type == types.ContentType.PHOTO, StateFilter(cl.RegTournamentsStates.img_flag))
 async def save_photo_payment(message: types.Message, state: FSMContext):
     
-    await state.set_state(None)
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+    
+        await state.set_state(None)
 
-    data = await state.get_data()
-    tournament = session.query(Tournament).all()
+        data = await state.get_data()
+        tournament = (await session.scalars(select(Tournament))).all()
 
     # Формируем базовое имя файла
     if data.get("id_tournament"):
@@ -274,61 +282,49 @@ async def register_age(message: Message, state:FSMContext, bot):
             regulations=data.get("regulations")
         )
 
-    tournament = session.query(Tournament).filter(Tournament.tournament_id == data.get("id_tournament")).first()
-    if tournament:
+        async with get_db() as session:  # Используем контекстный менеджер
+            tournament = (await session.scalars(select(Tournament).where(Tournament.tournament_id == data.get("id_tournament")))).first()
+    
+            if tournament:
+                gs.edit_name_tournament(tournament.name_tournament, data.get("name"))
+                
+                old_name = tournament.name_tournament
 
-        gs.edit_name_tournament(tournament.name_tournament, data.get("name"))
-        
-        try:
-            old_name = tournament.name_tournament
+                tournament.name_tournament = data.get("name")
+                tournament.type = data.get("type")
+                tournament.quantity_person = int(data.get("count"))
+                tournament.start_tournament = data.get("time1")
+                tournament.end_tournament = data.get("time2")
+                tournament.price = int(data.get("price"))
+                tournament.regulations = data.get("regulations")
 
-            tournament.name_tournament = data.get("name")
-            tournament.type = data.get("type")
-            tournament.quantity_person = int(data.get("count"))
-            tournament.start_tournament = data.get("time1")
-            tournament.end_tournament = data.get("time2")
-            tournament.price = int(data.get("price"))
-            tournament.regulations = data.get("regulations")
-            session.commit()
+                print(f'✅ Турнир "{old_name}" был обновлён редактором на "{data.get("name")}"!')
+                await message.answer('✅ Турнир обновлён!')
 
-            print(f'✅ Турнир "{old_name}" был обновлён редактором на "{data.get("name")}"!')
-            await message.answer('✅ Турнир обновлён!')
-        except Exception as e:
-            session.rollback()
-            await message.answer("<b>Произошла критическая ошибка!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup, мы устраним её!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-            raise e
+                link_sheet_tournament = tournament.link_table
 
+            else:
+                tournament_sms = await message.answer('⏰ Начинаем создавать турнир')
+                await asyncio.sleep(2)
+                await tournament_sms.edit_text("Создаём Excel таблицу... 📁")
+                
+                type_tournament = f'Турнир {data.get("type")} (шаблон)'
+                names_division = (await session.scalars(select(Division))).all()
+                link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"), int(data.get("count")), type_tournament, names_division)
 
-        link_sheet_tournament = tournament.link_table
+                await tournament_sms.edit_text("Добавляем участников... 🙋‍♂️")
+                
+                new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), type = data.get("type"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
+                
+                session.add(new_tournament)  # Добавляем объект в сессию
 
-    else:
-        tournament_sms = await message.answer('⏰ Начинаем создавать турнир')
-        await asyncio.sleep(2)
-        await tournament_sms.edit_text("Создаём Excel таблицу... 📁")
-        
-        type_tournament = f'Турнир {data.get("type")} (шаблон)'
-        link_sheet_tournament = gs.startDoingSheet(data.get("name"), data.get("level"), int(data.get("count")), type_tournament)
+                await tournament_sms.edit_text('✅ Турнир создан!')
+                print(f'✅ Создан новый турнир - "{data.get("name")}"')
 
-        await tournament_sms.edit_text("Добавляем участников... 🙋‍♂️")
-        
-        new_tournament = Tournament(name_tournament = data.get("name"), division = data.get("level"), type = data.get("type"), quantity_person = int(data.get("count")), start_tournament = data.get("time1"), end_tournament = data.get("time2"), price = int(data.get("price")), link_table = link_sheet_tournament, regulations = data.get("regulations"))
-        
-        try:
-            session.add(new_tournament)  # Добавляем объект в сессию
-            session.commit()
-
-            await tournament_sms.edit_text('✅ Турнир создан!')
-            print(f'✅ Создан новый турнир - "{data.get("name")}"')
-
-            await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot)
-        except Exception as e:
-            session.rollback()
-            await message.answer("<b>Произошла критическая ошибка!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup, мы устраним её!", parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-            raise e
-
+                await f.notification_about_new_tournament(data.get("name"), data.get("time1"), data.get("level"), bot, session)
 
     try:
-        await message.answer(f"<b>Турнирная карточка выглядит так</b> 👇\n\n{tournament_data}Ссылка на турнир: {link_sheet_tournament}\n\n• Ссылки на турниры находятся в разделе \"Турнирные таблицы 📋\"", parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
+        await message.answer(f"<b>Турнирная карточка выглядит так</b> 👇\n\n{(await tournament_data.get_data_async())}<b>Ссылка на турнир:</b> {link_sheet_tournament}\n\n<i>• Ссылки на турниры находятся в разделе \"Турнирные таблицы 📋\"</i>", parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.tournament)
     except Exception as e:
         print(f"Сообщение с турнирной карточкой не удалось вывести редактору из-за ошибки: {e}")
         await message.answer("<b>Турнирная карточка по какой-то причине не вывелась!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup", parse_mode=ParseMode.HTML, reply_markup=kb.exit)

@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.Division import Division
 
-class Tournament(Base):
+class Tournament(AsyncAttrs, Base):
     __tablename__ = "tournament"
     tournament_id = Column(Integer, primary_key=True, autoincrement=True)
     name_tournament = Column(String(50), nullable=False)
@@ -33,9 +35,15 @@ class Tournament(Base):
 
 
     def __repr__(self):
+        return "Для получения карточки игрока вызовите метод .build_repr_data()"
+
+    async def build_repr_data(self):
         if self.division != None:
             levelTournament_list = list(map(int, self.division.split(",")))
-            name_division = session.query(Division).all()
+
+            async with get_db_readonly() as session:  # Используем контекстный менеджер
+                name_division = (await session.scalars(select(Division))).all()
+                
             # Создаём словарь {division_id: name}, чтобы быстрее искать названия
             division_dict = {div.division_id: div.name_division for div in name_division}
             # Преобразуем список ID в список названий

@@ -10,7 +10,8 @@ import handlers.classes as cl
 import handlers.functions as f
 import handlers.validation as valid
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.Division import Division
 from models.User import User
 
@@ -54,23 +55,25 @@ async def find_rename(message: Message, state:FSMContext):
         is_disabled=True
     )
 
-    list_finder_user = [row[0] for row in session.query(User.link).all()]
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+        list_finder_user = (await session.scalars(select(User.link))).all()
 
-    if name_finder_user in list_finder_user:
-        user = session.query(User).filter_by(link = name_finder_user).first()
-        await state.update_data(tg_user_id = user.tg_user_id)
+        if name_finder_user in list_finder_user:
+            user = (await session.scalars(select(User).where(User.link == name_finder_user))).first()
+            await state.update_data(tg_user_id = user.tg_user_id)
 
-        division_lvl = ''
+            division_lvl = ''
 
-        if user.division_level != None:
-            name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
-            division_lvl = name_division.name_division
+            if user.division_level != None:
+                name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
+                
+                division_lvl = name_division.name_division
+            else:
+                division_lvl = 'Не определён'
+
+            await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_rename)
         else:
-            division_lvl = 'Не определён'
-
-        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_rename)
-    else:
-        await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_rename)
+            await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_rename)
 
 
 @router.callback_query(F.data == 'set_new_name_user')
@@ -94,20 +97,27 @@ async def find_name_rename(message: Message, state:FSMContext):
     data = await state.get_data()
     name_finder_user = data.get("tg_user_id")
 
-    user = session.query(User).filter_by(tg_user_id = name_finder_user).first()
-    
-    if user:
-        try:
-            old_name = user.name_user
-            user.name_user = rename
+    try:
+        async with get_db() as session:  # Используем контекстный менеджер
+            user = (await session.scalars(select(User).where(User.tg_user_id == name_finder_user))).first()
+            
+            if user:
+                try:
+                    old_name = user.name_user
+                    user.name_user = rename
 
-            print(f'Пользователь "{old_name}" был переименован на {rename}!')
-            await message.answer(f'✅ Пользователь "{old_name}" был переименован на {rename}!', reply_markup=kb.back_rename)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            raise e
-    else:
-        await message.answer(f'❌ Пользователь "{user.name_user}" не был переименован!', reply_markup=kb.back_rename)
-        print(f"ОШИБКА! Пользователь '{user.name_user}' не был переименован!")  
-    await state.clear()
+                    print(f'Пользователь "{old_name}" был переименован на {rename}!')
+                    await message.answer(f'✅ Пользователь "{old_name}" был переименован на {rename}!', reply_markup=kb.back_rename)
+                except Exception as e:
+                    # обработка ошибки
+                    print(f"Произошла ошибка: {e}")
+            else:
+                await message.answer(f'❌ Пользователь "{user.name_user}" не был переименован!', reply_markup=kb.back_rename)
+                print(f"ОШИБКА! Пользователь '{user.name_user}' не был переименован!")  
+    except Exception as e:
+        print(f"Произошла ошибка при переименовании: {e}")
+        await message.answer('❌ Произошла ошибка при переименовании', reply_markup=kb.back_rename)
+    finally:
+        await state.clear()
+
+    

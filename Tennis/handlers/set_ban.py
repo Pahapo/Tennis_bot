@@ -10,14 +10,15 @@ import handlers.classes as cl
 import handlers.functions as f
 import handlers.validation as valid
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.Division import Division
 from models.User import User
 
 
 router = Router()
 
-# ВОЗМОЖНО БАН ЛУЧШЕ ВЫДАВАТЬ НЕ НА КОЛИЧЕСВО ДНЕЙ, А НА КОЛИЧЕСТВО ТУРНИРОВ
+# ВОЗМОЖНО БАН ЛУЧШЕ ВЫДАВАТЬ НЕ НА КОЛИЧЕСТВО ДНЕЙ, А НА КОЛИЧЕСТВО ТУРНИРОВ
 
 @router.callback_query(F.data == 'set_ban')
 async def set_ban(callback: CallbackQuery, state:FSMContext):
@@ -55,23 +56,25 @@ async def find_name(message: Message, state:FSMContext):
         is_disabled=True
     )
 
-    list_finder_user = [row[0] for row in session.query(User.link).all()]
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+        list_finder_user = (await session.scalars(select(User.link))).all()
 
-    if name_finder_user in list_finder_user:
-        user = session.query(User).filter_by(link = name_finder_user).first()
-        await state.update_data(tg_user_id = user.tg_user_id)
+        if name_finder_user in list_finder_user:
+            user = (await session.scalars(select(User).where(User.link == name_finder_user))).first()
+            await state.update_data(tg_user_id = user.tg_user_id)
 
-        division_lvl = ''
+            division_lvl = ''
 
-        if user.division_level != None:
-            name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
-            division_lvl = name_division.name_division
+            if user.division_level != None:
+                name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
+
+                division_lvl = name_division.name_division
+            else:
+                division_lvl = 'Не определён'
+
+            await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
         else:
-            division_lvl = 'Не определён'
-
-        await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
-    else:
-        await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_ban)
+            await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_ban)
 
 
 @router.callback_query(F.data == 'set_new_ban')
@@ -92,7 +95,7 @@ async def find_name_p_ban(message: Message, state:FSMContext):
 
     await state.update_data(period_ban = int(message.text))
     await state.set_state(cl.FindUser.reason_ban)
-    await message.answer('Опишите причину бана. (Этот текст увидит пользователь) 👇')
+    await message.answer('Опишите причину бана (этот текст увидит пользователь) 👇')
 
 
 @router.message(cl.FindUser.reason_ban)
@@ -109,31 +112,27 @@ async def find_name_r_ban(message: Message, state:FSMContext, bot):
 
     # Работа с датами
     end_date_ban = datetime.today() + timedelta(days = period_ban)
-
-    user = session.query(User).filter_by(tg_user_id = name_finder_user).first()
     
-    if user:
-        user.ban_status = True
-        if user.end_date_ban != None:
-            end_date_ban = datetime.strptime(user.end_date_ban, "%d.%m.%Y") + timedelta(days = period_ban)
+    async with get_db() as session:  # Используем контекстный менеджер
+        user = (await session.scalars(select(User).where(User.tg_user_id == name_finder_user))).first()
+        
+        if user:
+            user.ban_status = True
+            if user.end_date_ban != None:
+                end_date_ban = datetime.strptime(user.end_date_ban, "%d.%m.%Y") + timedelta(days = period_ban)
+                # user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
+            
             user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
-        try:
-            user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
-
             print(f'Пользователь "{user.name_user}" был забанен на {period_ban} дн. (до {end_date_ban.strftime("%d.%m.%Y")})! Бан выдал организатор: {user_id}')
             await message.answer(f'✅ Пользователь "{user.name_user}" был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!', reply_markup=kb.back_ban)
-            session.commit()
 
             message_text_send = f'<b>Дорогой игрок, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>'
-        except Exception as e:
-            session.rollback()
-            raise e
 
-        try:
-            await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-        except Exception as e:
-            print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
-    else:
-        await callback.message.answer(f"❌ <b>Пользователь не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
-        print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  
+            try:
+                await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+            except Exception as e:
+                print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+        else:
+            await callback.message.answer(f"❌ <b>Пользователь не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+            print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  
     await state.clear()

@@ -7,7 +7,8 @@ import keywords.kw_any as ka
 import handlers.functions as f
 import handlers.classes as cl
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.Inventory import Inventory
 
 router = Router()
@@ -38,67 +39,68 @@ async def inventory(callback: CallbackQuery, bot):
 
 # @router.message(cl.SendMessage.invent)
 # async def sending_messages(message: Message, state:FSMContext):   
+#     async with get_db() as session:  # Используем контекстный менеджер
 # 
-#     await state.set_state(None) 
-
-#     check = Inventory(photo = 'img', description = message.html_text)
-#     try:
+#         await state.set_state(None) 
+#         check = Inventory(photo = 'img', description = message.html_text)
 #         session.add(check)
-#         session.commit()
-#     except Exception as e:
-#         session.rollback()
-#         raise e
+
 
 
 @router.callback_query(F.data == 'get_inventory1')
 async def register_inventory(callback: CallbackQuery):
-    await callback.answer('')
-    list_inventory = session.query(Inventory).filter(Inventory.photo.like("%1.%")).all()
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+        await callback.answer('')
+        list_inventory = (await session.scalars(select(Inventory).where(Inventory.photo.like("%1.%")))).all()
 
-    if os.path.exists("Tennis/img/inventory/1.jpg"):
-        photo_header = FSInputFile("Tennis/img/inventory/1.jpg")
-        await callback.message.answer_photo(photo_header)
+        if os.path.exists("Tennis/img/inventory/1.jpg"):
+            photo_header = FSInputFile("Tennis/img/inventory/1.jpg")
+            await callback.message.answer_photo(photo_header)
 
-    for inventory in list_inventory:
-        if os.path.exists(f"Tennis/img/inventory/{inventory.photo}.jpg"):
-            pyth_photo = f"Tennis/img/inventory/{inventory.photo}.jpg"
-            photo = FSInputFile(pyth_photo)
-            await callback.message.answer_photo(photo, caption=inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
-        else:
-            await callback.message.answer(inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
+        for inventory in list_inventory:
+            if os.path.exists(f"Tennis/img/inventory/{inventory.photo}.jpg"):
+                pyth_photo = f"Tennis/img/inventory/{inventory.photo}.jpg"
+                photo = FSInputFile(pyth_photo)
+                await callback.message.answer_photo(photo, caption=inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
+            else:
+                await callback.message.answer(inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
 
 
 @router.callback_query(F.data == 'get_inventory2')
 async def register_inventory(callback: CallbackQuery):
-    await callback.answer('')
-    list_inventory = session.query(Inventory).filter(Inventory.photo.like("%2.%")).all()
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    if os.path.exists("Tennis/img/inventory/2.jpg"):
-        photo_header = FSInputFile("Tennis/img/inventory/2.jpg")
-        await callback.message.answer_photo(photo_header)
+        await callback.answer('')
+        list_inventory = (await session.scalars(select(Inventory).where(Inventory.photo.like("%2.%")))).all()
 
-    for inventory in list_inventory:
-        if os.path.exists(f"Tennis/img/inventory/{inventory.photo}.jpg"):
-            pyth_photo = f"Tennis/img/inventory/{inventory.photo}.jpg"
-            photo = FSInputFile(pyth_photo)
-            await callback.message.answer_photo(photo, caption=inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
-        else:
-            await callback.message.answer(inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
+        if os.path.exists("Tennis/img/inventory/2.jpg"):
+            photo_header = FSInputFile("Tennis/img/inventory/2.jpg")
+            await callback.message.answer_photo(photo_header)
+
+        for inventory in list_inventory:
+            if os.path.exists(f"Tennis/img/inventory/{inventory.photo}.jpg"):
+                pyth_photo = f"Tennis/img/inventory/{inventory.photo}.jpg"
+                photo = FSInputFile(pyth_photo)
+                await callback.message.answer_photo(photo, caption=inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
+            else:
+                await callback.message.answer(inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
 
 
 @router.callback_query(F.data == 'get_inventory3')
 async def register_inventory(callback: CallbackQuery):
-    await callback.answer('')
-    list_inventory = session.query(Inventory).filter(Inventory.photo.like("%3.%")).all()
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    if os.path.exists("Tennis/img/inventory/3.jpg"):
-        photo_header = FSInputFile("Tennis/img/inventory/3.jpg")
-        await callback.message.answer_photo(photo_header)
+        await callback.answer('')
+        list_inventory = (await session.scalars(select(Inventory).where(Inventory.photo.like("%3.%")))).all()
 
-    for inventory in list_inventory:
-        if os.path.exists(f"Tennis/img/inventory/{inventory.photo}.jpg"):
-            pyth_photo = f"Tennis/img/inventory/{inventory.photo}.jpg"
-            photo = FSInputFile(pyth_photo)
-            await callback.message.answer_photo(photo, caption=inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
-        else:
-            await callback.message.answer(inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
+        if os.path.exists("Tennis/img/inventory/3.jpg"):
+            photo_header = FSInputFile("Tennis/img/inventory/3.jpg")
+            await callback.message.answer_photo(photo_header)
+
+        for inventory in list_inventory:
+            if os.path.exists(f"Tennis/img/inventory/{inventory.photo}.jpg"):
+                pyth_photo = f"Tennis/img/inventory/{inventory.photo}.jpg"
+                photo = FSInputFile(pyth_photo)
+                await callback.message.answer_photo(photo, caption=inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)
+            else:
+                await callback.message.answer(inventory.description, parse_mode=ParseMode.HTML, reply_markup=ka.inventory_exit)

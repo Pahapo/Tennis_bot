@@ -1,6 +1,7 @@
 from aiogram.fsm.state import State, StatesGroup
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.User import User
 from models.Division import Division
 from models.Tournament import Tournament
@@ -46,81 +47,88 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
         self.ban = ban
         self.tournaments_list = tournaments_list
 
-    def __str__(self):             # НЕ ТРОГАТЬ !!!
-        user = session.query(User).filter(User.tg_user_id == self.id).first()
-        user_in_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == self.id).all()
-        tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
-        history_tournaments = session.query(Tournament).filter(Tournament.tournament_id.in_(tournament_ids)).all()
+    def __str__(self):
+        return "Для получения карточки игрока вызовите метод .build_text_card()"
+    
+    async def build_text_card(self):  # НЕ ТРОГАТЬ !!!
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-        text_card =  f"Имя: {user.name_user}\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\n"
+            user = (await session.scalars(select(User).where(User.tg_user_id == self.id))).first()
+            user_in_tournaments = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == self.id))).all()
+            tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
+            history_tournaments = (await session.scalars(select(Tournament).where(Tournament.tournament_id.in_(tournament_ids)))).all()
 
-        history = ''
+            text_card =  f"<b>Имя:</b> {user.name_user}\n<b>Ссылка:</b> <tg-spoiler>{user.link}</tg-spoiler>\n"
 
-        for toutnament in history_tournaments:
+            history = ''
+
+            for tournament in history_tournaments:
+                if history == '':
+                    history += f"\"{tournament.name_tournament}\""
+                else:
+                    history += f", \"{tournament.name_tournament}\""
+
             if history == '':
-                history += f"\"{toutnament.name_tournament}\""
+                history += 'не участвовал(-а) 🥲'
+
+            text_card += f"<b>История турниров:</b> {history}\n"
+
+            if self.sex:
+                text_card += f"<b>Пол:</b> {self.sex}\n"
             else:
-                history += f", \"{toutnament.name_tournament}\""
+                text_card += f"<b>Пол:</b> {user.sex}\n"
 
-        if history == '':
-            history += 'не участвовал(-а) 🥲'
+            if self.age:
+                text_card += f"<b>Возраст:</b> {self.age}\n"
+            else:
+                text_card += f"<b>Возраст:</b> {user.age}\n"
+                
+            if user.division_level != None:
+                name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
+                text_card += f"<b>Дивизион:</b> {name_division.name_division}\n"
+            else:
+                text_card += f"<b>Дивизион:</b> Не определён\n" # Добавить выбор дивизиона
+                
+            if self.date_booking:
+                text_card += f"\n✅ <b>Бронь корта:</b> на {self.date_booking}\n<b>Корт:</b> {self.name_court}\n"
+            else:
+                text_card += f"\n❌ <b>Брони нет! Предлагаю поиграть:</b> {self.date_without_booking}\n"
 
-        text_card += f"История турниров: {history}\n"
+            if self.type_match:
+                text_card += f"<b>Тип игры:</b> {self.type_match}\n"
 
-        if self.sex:
-            text_card += f"Пол: {self.sex}\n"
-        else:
-            text_card += f"Пол: {user.sex}\n"
-
-        if self.age:
-            text_card += f"Возраст: {self.age}\n"
-        else:
-            text_card += f"Возраст: {user.age}\n"
-            
-        if user.division_level != None:
-            name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
-            text_card += f"Дивизион: {name_division.name_division}\n"
-        else:
-            text_card += f"Дивизион: Не определён\n" # Добавить выбор дивизиона
-            
-        if self.date_booking:
-            text_card += f"\nБронь корта: на {self.date_booking}\nКорт: {self.name_court}\n"
-        else:
-            text_card += f"\nБрони нет! Предлагаю поиграть: {self.date_without_booking}\n"
-
-        if self.type_match:
-            text_card += f"Тип игры: {self.type_match}\n"
-
-        if self.comment:
-            text_card += f"Комментарий: <blockquote>{self.comment}</blockquote>\n"
-        return text_card
+            if self.comment:
+                text_card += f"<b>Комментарий:</b> <blockquote>{self.comment}</blockquote>\n"
+            return text_card
             
     
-    def get_data(self):
-        user = session.query(User).filter(User.tg_user_id == self.id).first()
-        levelTournament_list = list(map(int, self.level.split(",")))
-        name_division = session.query(Division).all()
-        # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-        division_dict = {div.division_id: div.name_division for div in name_division}
-        # Преобразуем список ID в список названий
-        levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-        tournament_lvl = ", ".join(levelTournament_names)
-    
-        return {
-            self.id : 
-            {
-                "Ссылка": self.link,
-                "История турниров": self.tournaments_list,
-                "Пол": self.sex,
-                "Возраст": self.age,
-                "Дивизион": tournament_lvl,
-                "Бронь корта": self.date_booking,
-                "Корт": self.name_court,
-                "Тип игры": self.type_match,
-                "Предложение о дате игры": self.date_without_booking,
-                "Комментарий": self.comment
+    async def get_data(self):
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
+
+            user = (await session.scalars(select(User).where(User.tg_user_id == self.id))).first()
+            levelTournament_list = list(map(int, self.level.split(",")))
+            name_division = (await session.scalars(select(Division))).all()
+            # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+            division_dict = {div.division_id: div.name_division for div in name_division}
+            # Преобразуем список ID в список названий
+            levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+            tournament_lvl = ", ".join(levelTournament_names)
+        
+            return {
+                self.id : 
+                {
+                    "Ссылка": self.link,
+                    "История турниров": self.tournaments_list,
+                    "Пол": self.sex,
+                    "Возраст": self.age,
+                    "Дивизион": tournament_lvl,
+                    "Бронь корта": self.date_booking,
+                    "Корт": self.name_court,
+                    "Тип игры": self.type_match,
+                    "Предложение о дате игры": self.date_without_booking,
+                    "Комментарий": self.comment
+                }
             }
-        }
 
 
 class RegTournamentPlayerStates(StatesGroup):
@@ -139,40 +147,48 @@ class TournamentPlayerData:
         self.selected_tournament = selected_tournament
 
     def __str__(self):
-        levelTournament_list = list(map(int, self.level.split(",")))
-        name_division = session.query(Division).all()
-        # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-        division_dict = {div.division_id: div.name_division for div in name_division}
-        # Преобразуем список ID в список названий
-        levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-        tournament_lvl = ", ".join(levelTournament_names)
+        return "Для получения карточки игрока вызовите метод .build_text_card()"
     
-        return (
-            f"Название турнира: <b>{self.name}</b>\n"
-            f"Имя: {self.name}\n"
-            f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
-            f"Дивизион: {tournament_lvl}\n"
-        )
-    
-    def get_data(self):
-        levelTournament_list = list(map(int, self.level.split(",")))
-        name_division = session.query(Division).all()
-        # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-        division_dict = {div.division_id: div.name_division for div in name_division}
-        # Преобразуем список ID в список названий
-        levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-        tournament_lvl = ", ".join(levelTournament_names)
+    async def build_text_card(self):
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-        return {
-            self.id : 
-            {
-                "Название турнира": self.name,
-                "Имя": self.name,
-                "Ссылка": self.link,
-                "Дивизион": tournament_lvl
-            }
-        }
+            levelTournament_list = list(map(int, self.level.split(",")))
+            name_division = (await session.scalars(select(Division))).all()
+
+            # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+            division_dict = {div.division_id: div.name_division for div in name_division}
+            # Преобразуем список ID в список названий
+            levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+            tournament_lvl = ", ".join(levelTournament_names)
+        
+            return (
+                f"Название турнира: <b>{self.name}</b>\n"
+                f"Имя: {self.name}\n"
+                f"Ссылка: <tg-spoiler>{self.link}</tg-spoiler>\n"
+                f"Дивизион: {tournament_lvl}\n"
+            )
     
+    async def get_data(self):
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
+            levelTournament_list = list(map(int, self.level.split(",")))
+            name_division = (await session.scalars(select(Division))).all()
+
+            # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+            division_dict = {div.division_id: div.name_division for div in name_division}
+            # Преобразуем список ID в список названий
+            levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+            tournament_lvl = ", ".join(levelTournament_names)
+
+            return {
+                self.id : 
+                {
+                    "Название турнира": self.name,
+                    "Имя": self.name,
+                    "Ссылка": self.link,
+                    "Дивизион": tournament_lvl
+                }
+            }
+        
     
 class RegTournamentsStates(StatesGroup):
     name = State()
@@ -198,29 +214,37 @@ class TournamentsData:
         self.regulations = regulations
 
     def __str__(self):
+        return "Для получения карточки игрока вызовите метод .get_data_async()"
+
+    async def get_data_async(self):
         if self.level != None:
-            levelTournament_list = list(map(int, self.level.split(",")))
-            name_division = session.query(Division).all()
-            # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-            division_dict = {div.division_id: div.name_division for div in name_division}
-            # Преобразуем список ID в список названий
-            levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
-            tournament_lvl = ", ".join(levelTournament_names)
+            async with get_db_readonly() as session:  # Используем контекстный менеджер
+
+                levelTournament_list = list(map(int, self.level.split(",")))
+                name_division = (await session.scalars(select(Division))).all()
+                
+                # Создаём словарь {division_id: name}, чтобы быстрее искать названия
+                division_dict = {div.division_id: div.name_division for div in name_division}
+                # Преобразуем список ID в список названий
+                levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
+                tournament_lvl = ", ".join(levelTournament_names)
 
 
         return (
-            f"Название турнира: {self.name}\n"
-            f"Дивизион турнира: {tournament_lvl}\n"
-            f"Тип турнира: {self.type}\n"
-            f"Максимальное кол-во участников: {self.count} чел.\n"
-            f"Начало: {self.time1}\n"
-            f"Окончание: {self.time2}\n"
-            f"Стоимость участия: {self.price} бел.руб.\n"
+            f"<b>Название турнира:</b> {self.name}\n"
+            f"<b>Дивизион турнира:</b> {tournament_lvl}\n"
+            f"<b>Тип турнира:</b> {self.type}\n"
+            f"<b>Максимальное кол-во участников:</b> {self.count} чел.\n\n"
+            f"<b>Дата:</b> {self.time1} - {self.time2}\n"
+            f"<b>Стоимость участия:</b> {self.price} бел.руб.\n"
         )
     
-    def get_data(self):
+    async def get_data(self):
         levelTournament_list = list(map(int, self.level.split(",")))
-        name_division = session.query(Division).all()
+
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
+            name_division = (await session.scalars(select(Division))).all()
+
         # Создаём словарь {division_id: name}, чтобы быстрее искать названия
         division_dict = {div.division_id: div.name_division for div in name_division}
         # Преобразуем список ID в список названий

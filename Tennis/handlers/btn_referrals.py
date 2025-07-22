@@ -4,7 +4,6 @@ from aiogram import Router
 from config.config import BOT_USERNAME
 
 
-
 router = Router()
 
 # Вывод кнопок под реферальную систему

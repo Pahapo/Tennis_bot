@@ -9,7 +9,8 @@ import keywords.kw_tournament as kb
 import keywords.kw_any as ka
 import handlers.functions as f
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.User import User
 from models.Division import Division
 
@@ -29,8 +30,10 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext, bo
 
     user_id = callback.from_user.id
     if user_id in ADMINS or user_id in MAIN_EDITOR or user_id in EDITOR or str(user_id) == DIVISION_EDITOR:
-                        
-        users_without_division = session.query(User).filter(User.division_level == None).all()
+
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
+            users_without_division = (await session.scalars(select(User).where(User.division_level == None))).all()
+            
         count_users = len(users_without_division)
 
         await callback.answer(f'Всего игроков без дивизиона {count_users} чел.')
@@ -62,50 +65,48 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext, bo
 
 @router.callback_query(F.data.in_(["lvl_wd_1", "lvl_wd_2", "lvl_wd_3", "lvl_wd_4", "lvl_wd_5"]))
 async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
+    async with get_db() as session:  # Используем контекстный менеджер
 
-    level = ''
-    
-    data = await state.get_data()
-    user_id = data.get("pl_id_without_div")
+        level = ''
+        
+        data = await state.get_data()
+        user_id = data.get("pl_id_without_div")
 
-    if call.data == "lvl_wd_1":
-        level = '1'
-    elif call.data == "lvl_wd_2":
-        level = '2'
-    elif call.data == "lvl_wd_3":
-        level = '3'
-    elif call.data == "lvl_wd_4":
-        level = '4'
-    elif call.data == "lvl_wd_5":
-        level = '5'
+        if call.data == "lvl_wd_1":
+            level = '1'
+        elif call.data == "lvl_wd_2":
+            level = '2'
+        elif call.data == "lvl_wd_3":
+            level = '3'
+        elif call.data == "lvl_wd_4":
+            level = '4'
+        elif call.data == "lvl_wd_5":
+            level = '5'
 
-    user = session.query(User).filter(User.tg_user_id == user_id).first()
-    try:
+        user = (await session.scalars(select(User).where(User.tg_user_id == int(user_id)))).first()
+
         user.division_level = level
-        session.commit()
+        await session.commit()
 
-        print(f"Установлен дивизион для пользователя \"{user.name_user}\"!")
+        name_division = (await session.scalars(select(Division).where(Division.division_id == int(level)))).first()
+        division_lvl = name_division.name_division
+
+        print(f"✅ Установлен/изменён дивизион для пользователя \"{user.name_user}\" на \"{division_lvl}\"!")
         await call.answer(f"Дивизион установлен! ✅", show_alert=False)
 
-        name_division = session.query(Division).filter(Division.division_id == int(level)).first()
-        division_lvl = name_division.name_division
-    
         message_text_send = f"<b>Дорогой {user.name_user}, сообщаем Вам о том, что Вам установлен дивизион!</b> 🏆\n\nДивизион: <b>{division_lvl}</b>\n\n<b>Поздравляем!</b> 🎉 Теперь вы можете принять участие в турнирах!"
-    except Exception as e:
-        session.rollback()
-        raise e
 
-    try:
-        await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-    except Exception as e:
-        print(f"❌ Не удалось отправить сообщение об установлении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+        try:
+            await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        except Exception as e:
+            print(f"❌ Не удалось отправить сообщение об установлении дивизиона пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
 
 
-    await player_without_division(call, state)
+        await player_without_division(call, state, bot)
 
 
 @router.callback_query(F.data == 'player_without_division_next')
-async def player_without_division_next(callback: CallbackQuery, state: FSMContext):
+async def player_without_division_next(callback: CallbackQuery, state: FSMContext, bot):
     await callback.answer('')
     
     data = await state.get_data()
@@ -113,4 +114,4 @@ async def player_without_division_next(callback: CallbackQuery, state: FSMContex
     count += 1
     await state.update_data(next_user = count)
 
-    await player_without_division(callback, state)
+    await player_without_division(callback, state, bot)

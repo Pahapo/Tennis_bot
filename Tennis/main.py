@@ -4,7 +4,6 @@ import handlers.functions as f
 from config.router import router
 from config.config import TOKEN
 
-
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
@@ -16,6 +15,9 @@ async def main():
     asyncio.create_task(f.check_players(bot))  # Запускаем трекер игроков без дивизиона
     await dp.start_polling(bot) # start_polling обращается к серверу телеграмм и спрашивает не пришло ли какое-то сообщение
 
+# Завершение бота
+async def shutdown(bot: Bot):
+    await bot.close()
 
 if __name__ == '__main__':
     try:

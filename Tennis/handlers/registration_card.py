@@ -14,7 +14,8 @@ import handlers.classes as cl
 import handlers.functions as f
 import handlers.validation as valid
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.User import User
 from models.Match import Match
 
@@ -27,22 +28,23 @@ MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 @router.callback_query(F.data == 'register_player')
 async def register(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    user_id = callback.from_user.id
-    user = session.query(User).filter(User.tg_user_id == user_id).first()
+        user_id = callback.from_user.id
+        user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
 
-    if user:
-        if user.age and user.sex:
-            await callback.message.answer('Вы уже забронировали корт? 🎾', reply_markup=kb.booking_court_q)
-        elif user.age:
-            await state.set_state(cl.RegPlayerStates.sex)
-            await callback.message.answer('Выберите ваш пол 👇', reply_markup=kb.sex)
+        if user:
+            if user.age and user.sex:
+                await callback.message.answer('Вы уже забронировали корт? 🎾', reply_markup=kb.booking_court_q)
+            elif user.age:
+                await state.set_state(cl.RegPlayerStates.sex)
+                await callback.message.answer('Выберите ваш пол 👇', reply_markup=kb.sex)
+            else:
+                await state.set_state(cl.RegPlayerStates.age)
+                await callback.message.answer('Введите ваш возраст 👇')
         else:
             await state.set_state(cl.RegPlayerStates.age)
             await callback.message.answer('Введите ваш возраст 👇')
-    else:
-        await state.set_state(cl.RegPlayerStates.age)
-        await callback.message.answer('Введите ваш возраст 👇')
 
 
 
@@ -205,23 +207,26 @@ async def register_comment(message: Message, state: FSMContext):
 
 async def register_card(callback: Optional[CallbackQuery], message: Message, state: FSMContext):
     data = await state.get_data()
+    async with get_db() as session:  # Используем контекстный менеджер
 
-    # Создаём объект PlayerData
-    player_data = cl.PlayerData(
-        id=data.get("user_id"),
-        link=data.get("link"),
-        age=data.get("age"),
-        sex=data.get("sex"),
-        date_booking=data.get("date_booking"),
-        date_without_booking=data.get("date_without_booking"),
-        name_court=data.get("name_court"),
-        type_match=data.get("type_match"),
-        comment=data.get("comment")
-    )
+        # Создаём объект PlayerData
+        player_data = cl.PlayerData(
+            id=data.get("user_id"),
+            link=data.get("link"),
+            age=data.get("age"),
+            sex=data.get("sex"),
+            date_booking=data.get("date_booking"),
+            date_without_booking=data.get("date_without_booking"),
+            name_court=data.get("name_court"),
+            type_match=data.get("type_match"),
+            comment=data.get("comment")
+        )
 
-    try:
         new_match = Match(id_tg_user = data.get("user_id"), date_booking = data.get("date_booking"), date_without_booking = data.get("date_without_booking"), name_court = data.get("name_court"), type = data.get("type_match"), comment = data.get("comment"), player_1 = data.get("user_id"))
         session.add(new_match)
+        user = (await session.scalars(select(User).where(User.tg_user_id == data.get("user_id")))).first()
+        user.age = data.get("age")
+        user.sex = data.get("sex")
 
         print(f'✅ Карточка игры создана пользователем с ID {data.get("user_id")}!')
         if callback:
@@ -229,18 +234,14 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         else:
             await message.answer('✅ Игра создана!')
 
-        session.commit()
-    except Exception as e:
-        session.rollback()
-        raise e
 
-
-    await f.check_ban_user(data.get("user_id"))
+    async with get_db() as session:  # Используем контекстный менеджер
+        await f.check_ban_user(data.get("user_id"), session)
 
     if callback:
-        await callback.message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
+        await callback.message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{(await player_data.build_text_card())}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
     else:
-        await message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{player_data}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
+        await message.answer(f'<b>Ваша карточка игры выглядит так</b> 👇\n\n{(await player_data.build_text_card())}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player)
 
     # Обнуляем данные
     await state.update_data(date_booking = None)
@@ -254,10 +255,11 @@ async def match_requests(callback: CallbackQuery):
 
     user_id = callback.from_user.id
 
-    await f.check_ban_user(user_id)
+    async with get_db() as session:  # Используем контекстный менеджер
+        await f.check_ban_user(user_id, session)
 
-    user = session.query(User).filter(User.tg_user_id == user_id).first()
-    user_matches = session.query(Match).filter((Match.id_tg_user == user_id) & (Match.player_2 == None)).all()
+        user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
+        user_matches = (await session.scalars(select(Match).where((Match.id_tg_user == user_id) & (Match.player_2 == None)))).all()
 
     if user_matches:
         if len(user_matches) == 1:
@@ -270,21 +272,20 @@ async def match_requests(callback: CallbackQuery):
                 text = ''
 
                 if user_match.date_booking:
-                    text += f'\n\nБронь корта: {user_match.date_booking}\nКорт: {user_match.name_court}'
+                    text += f'\n\n✅ <b>Бронь корта:</b> {user_match.date_booking}\n<b>Корт:</b> {user_match.name_court}'
                     
                 if user_match.date_without_booking:
-                    text += f'\n\nБрони нет! Предлагаю поиграть: {user_match.date_without_booking}'
+                    text += f'\n\n❌ <b>Брони нет! Предлагаю поиграть:</b> {user_match.date_without_booking}'
                 
                 if user_match.type:
-                    text += f'\nТип игры: {user_match.type}'
+                    text += f'\n<b>Тип игры:</b> {user_match.type}'
                 
                 if user_match.comment:
-                    text += f'\nКомментарий: <blockquote>{user_match.comment}</blockquote>'
+                    text += f'\n<b>Комментарий:</b> <blockquote>{user_match.comment}</blockquote>'
                 
-                await callback.message.answer(f'<b>Запрос на игру</b> (ID: {user_match.match_id}) 🎾\n\n{user}{text}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player_get_card)
+                await callback.message.answer(f'<b>Запрос на игру</b> (ID: {user_match.match_id}) 🎾\n\n{(await user.build_repr_data())}{text}', parse_mode=ParseMode.HTML, disable_web_page_preview=True, reply_markup=kb.player_get_card)
         if len(user_matches) < 3:
                 await callback.message.answer(f'<b>Хотите создать ещё 1 запрос на игру?</b>', parse_mode=ParseMode.HTML, reply_markup=kb.add_card_q)
-
     else:
         await callback.message.answer("<b>Активных игр не найдено! Хотите создать?</b>", parse_mode=ParseMode.HTML, reply_markup=kb.create_card)
 
@@ -301,18 +302,17 @@ async def delete_match(callback: types.CallbackQuery, state: FSMContext):
     if match:
         match_id = match.group(1)       # ID карточки
         
-        user_match = session.query(Match).filter(Match.match_id == match_id).first()
-        if user_match:
-            try:
-                session.delete(user_match)
-                session.commit()
-                
-                await callback.answer(f"✅ Карточка удалена!", show_alert=False)
-                print(f"✅ Карточка игры удалена пользователем с id {user_id}!")
-            except Exception as e:
-                session.rollback()
-                raise e
+        async with get_db() as session:  # Используем контекстный менеджер
 
+            user_match = (await session.scalars(select(Match).where(Match.match_id == match_id))).first()
+            
+            if user_match:
+                try:
+                    await session.delete(user_match)
+                    await callback.answer(f"✅ Карточка удалена!", show_alert=False)
+                except Exception as e:
+                    # обработка ошибки
+                    print(f"Произошла ошибка: {e}")    
     else:
         print("❌ При попытке удалить карточку игры произошла ошибка!")
 

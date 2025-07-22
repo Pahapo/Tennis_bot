@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
-class Match(Base):
+class Match(AsyncAttrs, Base):
     __tablename__ = "match"
     match_id = Column(Integer, autoincrement=True, primary_key=True, unique=True)
     id_tg_user = Column(Integer, nullable=False)

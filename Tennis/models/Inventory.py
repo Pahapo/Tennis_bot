@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
-class Inventory(Base):
+class Inventory(AsyncAttrs, Base):
     __tablename__ = "inventory"
     inventory_id = Column(Integer, primary_key=True, autoincrement=True)
     photo = Column(String(30), nullable=False)

@@ -1,11 +1,15 @@
 import time
 import gspread
+import asyncio
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 from aiogram.enums import ParseMode
 from config.config import EMAILS
 
-from config.db import session
+import keywords.kw_any as kb
+
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.Division import Division
 
 
@@ -36,16 +40,15 @@ def createNewSheet(source_spreadsheet_id, nameTournament):
 
 
 
-def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament, quantity_person):
-# def copy_lists(new_spreadsheet_id, source_spreadsheet_id):
+def copy_lists(new_spreadsheet_id, source_spreadsheet_id, levelTournament, quantity_person, names_division):
     # Получаем ID исходного листа
     source_sheets_info = service_sheets.spreadsheets().get(spreadsheetId=source_spreadsheet_id).execute()
     source_sheet_id = source_sheets_info['sheets'][0]['properties']['sheetId']  # Первый лист в таблице
 
     levelTournament_list = list(map(int, levelTournament.split(",")))
-    name_division = session.query(Division).all()
+    
     # Создаём словарь {division_id: name}, чтобы быстрее искать названия
-    division_dict = {div.division_id: div.name_division for div in name_division}
+    division_dict = {div.division_id: div.name_division for div in names_division}
     # Преобразуем список ID в список названий
     levelTournament_names = [division_dict[i] for i in levelTournament_list if i in division_dict]
 
@@ -133,7 +136,7 @@ def delete_template_list(new_spreadsheet_id, source_sheet_id):
 
 
 
-def startDoingSheet(nameTournament, levelTournament, quantity_person, type):
+def startDoingSheet(nameTournament, levelTournament, quantity_person, type, names_division):
     # ----- Открытие исходной таблицы -----
     gc = gspread.service_account(filename='credentials_tennisbot.json')
     # spreadsheet = gc.open("Турнир")
@@ -147,7 +150,7 @@ def startDoingSheet(nameTournament, levelTournament, quantity_person, type):
     # print("newSheetId = ", newSheetId)
     # print("source_spreadsheet_id = ", source_spreadsheet_id)
     # print("levelTournament = ", levelTournament)
-    copy_lists(newSheetId, source_spreadsheet_id, levelTournament, quantity_person)
+    copy_lists(newSheetId, source_spreadsheet_id, levelTournament, quantity_person, names_division)
     # copy_lists(newSheetId, source_spreadsheet_id)
 
     # ----- Предоставление доступа к таблице -----
@@ -202,6 +205,7 @@ def edit_name_tournament(old_name_tournament, new_name_tournament):
 
         # Отправляем запрос в Google Sheets API
         service_sheets.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=update_request).execute()
+
 
 
 def delete_player_from_tournament(nameTournament, person, user_division, organizer):

@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, BigInteger
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
-class FastUser(Base):
+class FastUser(AsyncAttrs, Base):
     __tablename__ = "fast_booking_players"
     user_id = Column(Integer, primary_key=True, autoincrement=True)
     tg_id_user = Column(BigInteger, unique=True)

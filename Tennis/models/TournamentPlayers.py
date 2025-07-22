@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, Boolean
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
-class TournamentPlayers(Base):
+class TournamentPlayers(AsyncAttrs, Base):
     __tablename__ = "tournament_players"
     id_tournament_players = Column(Integer, autoincrement=True, primary_key=True)
     id_tournament = Column(Integer, nullable=False)

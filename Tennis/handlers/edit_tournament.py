@@ -8,7 +8,8 @@ from aiogram import F, Router
 import handlers.btn_tournaments as bt
 import handlers.classes as cl
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.Tournament import Tournament
 
 
@@ -18,16 +19,19 @@ router = Router()
 @router.callback_query(F.data == 'tournament_edit')
 async def tournament_edit(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    tournament_info_edit = bt.create_tournaments_edit_keyboard(bt.get_list_tournaments_edit())
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    await callback.message.answer('<b>Тут вы можете отредактировать созданный турнир!</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=tournament_info_edit)
+        tournament_info_edit = bt.create_tournaments_edit_keyboard(await bt.get_list_tournaments_edit(session))
+        await callback.message.answer('<b>Тут вы можете отредактировать созданный турнир!</b>\nВыбери нужный турнир 👇', parse_mode=ParseMode.HTML, reply_markup=tournament_info_edit)
 
    
 @router.callback_query(F.data.startswith("tournament_edit_"))
 async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')       
     selected_tournament = callback.data.replace("tournament_edit_", "").replace("_edit", "")  # Получаем название выбранного турнира
-    tournament = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
+    
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+        tournament = (await session.scalars(select(Tournament).where(Tournament.name_tournament == selected_tournament))).first()
     
     await state.update_data(id_tournament = tournament.tournament_id)
     await state.update_data(name = tournament.name_tournament)
@@ -47,4 +51,4 @@ async def handle_level_buttons(callback: CallbackQuery, state: FSMContext):
     #     print(f"Ошибка при удалении турнирного фото. Ошибка: {e}")
 
     # await state.set_state(cl.RegTournamentsStates.img_flag) # если пользователь отправит фото вне этого состояния, оно не будет обработано
-    # await callback.message.answer('Отправьте фото турнира в формте .jpg 👇')
+    # await callback.message.answer('Отправьте фото турнира в формате .jpg 👇')

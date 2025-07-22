@@ -11,7 +11,8 @@ import keywords.kw_any as kb
 import handlers.classes as cl
 import handlers.validation as valid
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.TournamentPlayers import TournamentPlayers
 from models.Tournament import Tournament
 from models.Division import Division
@@ -41,49 +42,52 @@ async def find_users_for_score(callback: CallbackQuery, state:FSMContext):
 async def find_name_score(message: Message, state:FSMContext):
 
     await state.set_state(None)
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    user_id = message.from_user.id
-    link_finder_contestant = message.text.lower()
+        user_id = message.from_user.id
+        link_finder_contestant = message.text.lower()
 
-    if 'https://t.me/' not in link_finder_contestant:
-        if '@' in link_finder_contestant:
-            link_finder_contestant = link_finder_contestant.replace('@', '', 1)
+        if 'https://t.me/' not in link_finder_contestant:
+            if '@' in link_finder_contestant:
+                link_finder_contestant = link_finder_contestant.replace('@', '', 1)
 
-        link_finder_contestant = 'https://t.me/' + link_finder_contestant
+            link_finder_contestant = 'https://t.me/' + link_finder_contestant
 
-    await state.update_data(link_finder_contestant = link_finder_contestant)
+        await state.update_data(link_finder_contestant = link_finder_contestant)
 
-    options = LinkPreviewOptions(
-        is_disabled=True
-    )
+        options = LinkPreviewOptions(
+            is_disabled=True
+        )
 
-    user = session.query(User).filter(User.tg_user_id == user_id).first()
-    user_tournaments = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id).all()
+        
+        user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
+        user_tournaments = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == user_id))).all()
 
-    if user_tournaments:
-        tournament_ids = [tournament.id_tournament for tournament in user_tournaments]
+        if user_tournaments:
+            tournament_ids = [tournament.id_tournament for tournament in user_tournaments]
 
-    if user and tournament_ids:
-        list_finder_user = [row[0] for row in session.query(User.link).join(TournamentPlayers, TournamentPlayers.id_tg_user == User.tg_user_id).filter(TournamentPlayers.id_tournament.in_(tournament_ids), User.tg_user_id != user_id).all()]
-
-        if link_finder_contestant in list_finder_user:
-            user = session.query(User).filter_by(link = link_finder_contestant).first()
-            await state.update_data(tg_user_id_kassa = user.tg_user_id)
-
-            if user.division_level != None:
-                name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
-                division_lvl = name_division.name_division
-            else:
-                division_lvl = 'Не определён'
+        if user and tournament_ids:
+            list_finder_user = (await session.scalars(select(User.link).join(TournamentPlayers, TournamentPlayers.id_tg_user == User.tg_user_id).where(TournamentPlayers.id_tournament.in_(tournament_ids),User.tg_user_id != user_id))).all()
             
-            await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_score)
-        else:
-            if link_finder_contestant == user.link:
-                await message.answer(f'<b>Вы не можете выбрать себя! 🙋‍♂️</b>', parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
+            if link_finder_contestant in list_finder_user:
+                user = (await session.scalars(select(User).where(User.link == link_finder_contestant))).first()
+
+                await state.update_data(tg_user_id_kassa = user.tg_user_id)
+
+                if user.division_level != None:
+                    name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
+                    division_lvl = name_division.name_division
+                else:
+                    division_lvl = 'Не определён'
+                
+                await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_score)
             else:
-                await message.answer(f'<b>Вы не можете выбрать этого игрока! 🙋‍♂️</b>\n\nОн не участвует с Вами в турнире', parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
-    else:
-        await message.answer('Пользователь с таким <b>username</b> не найден в списке игроков турнира или не соответствует вашему дивизиону!',parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
+                if link_finder_contestant == user.link:
+                    await message.answer(f'<b>Вы не можете выбрать себя! 🙋‍♂️</b>', parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
+                else:
+                    await message.answer(f'<b>Вы не можете выбрать этого игрока! 🙋‍♂️</b>\n\nОн не участвует с Вами в турнире', parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
+        else:
+            await message.answer('Пользователь с таким <b>username</b> не найден в списке игроков турнира или не соответствует вашему дивизиону!',parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
 
 
 
@@ -116,20 +120,21 @@ async def find_score(message: Message, state:FSMContext):
     link_finder_contestant = data.get("link_finder_contestant")
 
     await state.update_data(score = score)
+    
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+        user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
+        contestant = (await session.scalars(select(User).where(User.link == link_finder_contestant))).first()
 
-    user = session.query(User).filter_by(tg_user_id = user_id).first()
-    contestant = session.query(User).filter_by(link = link_finder_contestant).first()
+        user_link = user.link
+        user_name = '@' + user_link.replace("https://t.me/", "")
+        contestant_link = contestant.link
+        contestant_name = '@' + contestant_link.replace("https://t.me/", "")
 
-    user_link = user.link
-    user_name = '@' + user_link.replace("https://t.me/", "")
-    contestant_link = contestant.link
-    contestant_name = '@' + contestant_link.replace("https://t.me/", "")
+        options = LinkPreviewOptions(
+            is_disabled=True
+        )
 
-    options = LinkPreviewOptions(
-        is_disabled=True
-    )
-
-    await message.answer(f"<b>Подтвердите правильность введённых Вами данных 🎾</b>\n\n<b>Счёт между игроками турнира:</b>\n🙋‍♂️ <b>Игроки:</b> {user_name} vs {contestant_name}\n<b>⚡️ Счёт:</b> {score}", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.confirm_score) 
+        await message.answer(f"<b>Подтвердите правильность введённых Вами данных 🎾</b>\n\n<b>Счёт между игроками турнира:</b>\n🙋‍♂️ <b>Игроки:</b> {user_name} vs {contestant_name}\n<b>⚡️ Счёт:</b> {score}", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.confirm_score) 
 
 
 
@@ -142,30 +147,32 @@ async def confirm_score(callback: CallbackQuery, state:FSMContext, bot):
     link_finder_contestant = data.get("link_finder_contestant")
     score = data.get("score")
 
-    user = session.query(User).filter_by(tg_user_id = user_id).first()
-    contestant = session.query(User).filter_by(link = link_finder_contestant).first()
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+        
+        user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
+        contestant = (await session.scalars(select(User).where(User.link == link_finder_contestant))).first()
 
-    user_link = user.link
-    user_name = '@' + user_link.replace("https://t.me/", "")
-    contestant_link = contestant.link
-    contestant_name = '@' + contestant_link.replace("https://t.me/", "")
+        user_link = user.link
+        user_name = '@' + user_link.replace("https://t.me/", "")
+        contestant_link = contestant.link
+        contestant_name = '@' + contestant_link.replace("https://t.me/", "")
 
-    options = LinkPreviewOptions(
-        is_disabled=True
-    )
+        options = LinkPreviewOptions(
+            is_disabled=True
+        )
 
-    if contestant:
-        # НЕ ИЗМЕНЯТЬ СООБЩЕНИЕ ОТПРАВКИ ! ! ! (это повлияет на функцию handle_button_click_confirm_score)
-        message_text_send = f"<b>Подтвердите счёт, записанный вашим <a href='{user.link}'>соперником</a></b>\n\n🙋‍♂️ <b>Игроки:</b> {user_name} vs {contestant_name}\n⚡️ <b>Счёт:</b> {score}"
-        try:
-            await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.confirm_score_contestant)
-            await callback.message.answer(f"<b>Запрос на подтверждение счёта отправлен! ⚡</b>\n\n• Ожидайте подтверждение со стороны соперника", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
-        except Exception as e:
-            print(f"❌ Не удалось отправить сообщение о счёте на турнире пользователю с id: {contestant.tg_user_id} из-за ошибки: {e}")
-            await callback.message.answer(f'<b>Произошла ошибка при отправке счёта!</b>\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-    else:
-        await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
-        print(f"ОШИБКА! Пользователь с ссылкой '{link_finder_contestant}' не был найден в БД. Счёт не может быть отправлено сопернику!")  
+        if contestant:
+            # НЕ ИЗМЕНЯТЬ СООБЩЕНИЕ ОТПРАВКИ ! ! ! (это повлияет на функцию handle_button_click_confirm_score)
+            message_text_send = f"<b>Подтвердите счёт, записанный вашим <a href='{user.link}'>соперником</a></b>\n\n🙋‍♂️ <b>Игроки:</b> {user_name} vs {contestant_name}\n⚡️ <b>Счёт:</b> {score}"
+            try:
+                await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.confirm_score_contestant)
+                await callback.message.answer(f"<b>Запрос на подтверждение счёта отправлен! ⚡</b>\n\n• Ожидайте подтверждение со стороны соперника", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+            except Exception as e:
+                print(f"❌ Не удалось отправить сообщение о счёте на турнире пользователю с id: {contestant.tg_user_id} из-за ошибки: {e}")
+                await callback.message.answer(f'<b>Произошла ошибка при отправке счёта!</b>\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        else:
+            await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+            print(f"ОШИБКА! Пользователь с ссылкой '{link_finder_contestant}' не был найден в БД. Счёт не может быть отправлено сопернику!")  
     await state.clear()
 
 
@@ -181,37 +188,39 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
         contestant_name = match.group(1)  # Игрок 1
         user_name = match.group(2)        # Игрок 2
         score = match.group(3)            # Счёт
+    
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-        contestant_link = contestant_name.replace("@", "https://t.me/")
-        user_link = user_name.replace("@", "https://t.me/")
-        contestant = session.query(User).filter(User.link == contestant_link).first()
-        user = session.query(User).filter(User.link == user_link).first()
+            contestant_link = contestant_name.replace("@", "https://t.me/")
+            user_link = user_name.replace("@", "https://t.me/")
+            user = (await session.scalars(select(User).where(User.link == user_link))).first()
+            contestant = (await session.scalars(select(User).where(User.link == contestant_link))).first()
 
-        contestant_tournament_pl = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == contestant.tg_user_id).first()
-        contestant_tournament = session.query(Tournament).filter(Tournament.tournament_id == contestant_tournament_pl.id_tournament).first()
-        contestant_division = session.query(Division).filter(Division.division_id == contestant.division_level).first()
+            contestant_tournament_pl = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == contestant.tg_user_id))).all()[-1]
+            contestant_tournament = (await session.scalars(select(Tournament).where(Tournament.tournament_id == contestant_tournament_pl.id_tournament))).first()
+            contestant_division = (await session.scalars(select(Division).where(Division.division_id == contestant.division_level))).first()
 
-        options = LinkPreviewOptions(
-            is_disabled=True
-        )
-        
-        # отправка сообщения в группу
-        group_chat_id = CHANNEL_SCORES  
-        try:
-            message_text_send = f"<b>Турнир:</b> {contestant_tournament.name_tournament}\n<b>Дивизион:</b> {contestant_division.name_division}\n\n<b>Игроки:</b> <a href='{contestant.link}'>{contestant.name_user}</a> vs <a href='{user.link}'>{user.name_user}</a>\n<b>Счёт:</b> {score}"
-            await bot.send_message(chat_id=group_chat_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True)
-        except TelegramAPIError as e:
-            print(f"Ошибка Telegram API: {e}")
-
-        if contestant:
-            message_text_send = f"<b><a href='{user.link}'>Соперник</a> подтвердил счёт Вашей с ним игры в турнире {contestant_tournament.name_tournament}!</b> 🙋‍♂️🎾"
+            options = LinkPreviewOptions(
+                is_disabled=True
+            )
+            
+            # отправка сообщения в группу
+            group_chat_id = CHANNEL_SCORES
             try:
-                await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-            except Exception as e:
-                print(f"❌ Не удалось отправить сообщение о положительном ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
-        else:
-            await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
-            print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД. Подтверждение счёта не может быть отправлено сопернику!")  
+                message_text_send = f"<b>Турнир:</b> {contestant_tournament.name_tournament}\n<b>Дивизион:</b> {contestant_division.name_division}\n\n<b>Игроки:</b> <a href='{contestant.link}'>{contestant.name_user}</a> vs <a href='{user.link}'>{user.name_user}</a>\n<b>Счёт:</b> {score}"
+                await bot.send_message(chat_id=group_chat_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True)
+            except TelegramAPIError as e:
+                print(f"Ошибка Telegram API: {e}")
+
+            if contestant:
+                message_text_send = f"<b><a href='{user.link}'>Соперник</a> подтвердил счёт Вашей с ним игры в турнире {contestant_tournament.name_tournament}!</b> 🙋‍♂️🎾"
+                try:
+                    await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, link_preview_options=options, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                except Exception as e:
+                    print(f"❌ Не удалось отправить сообщение о положительном ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
+            else:
+                await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+                print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД. Подтверждение счёта не может быть отправлено сопернику!")  
     else:
         print("❌ Данные не были обработаны при поиске данных при внесении счёта соперниками!")
 
@@ -231,24 +240,26 @@ async def unconfirm_score_contestant(callback: types.CallbackQuery, bot):
 
     if match:
         contestant_name = match.group(1)  # Игрок 1
+        
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-        contestant_name = contestant_name.replace("@", "https://t.me/")
-        user = session.query(User).filter(User.tg_user_id == user_id).first()
-        contestant = session.query(User).filter(User.link == contestant_name).first()
+            contestant_name = contestant_name.replace("@", "https://t.me/")
+            user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
+            contestant = (await session.scalars(select(User).where(User.link == contestant_name))).first()
 
-        options = LinkPreviewOptions(
-            is_disabled=True
-        )
+            options = LinkPreviewOptions(
+                is_disabled=True
+            )
 
-        if contestant:
-            message_text_send = f"<b>Соперник <a href='{user.link}'>{user.name_user}</a> НЕ подтвердил счёт Вашей с ним игры! 😥</b>"
-            try:
-                await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-            except Exception as e:
-                print(f"❌ Не удалось отправить сообщение о отрицательным ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
-        else:
-            await callback.message.answer(f"<b>Соперник не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
-            print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД")  
+            if contestant:
+                message_text_send = f"<b>Соперник <a href='{user.link}'>{user.name_user}</a> НЕ подтвердил счёт Вашей с ним игры! 😥</b>"
+                try:
+                    await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                except Exception as e:
+                    print(f"❌ Не удалось отправить сообщение о отрицательным ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
+            else:
+                await callback.message.answer(f"<b>Соперник не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
+                print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД")  
     else:
         print("❌ Данные не были обработаны при поиске данных при внесении счёта соперниками!")
     

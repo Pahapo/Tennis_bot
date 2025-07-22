@@ -8,6 +8,9 @@ from config.config import MAIN_EDITOR, ADMINS
 import keywords.kw_any as kb
 import handlers.functions as f
 
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
+
 
 router = Router()
 
@@ -15,13 +18,15 @@ router = Router()
 @router.callback_query(F.data == 'fast_booking_court')
 async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
-    data = await state.get_data()
-    user_id = callback.from_user.id
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    if await f.check_fast_user(user_id):
-        await callback.message.answer('<b>Быстрое бронирование 🎾</b>\n\nЕсли вы новичок, используйте \"Обычное бронирование\"\nЕсли Вы часто или профессионально играете, Вам подойдёт этот вариант\n\n<b>Автоматическое бронирование обеспечит Вас кортом в любое время</b>. Вы не столкнётесь с проблемой занятого корта, ведь бронирование мы берём на себя!\n\n<b>3 ПРОСТЫХ ШАГА:</b>\n• Выбери дату\n• Выбери корт\n• Выбери время\n\n⚡️ Чтобы использовать \"<b>Быстрое бронирование 🎾</b>\" необходима подписка \"<b>Tennis PRO</b>\"\n\n⚡️ Воспользуйтесь бесплатной версией, чтобы протестировать возможности (доступна 1 раз)', parse_mode=ParseMode.HTML, reply_markup=kb.fast_booking_court)
-    else:
-        await f.start_message(callback, bot)
+        data = await state.get_data()
+        user_id = callback.from_user.id
+
+        if await f.check_fast_user(user_id, session):
+            await callback.message.answer('<b>Быстрое бронирование 🎾</b>\n\nЕсли вы новичок, используйте \"Обычное бронирование\"\nЕсли Вы часто или профессионально играете, Вам подойдёт этот вариант\n\n<b>Автоматическое бронирование обеспечит Вас кортом в любое время</b>. Вы не столкнётесь с проблемой занятого корта, ведь бронирование мы берём на себя!\n\n<b>3 ПРОСТЫХ ШАГА:</b>\n• Выбери дату\n• Выбери корт\n• Выбери время\n\n⚡️ Чтобы использовать \"<b>Быстрое бронирование 🎾</b>\" необходима подписка \"<b>Tennis PRO</b>\"\n\n⚡️ Воспользуйтесь бесплатной версией, чтобы протестировать возможности (доступна 1 раз)', parse_mode=ParseMode.HTML, reply_markup=kb.fast_booking_court)
+        else:
+            await f.start_message(callback, bot)
 
 # @router.callback_query(F.data == 'find_users_for_ban')
 # async def find_users_for_ban(callback: CallbackQuery, state:FSMContext, bot):
@@ -38,36 +43,38 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 
 # @router.message(cl.FindUser.name_ban)
 # async def find_name(message: Message, state:FSMContext):
-#     await state.update_data(name = message.text)
-#     await state.set_state(None)
-#     name_finder_user = message.text.lower()
-#     if 'https://t.me/' not in name_finder_user:
-#         if '@' in name_finder_user:
-#             name_finder_user = name_finder_user.replace('@', '', 1)
+#     async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-#         name_finder_user = 'https://t.me/' + name_finder_user
+#         await state.update_data(name = message.text)
+#         await state.set_state(None)
+#         name_finder_user = message.text.lower()
+#         if 'https://t.me/' not in name_finder_user:
+#             if '@' in name_finder_user:
+#                 name_finder_user = name_finder_user.replace('@', '', 1)
 
-#     options = LinkPreviewOptions(
-#         is_disabled=True
-#     )
+#             name_finder_user = 'https://t.me/' + name_finder_user
 
-#     list_finder_user = [row[0] for row in session.query(User.link).all()]
+#         options = LinkPreviewOptions(
+#             is_disabled=True
+#         )
 
-#     if name_finder_user in list_finder_user:
-#         user = session.query(User).filter_by(link = name_finder_user).first()
-#         await state.update_data(tg_user_id = user.tg_user_id)
+#         list_finder_user = (await session.scalars(select(User.link))).all()
 
-#         division_lvl = ''
+#         if name_finder_user in list_finder_user:
+#             user = (await session.scalars(select(User).where(User.link == name_finder_user))).first()
+#             await state.update_data(tg_user_id = user.tg_user_id)
 
-#         if user.division_level != None:
-#             name_division = session.query(Division).filter(Division.division_id == int(user.division_level)).first()
-#             division_lvl = name_division.name_division
+#             division_lvl = ''
+
+#             if user.division_level != None:
+#                 name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
+#                 division_lvl = name_division.name_division
+#             else:
+#                 division_lvl = 'Не определён'
+
+#             await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
 #         else:
-#             division_lvl = 'Не определён'
-
-#         await message.answer(f'<b>Найден пользователь {user.name_user} 🙋‍♂️</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_ban)
-#     else:
-#         await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_ban)
+#             await message.answer('Пользователь с таким <b>username</b> не найден!', parse_mode=ParseMode.HTML, reply_markup=kb.back_ban)
 
 
 # @router.callback_query(F.data == 'set_new_ban')
@@ -87,42 +94,39 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 
 # @router.message(cl.FindUser.reason_ban)
 # async def find_name(message: Message, state:FSMContext, bot):
-#     await state.update_data(reason_ban = message.text)
-#     await state.set_state(None)
+#     async with get_db() as session:  # Используем контекстный менеджер
 
-#     data = await state.get_data()
-#     name_finder_user = data.get("tg_user_id")
-#     period_ban = int(data.get("period_ban"))
-#     reason_ban = message.text
+#         await state.update_data(reason_ban = message.text)
+#         await state.set_state(None)
 
-#     # Работа с датами
-#     end_date_ban = datetime.today() + timedelta(days = period_ban)
+#         data = await state.get_data()
+#         name_finder_user = data.get("tg_user_id")
+#         period_ban = int(data.get("period_ban"))
+#         reason_ban = message.text
 
-#     user = session.query(User).filter_by(tg_user_id = name_finder_user).first()
-    
-#     if user:
-#         user.ban_status = True
-#         if user.end_date_ban != None:
-#             end_date_ban = datetime.strptime(user.end_date_ban, "%d.%m.%Y") + timedelta(days = period_ban)
+#         # Работа с датами
+#         end_date_ban = datetime.today() + timedelta(days = period_ban)
+
+#         user = (await session.scalars(select(User).where(User.tg_user_id == name_finder_user))).first()
+        
+#         if user:
+#             user.ban_status = True
+#             if user.end_date_ban != None:
+#                 end_date_ban = datetime.strptime(user.end_date_ban, "%d.%m.%Y") + timedelta(days = period_ban)
+#                 user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
+
 #             user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
 
-#         user.end_date_ban = end_date_ban.strftime("%d.%m.%Y")
+#             print(f"Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!")
+#             await message.answer(f"✅ Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!", reply_markup=kb.back_ban)
 
-#         print(f"Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!")
-#         await message.answer(f"✅ Пользователь '{user.name_user}' был забанен на {period_ban} дн. до {end_date_ban.strftime("%d.%m.%Y")}!", reply_markup=kb.back_ban)
-#         try:
-#             session.commit()
-#         except Exception as e:
-#             session.rollback()
-#             raise e
+#             message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
 
-#         message_text_send = f"<b>Дорогой {user.name_user}, мы вынуждены сообщить, что Вам выдан Бан!</b> ❌\n\n<b>Причина:</b> {reason_ban}\n\n<b>⏰ Окончание Бана:</b> {end_date_ban.strftime("%d.%m.%Y")}\n\n<i>Данное ограничение касается только участия в турнирах!</i>"
-
-#         try:
-#             await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-#         except Exception as e:
-#             print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
-#     else:
-#         await message.answer(f"✅ Пользователь '{user.name_user}' не был забанен!", reply_markup=kb.back_ban)
-#         print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  
-#     await state.clear()
+#             try:
+#                 await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+#             except Exception as e:
+#                 print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+#         else:
+#             await message.answer(f"✅ Пользователь '{user.name_user}' не был забанен!", reply_markup=kb.back_ban)
+#             print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  
+#         await state.clear()

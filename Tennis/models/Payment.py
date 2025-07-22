@@ -1,8 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from datetime import datetime
 from config.db import Base
 
-class Payment(Base):
+class Payment(AsyncAttrs, Base):
     __tablename__ = "payment"
     id_payment = Column(Integer, primary_key=True, autoincrement=True)
     id_tournament = Column(Integer, nullable=False)

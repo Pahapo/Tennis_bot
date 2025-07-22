@@ -14,8 +14,10 @@ import keywords.kw_any as ka
 import handlers.classes as cl
 import handlers.functions as f
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.User import User
+
 
 router = Router()
 
@@ -160,8 +162,10 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
         message_text_send = data.get("message_text_send")
         message_callback = data.get("message_callback")
         message_link = data.get("message_link")
-
-        users = [row[0] for row in session.query(User.tg_user_id).filter(User.tg_user_id != user_id).all()]
+        
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
+            users = (await session.scalars(select(User.tg_user_id).where(User.tg_user_id != user_id))).all()
+        
         count_send_message = 0
 
         # Проверяем файл Tennis/img/message/message.jpg
@@ -268,21 +272,21 @@ async def send_winner(callback: CallbackQuery, bot):
     #             users_winner = json.load(file)                                    # ДОБАВИТЬ В ТАБЛИЦУ В БД СТОЛБЕЦ С ПОБЕДИТЕЛЯМИ И ИХ МЕСТАМИ
 
 
-    #         # достать: user_name, user_id, name_turnament, place_on_tumnaments
+    #         # достать: user_name, user_id, name_tournament, place_on_tournaments
         
 
     #         for user in users_winner:         # ИЗМЕНИТЬ ИЕРАРХИЮ ПОИСКА ID И МЕСТА
     #             try:
     #                 if user.place == 1:
-    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "1-е место" место🏆!</b>\n\n<b>Золото</b> - показатель блестящей победы! Ваше мастерство, упорство и страсть к игре вдохновляют. Пусть этот триумф станет началом новых высот! 🏆🎾' 
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_tournament}", Вы заняли "1-е место" место🏆!</b>\n\n<b>Золото</b> - показатель блестящей победы! Ваше мастерство, упорство и страсть к игре вдохновляют. Пусть этот триумф станет началом новых высот! 🏆🎾' 
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
     #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #                 elif user.place == 2:
-    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "2-е место" место🏆!</b>\n\n<b>Серебро</b> - доказательство вашего таланта и силы духа! Гордитесь собой, ведь вы подарили нам незабываемый матч. Вперёд к новым вершинам! 💪🌟' 
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_tournament}", Вы заняли "2-е место" место🏆!</b>\n\n<b>Серебро</b> - доказательство вашего таланта и силы духа! Гордитесь собой, ведь вы подарили нам незабываемый матч. Вперёд к новым вершинам! 💪🌟' 
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
     #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #                 elif user.place == 3:
-    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_turnament}", Вы заняли "3-е место" место🏆!</b>\n\n<b>Бронза</b> - это ступень к великим победам! Ваш труд и преданность не остались незамеченными. Продолжайте заряжать корт своей энергией! 🥉🔥'
+    #                     message_text_send = f'<b>Поздравляем с Победой 🎉 в турнире "{name_tournament}", Вы заняли "3-е место" место🏆!</b>\n\n<b>Бронза</b> - это ступень к великим победам! Ваш труд и преданность не остались незамеченными. Продолжайте заряжать корт своей энергией! 🥉🔥'
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
     #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #             except Exception as e:

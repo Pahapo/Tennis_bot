@@ -18,7 +18,8 @@ import handlers.classes as cl
 import handlers.functions as f
 import googleSheet.googleSheet as gs
 
-from config.db import session
+from config.db_utils import get_db_readonly, get_db
+from sqlalchemy import select
 from models.TournamentPlayers import TournamentPlayers
 from models.Tournament import Tournament
 from models.User import User
@@ -33,26 +34,29 @@ router = Router()
 @router.callback_query(F.data == 'reglament_confirm')
 async def register(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
-    await state.set_state(cl.RegTournamentPlayerStates.level)
-    payment_method = session.query(PaymentMethod).filter(PaymentMethod.payment_method_id == 1).first()
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    if payment_method:
-        data = await state.get_data()
-        user_id = callback.from_user.id
-        selected_tournament = data.get("selected_tournament")
-        coins = data.get("coins")
+        await state.set_state(cl.RegTournamentPlayerStates.level)
+        payment_method = (await session.scalars(select(PaymentMethod).where(PaymentMethod.payment_method_id == 1))).first()
 
-        tournament = session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first()
-        price = tournament.price
-        if coins:
-            price = round(price - coins / 100, 1)
+        if payment_method:
+            data = await state.get_data()
+            user_id = callback.from_user.id
+            selected_tournament = data.get("selected_tournament")
+            coins = data.get("coins")
 
-        await state.update_data(tournament_price_with_coins = price)
+            tournament = (await session.scalars(select(Tournament).where(Tournament.name_tournament == selected_tournament))).first()
+            
+            price = tournament.price
+            if coins:
+                price = round(price - coins / 100, 1)
 
-        payment_address = await create_payment_keyboard(user_id, price)
-        await callback.message.answer(f'<b>Страница оплаты по ЕРИП</b> 💳\n\n• Система \"Расчёт\" (ЕРИП)\n• Банковские, финансовые услуги\n• Банки, НКФО\n• {payment_method.bank_name}\n• Пополнение счёта\n\n<b>Введите номер счёта</b> 👇\n\n<pre><code>{payment_method.payment_method}</code></pre>\n\n💰 <b>Стоимость участия:</b> {price} бел.руб.\n\n• Если вы не успеете оплатить участие в турнире до истечения срока резервирования, оно аннулируется автоматически!\n\n⏰ <b>Время обработки платежа: 120 минут</b>', parse_mode=ParseMode.HTML, reply_markup=payment_address)
-    else:
-        await callback.message.answer(f'<b>Произошла ошибка загрузки страницы оплаты!</b> 💳\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+            await state.update_data(tournament_price_with_coins = price)
+
+            payment_address = await create_payment_keyboard(user_id, price)
+            await callback.message.answer(f'<b>Страница оплаты по ЕРИП</b> 💳\n\n• Система \"Расчёт\" (ЕРИП)\n• Банковские, финансовые услуги\n• Банки, НКФО\n• {payment_method.bank_name}\n• Пополнение счёта\n\n<b>Введите номер счёта</b> 👇\n\n<pre><code>{payment_method.payment_method}</code></pre>\n\n💰 <b>Стоимость участия:</b> {price} бел.руб.\n\n• Если вы не успеете оплатить участие в турнире до истечения срока резервирования, оно аннулируется автоматически!\n\n⏰ <b>Время обработки платежа: 120 минут</b>', parse_mode=ParseMode.HTML, reply_markup=payment_address)
+        else:
+            await callback.message.answer(f'<b>Произошла ошибка загрузки страницы оплаты!</b> 💳\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
 
 
 
@@ -153,41 +157,44 @@ async def save_photo_payment(message: types.Message, state: FSMContext, bot):
 
 
 async def find_tournament(selected_tournament):
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, lambda: session.query(Tournament).filter(Tournament.name_tournament == selected_tournament).first())
-
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
+        loop = asyncio.get_running_loop()
+        return (await session.scalars(select(Tournament).where(Tournament.name_tournament == selected_tournament))).first()
 
 
 @router.callback_query(F.data == 'check_payment')
 async def check_payment(callback: CallbackQuery, state:FSMContext, bot):
+    async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-    data = await state.get_data()
-    user_id = callback.from_user.id
-    selected_tournament = data.get("selected_tournament")
+        data = await state.get_data()
+        user_id = callback.from_user.id
+        selected_tournament = data.get("selected_tournament")
 
-    user_payment = ''
+        user_payment = ''
 
-    for i in range(280):
-        await asyncio.sleep(30)
-        # Поиск id выбранного турнира
-        selected_tournament = session.query(Tournament).filter(Tournament.name_tournament == data.get("selected_tournament")).first()
-        # Запрос "оплатил ли пользователь выбранный турнир?"
-        user_payment = session.query(Payment).filter(Payment.id_tg_user == user_id, Payment.id_tournament == selected_tournament.tournament_id).first()
+        for i in range(280):
+            await asyncio.sleep(30)
+            # Поиск id выбранного турнира
+            selected_tournament = (await session.scalars(select(Tournament).where(Tournament.name_tournament == data.get("selected_tournament")))).first()
+            
+            # Запрос "оплатил ли пользователь выбранный турнир?"
+            user_payment = (await session.scalars(select(Payment).where((Payment.id_tg_user == user_id, Payment.id_tournament == selected_tournament.tournament_id)))).first()
 
-        if user_payment:
-            await success_payment(callback, state, bot)
-            break
+            if user_payment:
+                await success_payment(callback, state, bot)
+                break
 
-    # Ожидание оплаты 140 минут (120 + 20)
-    if not user_payment:
-        editors_list = await f.output_edits_list()
+        # Ожидание оплаты 140 минут (120 + 20)
+        if not user_payment:
+            async with get_db_readonly() as session:  # Используем контекстный менеджер
+                editors_list = await f.output_edits_list(session)
 
-        options = LinkPreviewOptions(
-            is_disabled=True
-        )
-        
-        await callback.message.answer(f'<b>К сожалению, \"{selected_tournament.name_tournament}\" не был подтверждён или оплачен!</b> 😔\n\nНо мы уверены, что впереди у тебя ещё много побед и крутых турниров! 💪🎾\nИспользуй это время, чтобы набраться сил, усовершенствовать свою игру и вернуться ещё сильнее! 🚀🔥Ждём тебя в следующих соревнованиях!\n\n<i>• Если это ошибка, пожалуйста, свяжись с редактором(-ами) турнира!</i> {editors_list}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-        await state.clear()
+            options = LinkPreviewOptions(
+                is_disabled=True
+            )
+            
+            await callback.message.answer(f'<b>К сожалению, \"{selected_tournament.name_tournament}\" не был подтверждён или оплачен!</b> 😔\n\nНо мы уверены, что впереди у тебя ещё много побед и крутых турниров! 💪🎾\nИспользуй это время, чтобы набраться сил, усовершенствовать свою игру и вернуться ещё сильнее! 🚀🔥Ждём тебя в следующих соревнованиях!\n\n<i>• Если это ошибка, пожалуйста, свяжись с редактором(-ами) турнира!</i> {editors_list}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
+            await state.clear()
 
 
 
@@ -208,19 +215,15 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
         date = now_UTC + timedelta(minutes=180)
         
         # Запрос "подтверждал ли этот турнир другой редактор?"
-        user_payment = session.query(Payment).filter(Payment.id_tg_user == user_id, Payment.id_tournament == tournament_id).first()
+        async with get_db() as session:  # Используем контекстный менеджер
+            user_payment = (await session.scalars(select(Payment).where((Payment.id_tg_user == user_id, Payment.id_tournament == tournament_id)))).first()
 
-        if not user_payment:
-            check = Payment(id_tournament = tournament_id, id_tg_user = user_id, price = price, coins = coins, photo = file_id, date = date)
-            try:
+            if not user_payment:
+                check = Payment(id_tournament = tournament_id, id_tg_user = user_id, price = price, coins = coins, photo = file_id, date = date)
                 session.add(check)
-                session.commit()
 
                 print(f"✅ Игрок с id {user_id} добавлен в таблицу 'Payment' после подтверждения оплаты")
                 await callback.answer(f"✅ Оплата подтверждена", show_alert=False)
-            except Exception as e:
-                session.rollback()
-                raise e
 
         await callback.answer(f"⚠️ Оплата уже была подтверждена другим редактором!", show_alert=False)
     else:
@@ -234,27 +237,27 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
 @router.callback_query(F.data == 'success_payment')
 async def success_payment(callback: CallbackQuery, state:FSMContext, bot):
     await callback.answer('')
+    async with get_db() as session:  # Используем контекстный менеджер
 
-    data = await state.get_data()
-    user_id = callback.from_user.id
+        data = await state.get_data()
+        user_id = callback.from_user.id
 
-    # Поиск id выбранного турнира
-    selected_tournament = session.query(Tournament).filter(Tournament.name_tournament == data.get("selected_tournament")).first()
-    # Запрос "зарегистрирован ли пользователь на выбранный им турнир?"
-    user_in_tournament = session.query(TournamentPlayers).filter(TournamentPlayers.id_tg_user == user_id, TournamentPlayers.id_tournament == selected_tournament.tournament_id).all()
+        # Поиск id выбранного турнира
+        selected_tournament = (await session.scalars(select(Tournament).where((Tournament.name_tournament == data.get("selected_tournament"))))).first()
+        # Запрос "зарегистрирован ли пользователь на выбранный им турнир?"
+        user_in_tournament = (await session.scalars(select(TournamentPlayers).where((TournamentPlayers.id_tg_user == user_id) & (TournamentPlayers.id_tournament == selected_tournament.tournament_id)))).all()
+        selected_user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
 
-    selected_user = session.query(User).filter(User.tg_user_id == user_id).first()
+        if data.get("one_else_division"):
+            division_level = int(data.get("one_else_division"))
+            await state.update_data(one_else_division = None)
+        else:
+            division_level = selected_user.division_level
+            
+        user_division = (await session.scalars(select(Division).where(Division.division_id == division_level))).first()
 
-    if data.get("one_else_division"):
-        division_level = int(data.get("one_else_division"))
-        await state.update_data(one_else_division = None)
-    else:
-        division_level = selected_user.division_level
-        
-    user_division = session.query(Division).filter(Division.division_id == division_level).first()
+        if len(user_in_tournament) < 2:
 
-    if len(user_in_tournament) < 2:
-        try:
             user = TournamentPlayers(id_tournament = selected_tournament.tournament_id, id_tg_user = user_id)
             session.add(user)
 
@@ -263,31 +266,26 @@ async def success_payment(callback: CallbackQuery, state:FSMContext, bot):
                     selected_user.coins -= data.get("coins")
                     print(f'✅ Игрок с id {selected_user.tg_user_id} применил {data.get("coins")} монет для участия в турнире - "{selected_tournament.name_tournament}"!')
 
-            session.commit()
-            
+                
             print(f"✅ Игрок с id {selected_user.tg_user_id} зарегистрировался на турнир - '{selected_tournament.name_tournament}'!")
+
+        await callback.message.answer('✅ <b>Регистрация на турнир подтверждена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+        
+        try:
+            gs.addPlayerInList(selected_user.name_user, selected_user.link, selected_tournament.name_tournament, user_division.name_division)
+            print(f"✅ Игрок добавлен в Excel после регистрации на турнир - '{selected_tournament.name_tournament}' в '{user_division.name_division}' дивизион!")
         except Exception as e:
-            session.rollback()
-            raise e
+            print(f"Excel не смог добавить пользователя с id {selected_user.tg_user_id} в турнир '{selected_tournament.name_tournament}' и дивизион '{user_division.name_division} 'из-за ошибки: {e}")
+        
+            # Отправляем редактору сообщение об ошибке добавления в Excel
+            text_send = f"<b>Не получилось добавить пользователя {selected_user.name_user} в турнир '{selected_tournament.name_tournament}' в '{user_division.name_division}' дивизион из-за ошибки!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup"
+            for editor in EDITOR:
+                try:
+                    await bot.send_message(chat_id=editor, text=text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+                except Exception as e:
+                    print(f"Не удалось отправить редактору сообщение об ошибке при добавлении пользователя с id: {selected_user.tg_user_id} в Excel из-за ошибки: {e}")
 
-
-    await callback.message.answer('✅ <b>Регистрация на турнир подтверждена!</b>\n\nОжидайте завершения регистрации других участников', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-    
-    try:
-        gs.addPlayerInList(selected_user.name_user, selected_user.link, selected_tournament.name_tournament, user_division.name_division)
-        print(f"✅ Игрок добавлен в Excel после регистрации на турнир - '{selected_tournament.name_tournament}' в '{user_division.name_division}' дивизион!")
-    except Exception as e:
-        print(f"Excel не смог добавить пользователя с id {selected_user.tg_user_id} в турнир '{selected_tournament.name_tournament}' и дивизион '{user_division.name_division} 'из-за ошибки: {e}")
-       
-        # Отправляем редактору сообщение об ошибке добавления в Excel
-        text_send = f"<b>Не получилось добавить пользователя {selected_user.name_user} в турнир '{selected_tournament.name_tournament}' в '{user_division.name_division}' дивизион из-за ошибки!</b>\n\nОбратитесь в поддержку 🙋‍♂️ @mm_sup"
-        for editor in EDITOR:
-            try:
-                await bot.send_message(chat_id=editor, text=text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
-            except Exception as e:
-                print(f"Не удалось отправить редактору сообщение об ошибке при добавлении пользователя с id: {selected_user.tg_user_id} в Excel из-за ошибки: {e}")
-
-    await state.clear()
+        await state.clear()
 
 
 

@@ -1,7 +1,8 @@
 from sqlalchemy import Column, String, Integer, BigInteger
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
-class Referrals(Base):
+class Referrals(AsyncAttrs, Base):
     __tablename__ = "referrals"
     tg_users_id = Column(BigInteger, primary_key=True, unique=True)
     referrals = Column(String(250), nullable=False)

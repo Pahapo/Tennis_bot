@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
-class PaymentMethod(Base):
+class PaymentMethod(AsyncAttrs, Base):
     __tablename__ = "payment_method"
     payment_method_id = Column(Integer, primary_key=True, autoincrement=True)
     payment_method = Column(String(40), nullable=False)
