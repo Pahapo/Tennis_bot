@@ -59,7 +59,6 @@ async def find_name_score(message: Message, state:FSMContext):
             is_disabled=True
         )
 
-        
         user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
         user_tournaments = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == user_id))).all()
 
@@ -85,7 +84,7 @@ async def find_name_score(message: Message, state:FSMContext):
                 if link_finder_contestant == user.link:
                     await message.answer(f'<b>Вы не можете выбрать себя! 🙋‍♂️</b>', parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
                 else:
-                    await message.answer(f'<b>Вы не можете выбрать этого игрока! 🙋‍♂️</b>\n\nОн не участвует с Вами в турнире', parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
+                    await message.answer(f'<b>Вы не можете выбрать этого игрока! 🙋‍♂️</b>\n\nИгрок не участвует с Вами в турнире', parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
         else:
             await message.answer('Пользователь с таким <b>username</b> не найден в списке игроков турнира или не соответствует вашему дивизиону!',parse_mode=ParseMode.HTML, reply_markup=kb.back_score)
 
@@ -112,14 +111,19 @@ async def find_score(message: Message, state:FSMContext):
     if not valid.contains_link(score):
         await message.answer(f"⚠ Ошибка! Текст содержит ссылку. Попробуйте снова 👇")
         return  # Останавливаем обработку
-    
+
+    formatted_score = valid.auto_format_score(score)
+
+    if not valid.is_valid_score_format(formatted_score):
+        await message.answer(f"⚠ Ошибка! Текст неверного формата!\nВведите, например: 6:1 6:4 или 3-6 6-4 4-6\n\nПопробуйте снова 👇")
+
     await state.set_state(None)
 
     data = await state.get_data()
     user_id = message.from_user.id
     link_finder_contestant = data.get("link_finder_contestant")
 
-    await state.update_data(score = score)
+    await state.update_data(score = formatted_score)
     
     async with get_db_readonly() as session:  # Используем контекстный менеджер
         user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
@@ -189,7 +193,7 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
         user_name = match.group(2)        # Игрок 2
         score = match.group(3)            # Счёт
     
-        async with get_db_readonly() as session:  # Используем контекстный менеджер
+        async with get_db() as session:  # Используем контекстный менеджер
 
             contestant_link = contestant_name.replace("@", "https://t.me/")
             user_link = user_name.replace("@", "https://t.me/")
@@ -204,20 +208,52 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
                 is_disabled=True
             )
             
-            # отправка сообщения в группу
-            group_chat_id = CHANNEL_SCORES
-            try:
-                message_text_send = f"<b>Турнир:</b> {contestant_tournament.name_tournament}\n<b>Дивизион:</b> {contestant_division.name_division}\n\n<b>Игроки:</b> <a href='{contestant.link}'>{contestant.name_user}</a> vs <a href='{user.link}'>{user.name_user}</a>\n<b>Счёт:</b> {score}"
-                await bot.send_message(chat_id=group_chat_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True)
-            except TelegramAPIError as e:
-                print(f"Ошибка Telegram API: {e}")
-
             if contestant:
                 message_text_send = f"<b><a href='{user.link}'>Соперник</a> подтвердил счёт Вашей с ним игры в турнире {contestant_tournament.name_tournament}!</b> 🙋‍♂️🎾"
                 try:
                     await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, link_preview_options=options, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
                 except Exception as e:
                     print(f"❌ Не удалось отправить сообщение о положительном ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
+            
+
+                # отправка сообщения в группу
+                group_chat_id = CHANNEL_SCORES
+                try:
+                    message_text_send = f"<b>Турнир:</b> {contestant_tournament.name_tournament}\n<b>Дивизион:</b> {contestant_division.name_division}\n\n<b>Игроки:</b> <a href='{contestant.link}'>{contestant.name_user}</a> vs <a href='{user.link}'>{user.name_user}</a>\n<b>Счёт:</b> {score}"
+                    await bot.send_message(chat_id=group_chat_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True)
+                except TelegramAPIError as e:
+                    print(f"Ошибка Telegram API: {e}")
+
+
+                # изменение рейтинга после игры
+                scores = re.findall(r'\b\d{1,2}:\d{1,2}\b', score)
+                contestant_wins, user_wins = 0, 0
+
+                for score_text in scores:
+                    p1, p2 = map(int, score_text.split(":"))
+                    contestant_wins += p1 > p2
+                    user_wins += p2 > p1
+
+                if contestant_wins == user_wins:
+                    print("При выставлении счёта получилась - Ничья. Проверить!")
+                    return
+
+                winner, loser = (contestant, user) if contestant_wins > user_wins else (user, contestant)
+
+                winner_rating = float(winner.rating)
+                loser_rating = float(loser.rating)
+
+                new_winner_rating, new_loser_rating = calculate_rating_change(winner_rating, loser_rating)
+
+                winner.rating = new_winner_rating
+                loser.rating = new_loser_rating
+                await session.commit()
+                # По непонятной причине только когда разные дивизионы сражаются между собой, то рейтинг повышается только у дивизиона поменьше
+                # Когда равные дивизионы, то всё работает как надо!
+
+                await update_division_if_needed(winner, session, callback, bot)
+                await update_division_if_needed(loser, session, callback, bot)
+
             else:
                 await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
                 print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД. Подтверждение счёта не может быть отправлено сопернику!")  
@@ -226,6 +262,48 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
 
     # Удаляем сообщение после нажатия на кнопку
     await callback.message.delete()
+
+
+
+def get_division_by_rating(rating: float) -> int:
+    if 5.01 <= rating <= 5.99:
+        return 1
+    elif 4.01 <= rating <= 5.00:
+        return 2
+    elif 3.01 <= rating <= 4.00:
+        return 3
+    elif 2.01 <= rating <= 3.00:
+        return 4
+    else:
+        return 5
+
+
+async def update_division_if_needed(player, session, call, bot):
+    new_division = get_division_by_rating(player.rating)
+
+    if player.division_level != new_division:
+        player.division_level = new_division
+        try:
+            division = await session.scalars(select(Division).where(Division.division_id == new_division))
+            name = division.first().name_division if division else "Не определён"
+
+            print(f"Дивизион пользователя \"{player.tg_user_id}\" изменён на {name}")
+
+            message_text = (
+                f"<b>Дорогой игрок, сообщаем Вам о том, что Ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{name}</b>\n\n<b>Поздравляем!</b> 🎉"
+            )
+            await bot.send_message(chat_id=player.tg_user_id, text=message_text, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+
+        except Exception as e:
+            print(f"❌ Не удалось отправить сообщение о смене дивизиона: {e}")
+
+
+
+def calculate_rating_change(winner_rating, loser_rating, K=37):
+    expected_score = 1 / (1 + 10 ** ((loser_rating - winner_rating)))
+    new_winner = round((winner_rating * 400 + K * (1 - expected_score)) / 400, 2)
+    new_loser = round((loser_rating * 400 - K * expected_score) / 400, 2)
+    return new_winner, new_loser
 
 
 
@@ -265,3 +343,22 @@ async def unconfirm_score_contestant(callback: types.CallbackQuery, bot):
     
     # Удаляем сообщение после нажатия на кнопку
     await callback.message.delete()
+
+
+
+@router.callback_query(F.data == 'assign_initial_ratings')
+async def assign_initial_ratings(callback: types.CallbackQuery, bot):
+
+    await callback.answer(f"Начинаем выставлять рейтинг игрокам!", show_alert=False)
+    
+    def get_default_rating(level): return {1: 5.5, 2: 4.5, 3: 3.5, 4: 2.5}.get(level, 1.5)
+    
+    async with get_db() as session:  # Используем контекстный менеджер
+
+        users = (await session.scalars(select(User))).all()
+        for user in users:
+            if user.rating is None:
+                user.rating = get_default_rating(user.division_level)
+        await session.commit()
+    await callback.answer(f"Закончили выставлять рейтинг игрокам!", show_alert=False)
+

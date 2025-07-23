@@ -49,7 +49,6 @@ def validate_isdigit(number: str) -> bool:
     """Проверяет на - положительное целое число."""
     return number.isdigit()
 
-
 def validate_score(score: str) -> bool:
     """Проверяет, что комментарий не превышает 11 символов."""
     return len(score) <= 30
@@ -57,3 +56,13 @@ def validate_score(score: str) -> bool:
 def contains_link(text: str) -> bool:
     """Проверяет, что комментарий не содержит ссылок."""
     return not 'http' in text
+
+def auto_format_score(text: str) -> str:
+    """Заменяет дефисы между цифрами на двоеточие."""
+    return re.sub(r'(?<!\d)(\d{1,2})-(\d{1,2})(?!\d)', r'\1:\2', text)
+
+def is_valid_score_format(text: str) -> bool:
+    """Проверяет строгое соответствие формату: 2 или 3 пары X:Y, разделённые пробелами."""
+    pattern_two = r'^\d{1,2}:\d{1,2} \d{1,2}:\d{1,2}$'
+    pattern_three = r'^\d{1,2}:\d{1,2} \d{1,2}:\d{1,2} \d{1,2}:\d{1,2}$'
+    return re.fullmatch(pattern_two, text) or re.fullmatch(pattern_three, text)

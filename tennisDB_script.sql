@@ -11,6 +11,7 @@ CREATE TABLE `users` (
   `age` int DEFAULT NULL,
   `sex` varchar(10) DEFAULT NULL,
   `division_level` int DEFAULT NULL,
+  `rating` float DEFAULT NULL,
   `ban_status` tinyint(1) DEFAULT NULL,
   `end_date_ban` varchar(10) DEFAULT NULL,
   `coins` varchar(10) DEFAULT NULL,

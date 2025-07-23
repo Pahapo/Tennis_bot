@@ -118,20 +118,19 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
                             else:
                                 date = users_match.date_without_booking.split(" ")[1][:-5]
 
-                            # Добавить вывод рейтинга в скобках возле имени
                             # НЕ ИЗМЕНЯТЬ СООБЩЕНИЕ ! ! ! (это повлияет на функцию apply_match)
-                            list_matches += f'\n\n🙋‍♂️ <b>{user.name_user.upper()}</b> ({date})\n\nСсылка: <tg-spoiler>{user.link}</tg-spoiler>\nИстория турниров: {history}\nДивизион: {division_lvl}\nПол: {user.sex}\nВозраст: {user.age}\n'
-                
+                            list_matches += f'\n\n🙋‍♂️ <b>{user.name_user.upper()}</b> ({date})\n\n<b>Ссылка:</b> <tg-spoiler>{user.link}</tg-spoiler>\n<b>История турниров:</b> {history}\n<b>Дивизион:</b> {division_lvl} ⚡️ {user.rating}\n<b>Пол:</b> {user.sex}\n<b>Возраст:</b> {user.age}\n'
+
                             if users_match.date_booking:
-                                list_matches += f'\nБронь корта: {users_match.date_booking}\nКорт: {users_match.name_court}\n'
+                                list_matches += f'\n✅ <b>Бронь корта:</b> {users_match.date_booking}\nКорт: {users_match.name_court}\n'
                             else:
-                                list_matches += f'\nБрони нет! Предлагаю поиграть: {users_match.date_without_booking}\n'
+                                list_matches += f'\n❌ <b>Брони нет! Предлагаю поиграть:</b> {users_match.date_without_booking}\n'
 
                             if users_match.type:
-                                list_matches += f'Тип игры: {users_match.type}\n'
+                                list_matches += f'<b>Тип игры:</b> {users_match.type}\n'
 
                             if users_match.comment:
-                                list_matches += f'Комментарий: <blockquote>{users_match.comment}</blockquote>'
+                                list_matches += f'<b>Комментарий:</b> <blockquote>{users_match.comment}</blockquote>'
 
                             await callback.message.answer(list_matches, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.players_data)
                             list_matches = ''

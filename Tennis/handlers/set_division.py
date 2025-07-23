@@ -71,12 +71,12 @@ async def find_name_division(message: Message, state:FSMContext):
             await state.update_data(tg_user_id = user.tg_user_id)
 
             if user.division_level != None:
-                name_division = (await session.scalars(select(Division).where(User.division_id == int(user.division_level)))).first()
+                name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
                 division_lvl = name_division.name_division
             else:
                 division_lvl = 'Не определён'
             
-            await message.answer(f'<b>Найден пользователь 🙋‍♂️ {user.name_user}</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
+            await message.answer(f'<b>Найден пользователь 🙋‍♂️ {user.name_user}</b>\n\nСсылка: {user.link}\nДивизион: {division_lvl} ⚡️ {user.rating}', parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.edit_division)
         else:
             await message.answer('Пользователь с таким <b>username</b> не найден!',parse_mode=ParseMode.HTML, reply_markup=kb.back_division)
 
@@ -117,6 +117,7 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
             try:
                 division_lvl = ''
                 user.division_level = level_user
+                user.rating = get_rating_by_division(level_user)
 
                 if user.division_level != None:
                     name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
@@ -136,3 +137,16 @@ async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
             await call.message.answer(f"❌ <b>Пользователь не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
             print(f"ОШИБКА! Дивизион пользователя \"{user.tg_user_id}\" не был изменён. Пользователь не найден в БД!")  
     await state.clear()
+    
+
+def get_rating_by_division(level_user):
+    if level_user == 1:
+        return 5.5
+    elif level_user == 2:
+        return 4.5
+    elif level_user == 3:
+        return 3.5
+    elif level_user == 4:
+        return 2.5
+    else:
+        return 1.5

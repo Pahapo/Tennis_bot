@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, BigInteger
+from sqlalchemy import Column, Integer, BigInteger, Float, String, Boolean
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
@@ -16,6 +16,7 @@ class User(AsyncAttrs, Base):
     age = Column(Integer, nullable=True)
     sex = Column(String(10), nullable=True)
     division_level = Column(Integer)
+    rating = Column(Float)
     ban_status = Column(Boolean)
     end_date_ban = Column(String(10))
     coins = Column(Integer)
@@ -23,13 +24,14 @@ class User(AsyncAttrs, Base):
 
 
     # Конструктор __init__
-    def __init__(self, tg_user_id, name_user, link, age=None, sex=None, division_level=None, ban_status=None, end_date_ban=None, coins=None, skill=None):
+    def __init__(self, tg_user_id, name_user, link, age=None, sex=None, division_level=None, rating=None, ban_status=None, end_date_ban=None, coins=None, skill=None):
         self.tg_user_id = tg_user_id
         self.name_user = name_user
         self.link = link
         self.age = age
         self.sex = sex
         self.division_level = division_level
+        self.rating = rating
         self.ban_status = ban_status
         self.end_date_ban = end_date_ban
         self.coins = coins
@@ -73,7 +75,7 @@ class User(AsyncAttrs, Base):
             if self.age:
                 text += f'\n<b>Возраст:</b> {self.age}'
             
-            text += f'\n<b>Дивизион:</b> {division_lvl}'
+            text += f'\n<b>Дивизион:</b> {division_lvl} ⚡️ {self.rating}'
             
             if user.ban_status == True:
                 text += f'\n<b>Наличие бана:</b> до {user.end_date_ban}'
