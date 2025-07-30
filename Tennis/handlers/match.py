@@ -39,6 +39,13 @@ async def match(callback: CallbackQuery, bot):
         await f.check_subscription_message(callback)
 
 
+def parse_date_safe(date_str):
+    if date_str:
+        return datetime.strptime(date_str, "%H:%M %d.%m.%Y")
+    else:
+        return datetime.min  # или другая минимально возможная дата
+
+
 @router.callback_query(F.data == 'search_match')
 async def search_match(callback: CallbackQuery, state:FSMContext):
     await callback.answer('')
@@ -83,7 +90,8 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
             users = (await session.scalars(select(User))).all()  # Получаем список объектов User
 
             users_matches = (await session.scalars(select(Match).where(((Match.type == "Одиночный") & (Match.player_2 == None)) | ((Match.type == "Парный") & (Match.player_4 == None))))).all()
-            sorted_matches = sorted(users_matches, key=lambda x: datetime.strptime(x.date_booking or x.date_without_booking, "%H:%M %d.%m.%Y") if (x.date_booking or x.date_without_booking) else datetime.min)
+
+            sorted_matches = sorted(users_matches, key=lambda x: parse_date_safe(x.date_booking or x.date_without_booking))
             list_matches = ''
         
             for users_match in sorted_matches:
@@ -365,7 +373,8 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
             ((Match.type == 'Парный') & (Match.player_3 == user_id) & (Match.player_1 != None) & (Match.player_2 != None)) |
             ((Match.type == 'Парный') & (Match.player_4 == user_id) & (Match.player_1 != None) & (Match.player_2 != None) & (Match.player_3 != None))
         ))).all()
-        sorted_matches = sorted(matches, key=lambda x: datetime.strptime(x.date_booking or x.date_without_booking, "%H:%M %d.%m.%Y") if (x.date_booking or x.date_without_booking) else datetime.min)
+        
+        sorted_matches = sorted(matches, key=lambda x: parse_date_safe(x.date_booking or x.date_without_booking))
 
         if sorted_matches:
             for match in sorted_matches:
