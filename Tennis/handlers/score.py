@@ -172,7 +172,7 @@ async def confirm_score(callback: CallbackQuery, state:FSMContext, bot):
                 await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.confirm_score_contestant)
                 await callback.message.answer(f"<b>Запрос на подтверждение счёта отправлен! ⚡</b>\n\n• Ожидайте подтверждение со стороны соперника", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
             except Exception as e:
-                print(f"❌ Не удалось отправить сообщение о счёте на турнире пользователю с id: {contestant.tg_user_id} из-за ошибки: {e}")
+                print(f"⚠️ Не удалось отправить сообщение о счёте на турнире пользователю с id: {contestant.tg_user_id} из-за ошибки: {e}")
                 await callback.message.answer(f'<b>Произошла ошибка при отправке счёта!</b>\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         else:
             await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
@@ -213,7 +213,7 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
                 try:
                     await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, link_preview_options=options, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
                 except Exception as e:
-                    print(f"❌ Не удалось отправить сообщение о положительном ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
+                    print(f"⚠️ Не удалось отправить сообщение о положительном ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
             
 
                 # отправка сообщения в группу
@@ -245,9 +245,10 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
 
                 new_winner_rating, new_loser_rating = calculate_rating_change(winner_rating, loser_rating)
 
-                winner.rating = new_winner_rating
-                loser.rating = new_loser_rating
+                winner.rating = 5.99 if new_winner_rating > 5.99 else new_winner_rating
+                loser.rating = 1.01 if new_loser_rating < 1.01 else new_loser_rating
                 await session.commit()
+
                 # По непонятной причине только когда разные дивизионы сражаются между собой, то рейтинг повышается только у дивизиона поменьше
                 # Когда равные дивизионы, то всё работает как надо!
 
@@ -266,7 +267,7 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
 
 
 def get_division_by_rating(rating: float) -> int:
-    if 5.01 <= rating <= 5.99:
+    if 5.01 <= rating:
         return 1
     elif 4.01 <= rating <= 5.00:
         return 2
@@ -295,7 +296,7 @@ async def update_division_if_needed(player, session, call, bot):
             await bot.send_message(chat_id=player.tg_user_id, text=message_text, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
 
         except Exception as e:
-            print(f"❌ Не удалось отправить сообщение о смене дивизиона: {e}")
+            print(f"⚠️ Не удалось отправить сообщение о смене дивизиона: {e}")
 
 
 
@@ -334,7 +335,7 @@ async def unconfirm_score_contestant(callback: types.CallbackQuery, bot):
                 try:
                     await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send, link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
                 except Exception as e:
-                    print(f"❌ Не удалось отправить сообщение о отрицательным ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
+                    print(f"⚠️ Не удалось отправить сообщение о отрицательным ответом соперника на счёте. Пользователю с id: {contestant.tg_user_id} не отправилось сообщение из-за ошибки: {e}")
             else:
                 await callback.message.answer(f"<b>Соперник не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
                 print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД")  

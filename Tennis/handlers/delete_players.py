@@ -124,7 +124,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
                     try:
                         await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
                     except Exception as e:
-                        print(f"❌ Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+                        print(f"⚠️ Не удалось отправить сообщение пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
 
                 except Exception as e:
                     print(f"Редактору не получилось удалить пользователя с id {user.tg_user_id} из турнира '{selected_tournament.name_tournament}' в дивизионе '{selected_division.name_division}' из-за ошибки: {e}")

@@ -29,13 +29,16 @@ def validate_comment(comment: str) -> bool:
     return len(comment) <= 300
 
 def validate_start(text: str) -> bool:
-    """Проверяет, что текст не равен."""
+    """Проверяет, что текст не равен /start."""
     return text != '/start'
 
 def validate_date(text: str) -> bool:
     """Проверяет, что дата соответствует формату DD.MM.YYYY и является реальной."""
     pattern = r'^\d{2}\.\d{2}\.\d{4}$'
     
+    if not text:
+        return False  # Пустая строка
+
     if not re.match(pattern, text):
         return False  # Формат неверный
     

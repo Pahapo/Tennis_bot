@@ -225,7 +225,7 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
                         count_send_message += 1
 
                 except Exception as e:
-                    print(f"❌ Не удалось отправить сообщение при рассылке пользователю с id: {user_id} из-за ошибки: {e}")
+                    print(f"⚠️ Не удалось отправить сообщение при рассылке пользователю с id: {user_id} из-за ошибки: {e}")
             
             await callback.message.edit_text(f"✅ <b>Рассылка завершена!</b>\n\nСообщение получило {count_send_message} чел.", parse_mode=ParseMode.HTML, reply_markup=ka.exit)
         else:
@@ -290,7 +290,7 @@ async def send_winner(callback: CallbackQuery, bot):
     #                     await bot.send_message(chat_id=user, text='🏆', parse_mode=ParseMode.HTML)
     #                     await bot.send_message(chat_id=user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
     #             except Exception as e:
-    #                 print(f"❌ Не удалось отправить сообщение пользователю с name: {user_name} из-за ошибки: {e}")     # ИЗМЕНИТЬ user_name
+    #                 print(f"⚠️ Не удалось отправить сообщение пользователю с name: {user_name} из-за ошибки: {e}")     # ИЗМЕНИТЬ user_name
     #     except FileNotFoundError:
     #         await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного!")
     # else:

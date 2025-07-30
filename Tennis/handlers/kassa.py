@@ -206,7 +206,7 @@ async def confirm_kassa(callback: CallbackQuery, state:FSMContext, bot):
                 try:
                     await bot.send_message(chat_id=id_finder_user, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
                 except Exception as e:
-                    print(f"❌ Не удалось отправить сообщение о наличной оплате пользователю с id: {id_finder_user} из-за ошибки: {e}")
+                    print(f"⚠️ Не удалось отправить сообщение о наличной оплате пользователю с id: {id_finder_user} из-за ошибки: {e}")
 
 
             else:

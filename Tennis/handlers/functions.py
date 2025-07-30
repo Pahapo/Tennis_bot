@@ -49,7 +49,7 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
         user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
 
         if not user:
-            print(f"Новый пользователь нажал /start")
+            print(f"🙋‍♂️ Новый пользователь!")
 
             # СКАЗКА (~30 секунд)
 
@@ -392,7 +392,7 @@ async def notification_about_new_tournament(tournament_name, tournament_start, d
                     for players_tg_id in list(set(players_tg_ids)):
                         await bot.send_message(chat_id=players_tg_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=exit)
                 except Exception as e:
-                    print(f"❌ Не удалось отправить сообщение о появлении нового турнира пользователю с id: {players_tg_id} из-за ошибки: {e}")
+                    print(f"⚠️ Не удалось отправить сообщение о появлении нового турнира пользователю с id: {players_tg_id} из-за ошибки: {e}")
 
 
 
@@ -414,7 +414,7 @@ async def spam(callback: CallbackQuery, bot):
             try:
                 await bot.send_message(chat_id=admin, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=ka.exit)
             except Exception as e:
-                print(f"❌ Не удалось отправить сообщение от пользователя {user_name} из-за ошибки: {e}")
+                print(f"⚠️ Не удалось отправить сообщение от пользователя {user_name} из-за ошибки: {e}")
     else:
         print(f"❌ Сообщение о СПАМе не дошло от пользователя {user_name} из-за ошибки: {e}")
 

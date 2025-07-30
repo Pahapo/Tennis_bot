@@ -131,7 +131,7 @@ async def find_name_r_ban(message: Message, state:FSMContext, bot):
             try:
                 await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
             except Exception as e:
-                print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+                print(f"⚠️ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
         else:
             await callback.message.answer(f"❌ <b>Пользователь не был найден!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
             print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  

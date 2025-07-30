@@ -125,7 +125,7 @@ async def fast_booking_court(callback: CallbackQuery, state:FSMContext, bot):
 #             try:
 #                 await bot.send_message(chat_id=user.tg_user_id, text=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kb.exit)
 #             except Exception as e:
-#                 print(f"❌ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
+#                 print(f"⚠️ Не удалось отправить сообщение о бане пользователю с id: {user.tg_user_id} из-за ошибки: {e}")
 #         else:
 #             await message.answer(f"✅ Пользователь '{user.name_user}' не был забанен!", reply_markup=kb.back_ban)
 #             print(f"ОШИБКА! Пользователь '{user.name_user}' не был забанен!")  

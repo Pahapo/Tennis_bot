@@ -152,7 +152,7 @@ async def save_photo_payment(message: types.Message, state: FSMContext, bot):
             photo = FSInputFile(save_path)  # Локальный файл
             await bot.send_photo(chat_id=editor, photo=photo, caption=message_text_send, parse_mode=ParseMode.HTML, reply_markup=kp.confirm_payment)
         except Exception as e:
-            print(f"❌ Не удалось отправить сообщение с чеком для оплаты пользователя с id: {user_id} из-за ошибки: {e}")
+            print(f"⚠️ Не удалось отправить сообщение с чеком для оплаты пользователя с id: {user_id} из-за ошибки: {e}")
 
 
 

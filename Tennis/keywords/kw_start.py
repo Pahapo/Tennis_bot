@@ -9,7 +9,7 @@ main_admin_btn = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(tex
                                                        [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                                                     #    [InlineKeyboardButton(text = 'Корты 🎾', callback_data='testtesttest')], # добавить
                                                        [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
-                                                       [InlineKeyboardButton(text = 'ТЕСТИРОВАНИЕ', callback_data='assign_initial_ratings')], # изменить при тестировании новой функции!
+                                                       [InlineKeyboardButton(text = 'ТЕСТИРОВАНИЕ', callback_data='testtesttest')], # изменить при тестировании новой функции!
                                                        [InlineKeyboardButton(text = 'Рассылка', callback_data='sending_messages')]
                                                        ])
 # Главные редакторы

@@ -83,7 +83,7 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
             users = (await session.scalars(select(User))).all()  # Получаем список объектов User
 
             users_matches = (await session.scalars(select(Match).where(((Match.type == "Одиночный") & (Match.player_2 == None)) | ((Match.type == "Парный") & (Match.player_4 == None))))).all()
-            sorted_matches = sorted(users_matches, key=lambda x: datetime.strptime(x.date_booking or x.date_without_booking, "%H:%M %d.%m.%Y"))
+            sorted_matches = sorted(users_matches, key=lambda x: datetime.strptime(x.date_booking or x.date_without_booking, "%H:%M %d.%m.%Y") if (x.date_booking or x.date_without_booking) else datetime.min)
             list_matches = ''
         
             for users_match in sorted_matches:
@@ -224,7 +224,7 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
                                 await bot.send_message(chat_id=contestant.tg_user_id, text="🏆")
                                 await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send2, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
                             except Exception as e:
-                                print(f"❌ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
+                                print(f"⚠️ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
 
                             # напоминание о игре
                             time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
@@ -271,7 +271,7 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
                                 await bot.send_message(chat_id=contestant.tg_user_id, text="🏆")
                                 await bot.send_message(chat_id=contestant.tg_user_id, text=message_text_send2, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
                             except Exception as e:
-                                print(f"❌ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
+                                print(f"⚠️ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
 
                             # напоминание о игре
                             if user_match.player_3 != None:
@@ -365,7 +365,7 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
             ((Match.type == 'Парный') & (Match.player_3 == user_id) & (Match.player_1 != None) & (Match.player_2 != None)) |
             ((Match.type == 'Парный') & (Match.player_4 == user_id) & (Match.player_1 != None) & (Match.player_2 != None) & (Match.player_3 != None))
         ))).all()
-        sorted_matches = sorted(matches, key=lambda x: datetime.strptime(x.date_booking or x.date_without_booking, "%H:%M %d.%m.%Y"))
+        sorted_matches = sorted(matches, key=lambda x: datetime.strptime(x.date_booking or x.date_without_booking, "%H:%M %d.%m.%Y") if (x.date_booking or x.date_without_booking) else datetime.min)
 
         if sorted_matches:
             for match in sorted_matches:

@@ -18,4 +18,4 @@ EDITOR = list(map(int, os.getenv('EDITOR').split(',')))                 # Соз
 DIVISION_EDITOR = os.getenv('DIVISION_EDITOR')                          # Задаёт дивизион игрокам
 
 EMAILS = list(map(str, os.getenv('EMAILS').split(',')))
-DATABASE_URL = os.getenv('DATABASE_URL')  
+DATABASE_URL = os.getenv('DATABASE_URL')
