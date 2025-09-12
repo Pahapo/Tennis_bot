@@ -18,6 +18,7 @@ class SendMessage(StatesGroup):
     link = State()
     payment_flag = State()
     message_flag = State()
+    send_division = State()
 
 class RegPlayerStates(StatesGroup):
     id = State()

@@ -7,6 +7,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import StateFilter
 from aiogram.types import FSInputFile
 from aiogram.enums import ParseMode
+from typing import Optional
 from config.config import ADMINS
 
 import keywords.kw_send_message as kb
@@ -113,37 +114,64 @@ async def save_photo_payment(message: types.Message, state: FSMContext):
 async def add_btn_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')
     await state.set_state(cl.SendMessage.callback)
-    await callback.message.answer("Введи текст для кнопки 👇\n\nФормат: Текст - Callback", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+    await callback.message.answer("Введи текст для кнопки 👇\n\nФормат: Текст - Callback", parse_mode=ParseMode.HTML)
 
 
 @router.message(cl.SendMessage.callback)
-async def sending_callback(message: Message, state:FSMContext):    
+async def sending_callback(message: Message, state:FSMContext, bot):    
     await state.update_data(message_callback = message.text)
 
     await state.set_state(None)
+    await send_war(None, message, state)
 
 
 @router.callback_query(F.data == 'add_btn_link')
 async def add_btn_link(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')
     await state.set_state(cl.SendMessage.link)
-    await callback.message.answer("Введи текст для кнопки 👇\n\nФормат: <code>Текст - Ссылка</code>", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+    await callback.message.answer("Введи текст для кнопки 👇\n\nФормат: <code>Текст - Ссылка</code>", parse_mode=ParseMode.HTML)
 
 
 @router.message(cl.SendMessage.link)
-async def sending_clink(message: Message, state:FSMContext):    
+async def sending_link(message: Message, state:FSMContext, bot):    
     await state.update_data(message_link = message.text)
 
     await state.set_state(None)
+    await send_war(None, message, state)
 
 
 # Подтверждение для начала рассылки
-
-
 @router.callback_query(F.data == 'send_war')
-async def send_war(callback: CallbackQuery, bot):
-    await callback.answer('')
-    await callback.message.edit_text("<b>Подтверди</b>, чтобы начать рассылку 👇", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+# async def send_war(callback: CallbackQuery, bot):
+async def send_war(callback: Optional[CallbackQuery], message: Message, state: FSMContext):
+
+    if callback:
+        await callback.answer('')
+        await callback.message.edit_text("<b>Подтверди</b>, чтобы начать рассылку 👇", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+    else:
+        await message.answer("<b>Подтверди</b>, чтобы начать рассылку 👇", parse_mode=ParseMode.HTML, reply_markup=kb.send_message)
+
+
+@router.callback_query(F.data.in_(["send_1", "send_2", "send_3", "send_4", "send_5", "send_all"]))
+async def send_division(call: CallbackQuery, state: FSMContext, bot):
+    await call.answer('')
+
+    if call.data == "send_1":
+        send_division = 1
+    if call.data == "send_2":
+        send_division = 2
+    if call.data == "send_3":
+        send_division = 3
+    if call.data == "send_4":
+        send_division = 4
+    if call.data == "send_5":
+        send_division = 5
+    if call.data == "send_all":
+        send_division = "all"
+
+    await state.update_data(send_division = send_division)
+
+    await send(call, state, bot)
 
 
 @router.callback_query(F.data == 'send')
@@ -162,10 +190,15 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
         message_text_send = data.get("message_text_send")
         message_callback = data.get("message_callback")
         message_link = data.get("message_link")
-        
-        async with get_db_readonly() as session:  # Используем контекстный менеджер
-            users = (await session.scalars(select(User.tg_user_id).where(User.tg_user_id != user_id))).all()
-        
+        send_division = data.get("send_division")
+
+        if send_division == "all":
+            async with get_db_readonly() as session:  # Используем контекстный менеджер
+                users = (await session.scalars(select(User.tg_user_id).where(User.tg_user_id != user_id))).all()
+        else:
+            async with get_db_readonly() as session:  # Используем контекстный менеджер
+                users = (await session.scalars(select(User.tg_user_id).where((User.tg_user_id != user_id) & (User.division_level == int(send_division))))).all()
+
         count_send_message = 0
 
         # Проверяем файл Tennis/img/message/message.jpg

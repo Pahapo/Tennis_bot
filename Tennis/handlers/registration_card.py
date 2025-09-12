@@ -228,12 +228,11 @@ async def register_card(callback: Optional[CallbackQuery], message: Message, sta
         user.age = data.get("age")
         user.sex = data.get("sex")
 
-        print(f'✅ Карточка игры создана пользователем с ID {data.get("user_id")}!')
-        if callback:
-            await callback.message.answer('✅ Игра создана!')
-        else:
-            await message.answer('✅ Игра создана!')
-
+    print(f'✅ Карточка игры создана пользователем с ID {data.get("user_id")}!')
+    if callback:
+        await callback.message.answer('✅ Игра создана!')
+    else:
+        await message.answer('✅ Игра создана!')
 
     async with get_db() as session:  # Используем контекстный менеджер
         await f.check_ban_user(data.get("user_id"), session)

@@ -178,7 +178,7 @@ async def check_payment(callback: CallbackQuery, state:FSMContext, bot):
             selected_tournament = (await session.scalars(select(Tournament).where(Tournament.name_tournament == data.get("selected_tournament")))).first()
             
             # Запрос "оплатил ли пользователь выбранный турнир?"
-            user_payment = (await session.scalars(select(Payment).where((Payment.id_tg_user == user_id, Payment.id_tournament == selected_tournament.tournament_id)))).first()
+            user_payment = (await session.scalars(select(Payment).where((Payment.id_tg_user == user_id) & (Payment.id_tournament == selected_tournament.tournament_id)))).first()
 
             if user_payment:
                 await success_payment(callback, state, bot)
@@ -216,7 +216,7 @@ async def handle_button_click_confirm_payment(callback: types.CallbackQuery):
         
         # Запрос "подтверждал ли этот турнир другой редактор?"
         async with get_db() as session:  # Используем контекстный менеджер
-            user_payment = (await session.scalars(select(Payment).where((Payment.id_tg_user == user_id, Payment.id_tournament == tournament_id)))).first()
+            user_payment = (await session.scalars(select(Payment).where((Payment.id_tg_user == user_id) & (Payment.id_tournament == tournament_id)))).first()
 
             if not user_payment:
                 check = Payment(id_tournament = tournament_id, id_tg_user = user_id, price = price, coins = coins, photo = file_id, date = date)

@@ -111,7 +111,7 @@ async def delete_players_tournaments(callback: CallbackQuery, state:FSMContext, 
             
                 try:
                     gs.delete_player_from_tournament(name_finder_tournament, name_finder_user, selected_division.name_division, user_id)
-                    await loading.edit_text(f"✅ Игрок <b>{user.name_user}</b> был исключён из турнира <b>{name_finder_tournament}</b>!", link_preview_options=options, reply_markup=kb.exit)
+                    await loading.edit_text(f"✅ Игрок <b>{user.name_user}</b> был исключён из турнира <b>{name_finder_tournament}</b>!", parse_mode=ParseMode.HTML, link_preview_options=options, reply_markup=kb.exit)
 
                     editors_list = await f.output_edits_list(session)
                         
