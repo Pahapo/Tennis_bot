@@ -1,8 +1,10 @@
 import os
 import re
+import ssl
 import pytz
 import asyncio
 import aiohttp
+import certifi
 from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
@@ -129,7 +131,8 @@ async def save_photo_payment(message: types.Message, state: FSMContext, bot):
 
     # Загружаем файл
     async with aiohttp.ClientSession() as session_http:
-        async with session_http.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        async with session_http.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}", ssl=ssl_context) as resp:
             if resp.status == 200:
                 with open(save_path, "wb") as f:
                     f.write(await resp.read())
@@ -164,6 +167,7 @@ async def find_tournament(selected_tournament):
 
 @router.callback_query(F.data == 'check_payment')
 async def check_payment(callback: CallbackQuery, state:FSMContext, bot):
+    await callback.answer('')
     async with get_db_readonly() as session:  # Используем контекстный менеджер
 
         data = await state.get_data()

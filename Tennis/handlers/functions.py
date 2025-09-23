@@ -404,6 +404,9 @@ async def spam(callback: CallbackQuery, bot):
     message_text = callback.message.text
     match = re.search(r"(@[^\s]+) vs (@[^\s]+)\n.*? Счёт: ([\d: ]+)", message_text)  # Ищем нужные значения
 
+    # Удаляем сообщение после нажатия на кнопку
+    await callback.message.delete()
+
     if match:
         spam_name = match.group(1)  # Спамер
         user_name = match.group(2)  # Игрок
@@ -417,9 +420,6 @@ async def spam(callback: CallbackQuery, bot):
                 print(f"⚠️ Не удалось отправить сообщение от пользователя {user_name} из-за ошибки: {e}")
     else:
         print(f"❌ Сообщение о СПАМе не дошло от пользователя {user_name} из-за ошибки: {e}")
-
-    # Удаляем сообщение после нажатия на кнопку
-    await callback.message.delete()
 
 
 

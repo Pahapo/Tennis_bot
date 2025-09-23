@@ -8,6 +8,7 @@ from config.config import ADMINS, MAIN_EDITOR, EDITOR, DIVISION_EDITOR
 import keywords.kw_tournament as kb
 import keywords.kw_any as ka
 import handlers.functions as f
+import handlers.set_division as sd
 
 from config.db_utils import get_db_readonly, get_db
 from sqlalchemy import select
@@ -67,25 +68,27 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext, bo
 async def handle_level_buttons(call: CallbackQuery, state: FSMContext, bot):
     async with get_db() as session:  # Используем контекстный менеджер
 
-        level = ''
+        level = 0
         
         data = await state.get_data()
         user_id = data.get("pl_id_without_div")
 
         if call.data == "lvl_wd_1":
-            level = '1'
+            level = 1
         elif call.data == "lvl_wd_2":
-            level = '2'
+            level = 2
         elif call.data == "lvl_wd_3":
-            level = '3'
+            level = 3
         elif call.data == "lvl_wd_4":
-            level = '4'
+            level = 4
         elif call.data == "lvl_wd_5":
-            level = '5'
+            level = 5
 
         user = (await session.scalars(select(User).where(User.tg_user_id == int(user_id)))).first()
 
         user.division_level = level
+        user.rating = sd.get_rating_by_division(level)
+        print(f"set rating: {user.rating}")
         await session.commit()
 
         name_division = (await session.scalars(select(Division).where(Division.division_id == int(level)))).first()

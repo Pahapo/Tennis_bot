@@ -188,6 +188,9 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
     message_text = callback.message.text
     match = re.search(r"(@[^\s]+) vs (@[^\s]+)\n.*? Счёт: ([\d: ]+)", message_text)  # Ищем нужные значения
 
+    # Удаляем сообщение после нажатия на кнопку
+    await callback.message.delete()
+
     if match:
         contestant_name = match.group(1)  # Игрок 1
         user_name = match.group(2)        # Игрок 2
@@ -245,6 +248,11 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
 
                 new_winner_rating, new_loser_rating = calculate_rating_change(winner_rating, loser_rating)
 
+                if contestant_wins > user_wins:
+                    print(f"Рейтинг пользователя \"{contestant.name_user}\" изменён с {winner_rating} на {new_winner_rating} из-за победы, а \"{user.name_user}\" изменён с {loser_rating} на {new_loser_rating} из-за проигрыша")
+                elif user_wins > contestant_wins:
+                    print(f"Рейтинг пользователя \"{user.name_user}\" изменён с {winner_rating} на {new_winner_rating} из-за победы, а \"{contestant.name_user}\" изменён с {loser_rating} на {new_loser_rating} из-за проигрыша")
+
                 winner.rating = 5.99 if new_winner_rating > 5.99 else new_winner_rating
                 loser.rating = 1.01 if new_loser_rating < 1.01 else new_loser_rating
                 await session.commit()
@@ -260,9 +268,6 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
                 print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД. Подтверждение счёта не может быть отправлено сопернику!")  
     else:
         print("❌ Данные не были обработаны при поиске данных при внесении счёта соперниками!")
-
-    # Удаляем сообщение после нажатия на кнопку
-    await callback.message.delete()
 
 
 
@@ -288,7 +293,7 @@ async def update_division_if_needed(player, session, call, bot):
             division = await session.scalars(select(Division).where(Division.division_id == new_division))
             name = division.first().name_division if division else "Не определён"
 
-            print(f"Дивизион пользователя \"{player.tg_user_id}\" изменён на {name}")
+            print(f"✅ Дивизион пользователя \"{player.tg_user_id}\" изменён на \"{name}\" автоматически")
 
             message_text = (
                 f"<b>Дорогой игрок, сообщаем Вам о том, что Ваш дивизион изменён!</b> 🏆\n\nНовый дивизион: <b>{name}</b>\n\n<b>Поздравляем!</b> 🎉"
@@ -317,6 +322,9 @@ async def unconfirm_score_contestant(callback: types.CallbackQuery, bot):
     message_text = callback.message.text
     match = re.search(r"(@[^\s]+) vs (@[^\s]+)\n.*? Счёт: ([\d: ]+)", message_text)  # Ищем нужные значения
 
+    # Удаляем сообщение после нажатия на кнопку
+    await callback.message.delete()
+
     if match:
         contestant_name = match.group(1)  # Игрок 1
         
@@ -341,9 +349,6 @@ async def unconfirm_score_contestant(callback: types.CallbackQuery, bot):
                 print(f"ОШИБКА! Пользователь с id '{contestant.tg_user_id}' не был найден в БД")  
     else:
         print("❌ Данные не были обработаны при поиске данных при внесении счёта соперниками!")
-    
-    # Удаляем сообщение после нажатия на кнопку
-    await callback.message.delete()
 
 
 
@@ -358,8 +363,10 @@ async def assign_initial_ratings(callback: types.CallbackQuery, bot):
 
         users = (await session.scalars(select(User))).all()
         for user in users:
-            if user.rating is None:
+            if user.rating is None and user.division_level is None:
+                continue
+            elif user.rating is None:
                 user.rating = get_default_rating(user.division_level)
         await session.commit()
-    await callback.answer(f"Закончили выставлять рейтинг игрокам!", show_alert=False)
+    await callback.message.answer(f"Закончили выставлять рейтинг игрокам!", reply_markup=kb.exit)
 

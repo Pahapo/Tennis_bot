@@ -139,7 +139,7 @@ async def registration_on_tournaments(callback: CallbackQuery, state: FSMContext
         elif user_division_level == None:
             await callback.message.answer(f'⚠️ <b>Дорогой пользователь, пока Вы не можете участвовать в турнире</b>\n\nДля начала Вам нужно получить дивизион. Этим уже занимаются наши главные редакторы\n\nБлагодарим за понимание!', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         elif user_division_level not in levelTournament_list:
-            await callback.message.answer(f'⚠️ <b>Вы не можете участвовать в турнире</b>\n\nК сожалению, этот турнир доступен только для дивизиона(-ов):\n{tournament_lvl}', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
+            await callback.message.answer(f'⚠️ <b>Вы не можете участвовать в турнире</b>\n\nК сожалению, этот турнир доступен только для дивизиона(-ов):\n{tournament_lvl}\n\n🔗 <b>Ваш дивизион:</b> {division_dict[user_division_level]}', parse_mode=ParseMode.HTML, reply_markup=kb.exit)
         elif user_division_level in levelTournament_list:
             await callback.message.answer(f"{tournament_data.regulations}\n\n<b>ДЕТАЛИ ТУРНИРА</b> 🏆\n\n<b><i>Турнир \"{tournament_data.name_tournament.upper()}\"</i></b>\n💪 Дивизион: {tournament_lvl}\n🙋‍♂️ Количество участников: {tournament_data.quantity_person} чел.\n📆 Начало: {tournament_data.start_tournament}\n📆 Окончание: {tournament_data.end_tournament}\n💰 Стоимость участия: {tournament_data.price} бел.руб.", parse_mode=ParseMode.HTML, reply_markup=kb.reglament)
             await state.update_data(division_level_user = None)

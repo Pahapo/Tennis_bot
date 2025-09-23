@@ -41,11 +41,11 @@ create_exit = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text =
                                                     ])
 
 confirm_delete_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='edit_tournament'),
-                                                                InlineKeyboardButton(text = '✅ Подтвердить!', callback_data='delete_tournament_anyway')]
+                                                                InlineKeyboardButton(text = 'Подтвердить! ✅', callback_data='delete_tournament_anyway')]
                                                                 ])
 
 reglament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Назад', callback_data='tournament_info'),
-                                                 InlineKeyboardButton(text = '✅ Согласиться', callback_data='success_payment')] # ЗАМЕНИЛ (было reglament_confirm)
+                                                 InlineKeyboardButton(text = 'Согласиться! ✅', callback_data='success_payment')] # ЗАМЕНИЛ (было reglament_confirm)
                                                  ])
 
 level_tournament = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = 'Золотой', callback_data='lvl_t_1')],

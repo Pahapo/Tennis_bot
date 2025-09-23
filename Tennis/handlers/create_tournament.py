@@ -1,7 +1,9 @@
 import os
+import ssl
 import pytz
 import asyncio
 import aiohttp
+import certifi
 from aiogram import F, Router, types
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
@@ -185,7 +187,8 @@ async def save_photo_payment(message: types.Message, state: FSMContext):
 
     # Загружаем файл
     async with aiohttp.ClientSession() as session_http:
-        async with session_http.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}") as resp:
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        async with session_http.get(f"https://api.telegram.org/file/bot{message.bot.token}/{file_path}", ssl=ssl_context) as resp:
             if resp.status == 200:
                 with open(save_path, "wb") as f:
                     f.write(await resp.read())
