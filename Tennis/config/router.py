@@ -24,6 +24,7 @@ from handlers.referrals import router as referrals
 from handlers.kassa import router as kassa
 from handlers.score import router as score
 from handlers.rename_user import router as rename_user
+from handlers.about_me import router as about_me
 # from handlers.create_chats import router as create_chats
 
 
@@ -56,4 +57,5 @@ router.include_router(referrals)
 router.include_router(kassa)
 router.include_router(score)
 router.include_router(rename_user)
+router.include_router(about_me)
 # router.include_router(create_chats)

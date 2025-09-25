@@ -259,7 +259,8 @@ async def create_tournament_table_keyboard_user(user_id):
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                 [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
                 [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
-                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
+                [InlineKeyboardButton(text = 'Обо мне 📎', callback_data='about_me')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
         else:
@@ -268,7 +269,8 @@ async def create_tournament_table_keyboard_user(user_id):
                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                 [InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')],
-                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
+                [InlineKeyboardButton(text = 'Обо мне 📎', callback_data='about_me')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
     else:
@@ -278,7 +280,8 @@ async def create_tournament_table_keyboard_user(user_id):
                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
                 [InlineKeyboardButton(text = 'Турнирные таблицы 📋', callback_data='tournament_table')],
-                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
+                [InlineKeyboardButton(text = 'Обо мне 📎', callback_data='about_me')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
         else:
@@ -286,7 +289,8 @@ async def create_tournament_table_keyboard_user(user_id):
                 [InlineKeyboardButton(text = 'Турнир 🏆', callback_data='user_tournament_keyboard')],
                 [InlineKeyboardButton(text = 'Поиск соперника 🙋‍♂️', callback_data='match')],
                 [InlineKeyboardButton(text = 'Забронировать корт 🎾', callback_data='court_reservation')],
-                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')] # запятая
+                [InlineKeyboardButton(text = 'Барахолка 🛒', callback_data='inventory')],
+                [InlineKeyboardButton(text = 'Обо мне 📎', callback_data='about_me')] # запятая
                 # [InlineKeyboardButton(text = 'Реферальная система 👥', callback_data='referral_system')]
             ]
 

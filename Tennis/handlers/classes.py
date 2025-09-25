@@ -100,6 +100,7 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
 
             if self.comment:
                 text_card += f"<b>Комментарий:</b> <blockquote>{self.comment}</blockquote>\n"
+            
             return text_card
             
     
@@ -130,6 +131,58 @@ class PlayerData:     # НЕ ТРОГАТЬ !!!
                     "Комментарий": self.comment
                 }
             }
+
+
+class PlayerDataAbout:     # НЕ ТРОГАТЬ !!!
+    def __init__(self, id=None):
+        self.id = id
+
+    def __str__(self):
+        return "Для получения информации о игроке вызовите метод .about_player()"
+    
+    async def about_player(self):  # НЕ ТРОГАТЬ !!!
+        async with get_db_readonly() as session:  # Используем контекстный менеджер
+
+            user = (await session.scalars(select(User).where(User.tg_user_id == self.id))).first()
+            user_in_tournaments = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == self.id))).all()
+            tournament_ids = [games.id_tournament for games in user_in_tournaments]  # Получаем список ID игроков
+            history_tournaments = (await session.scalars(select(Tournament).where(Tournament.tournament_id.in_(tournament_ids)))).all()
+
+            text_card =  f"<b>Имя:</b> {user.name_user}\n"
+
+            if user.sex:
+                text_card += f"<b>Пол:</b> {user.sex}\n"
+
+            if user.age:
+                text_card += f"<b>Возраст:</b> {user.age} лет\n"
+
+            if user.division_level != None:
+                name_division = (await session.scalars(select(Division).where(Division.division_id == int(user.division_level)))).first()
+                text_card += f"\n<b>Дивизион:</b> {name_division.name_division}\n"
+            else:
+                text_card += f"\n<b>Дивизион:</b> Не определён\n"
+
+            if user.rating != None and user.division_level != None:
+                text_card += f"<b>Рейтинг:</b> {user.rating} ⚡️\n"
+
+            history = ''
+
+            for tournament in history_tournaments:
+                if history == '':
+                    history += f"\"{tournament.name_tournament}\""
+                else:
+                    history += f", \"{tournament.name_tournament}\""
+
+            if history == '':
+                history += "не участвовал(-а) 🥲"
+
+            text_card += f"\n<b>История турниров:</b> {history}\n"
+            
+            if user_in_tournaments:
+                text_card += f"<b>Количество сыгранных игр в турнирах:</b> {len(user_in_tournaments)} 🎾"
+
+            return text_card
+
 
 
 class RegTournamentPlayerStates(StatesGroup):
