@@ -38,6 +38,7 @@ async def referral_system(callback: CallbackQuery, state:FSMContext, bot):
             user_id = callback.from_user.id
 
             user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
+            user_referrals = (await session.scalars(select(Referrals).where(Referrals.tg_users_id == user_id))).first()
 
             if user:
                 coins = ''
@@ -45,16 +46,22 @@ async def referral_system(callback: CallbackQuery, state:FSMContext, bot):
                     coins = 0
                 else:
                     coins = user.coins
-                refferal_link = await generate_referral_link(user_id)
+                referral_link = await generate_referral_link(user_id)
+                
+                friends = ''
+                if user_referrals:
+                    friends = f'🙋‍♂️ <b>Приглашено:</b> {user_referrals.count} чел.\n'
+                else:
+                    friends = f'🙋‍♂️ <b>Приглашено:</b> 0 чел.\n'
 
                 invite_text = "\nПрисоединяйся к нашему теннисному клубу 🎾 и участвуй в турнирах! 🏆"
                 referral_system = rf.generate_share_referral_link(user_id, invite_text)
 
                 if os.path.exists("Tennis/img/referral/referral.png"):  # Проверка, есть ли файл
                     photo = FSInputFile("Tennis/img/referral/referral.png")  # Загружаем файл
-                    await callback.message.answer_photo(photo, caption=f'<b>📊 Ваша реферальная статистика</b>\n\n💰 <b>Монеты:</b> {coins}\n🔗 <b>Ваша ссылка:</b> <code>{refferal_link}</code>\n\n😎 Приглашайте друзей и получайте 100 монет за каждого приглашённого!', parse_mode=ParseMode.HTML, reply_markup=referral_system)
+                    await callback.message.answer_photo(photo, caption=f'<b>📊 Ваша реферальная статистика</b>\n\n💰 <b>Монеты:</b> {coins}\n{friends}🔗 <b>Ваша ссылка:</b> <code>{referral_link}</code>\n\n😎 Приглашайте друзей и <b>получайте 100 монет</b> за каждого приглашённого!\n\n🛍 Накопленные монеты скоро можно будет потратить для уменьшения взноса за турнир', parse_mode=ParseMode.HTML, reply_markup=referral_system)
                 else:
-                    await callback.message.answer(f'<b>📊 Ваша реферальная статистика</b>\n\n💰 <b>Монеты:</b> {coins}\n🔗 <b>Ваша ссылка:</b> <code>{refferal_link}</code>\n\n😎 Приглашайте друзей и получайте 100 монет за каждого приглашённого!', parse_mode=ParseMode.HTML, reply_markup=referral_system)
+                    await callback.message.answer(f'<b>📊 Ваша реферальная статистика</b>\n\n💰 <b>Монеты:</b> {coins}\n{friends}🔗 <b>Ваша ссылка:</b> <code>{referral_link}</code>\n\n😎 Приглашайте друзей и <b>получайте 100 монет</b> за каждого приглашённого!\n\n🛍 Накопленные монеты скоро можно будет потратить для уменьшения взноса за турнир', parse_mode=ParseMode.HTML, reply_markup=referral_system)
             else:
                 await callback.message.answer(f'<b>Произошла ошибка загрузки страницы!</b>\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=ka.exit)
         else:
@@ -89,7 +96,7 @@ async def check_referral(args, user_id, bot):
                                 referrer.referrals += f", {user_id}"
                                 referrer.count += 1
 
-                                # Увеличиваем баллы у реферрера
+                                # Увеличиваем баллы у реферера
                                 if referrer_user:
                                     referrer_user.coins += 100
                                     coins += 100
@@ -101,12 +108,12 @@ async def check_referral(args, user_id, bot):
                             if new_referrer:
                                 session.add(new_referrer)  # Добавляем объект в сессию
 
-                            # Увеличиваем баллы у реферрера
+                            # Увеличиваем баллы у реферера
                             if referrer_user:
                                 referrer_user.coins = 100
                                 coins = 100
                         
-                        # Оповещаем реферреру о новом реферале
+                        # Оповещаем рефереру о новом реферале
                         message_text_send = f"<b>По Вашей ссылке зарегистрировался новый реферал! 🚀</b>\n\n🙋‍♂️ <b>Реферал:</b> {check_new_user.name_user}\n💰 <b>Монеты:</b> {coins}"
 
                         try:
