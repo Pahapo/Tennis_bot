@@ -101,8 +101,13 @@ WEBAPP_PORT=8080
 # ADMIN_CHAT=id_чата_админов     (необязательно: споры по счёту и модерация барахолки)
 ```
 
-Остальные переменные — как на сервере: `BOT_USERNAME`, `CHANNEL`, `CHANNEL_CHAT`, `CHANNELS_SUB`,
-`CHANNEL_SCORES`, `ADMINS`, `MAIN_EDITOR`, `EDITOR`, `DIVISION_EDITOR`, `EMAILS`. Без них бот упадёт при старте.
+Остальные переменные — как на сервере: `BOT_USERNAME`, `CHANNEL`, `CHANNEL_ID`, `CHANNEL_CHAT`,
+`CHANNEL_SCORES`, `ADMINS`, `MAIN_EDITOR`, `EDITOR`, `EMAILS`, `CARD_NUMBER`.
+Без `ADMINS`, `MAIN_EDITOR`, `EDITOR` и `EMAILS` бот упадёт при старте.
+
+- `CHANNEL` — ссылка на ваш канал (`https://t.me/имя_канала`). По нему же бот проверяет подписку —
+  для этого бот должен быть **админом** канала.
+- `MAIN_EDITOR` — главные редакторы: в том числе ставят игрокам дивизионы.
 
 ---
 
@@ -150,7 +155,7 @@ python Tennis\main.py
 |---|---|
 | `Can't connect to MySQL server` | MySQL не запущен (Пуск → «Службы» → MySQL80 → Запустить) или неверный пароль в `DATABASE_URL` |
 | `No such file ... credentials_tennisbot.json` | файл не лежит в `Tennis_bot` или бот запущен не из этой папки |
-| `AttributeError: 'NoneType' object has no attribute 'split'` | в `.env` не хватает одной из переменных (`CHANNELS_SUB`, `ADMINS` и т. п.) |
+| `AttributeError: 'NoneType' object has no attribute 'split'` | в `.env` не хватает одной из переменных (`ADMINS`, `MAIN_EDITOR`, `EDITOR`, `EMAILS`) |
 | `Conflict: terminated by other getUpdates request` | этот токен уже запущен где-то ещё — остановите другую копию или возьмите тестового бота |
 | Приложение не открывается | закрыто окно с `cloudflared` или в `WEBAPP_URL` старый адрес (он меняется при каждом запуске туннеля) — обновите и перезапустите бота |
 | Windows спрашивает про брандмауэр | разрешите доступ для Python |

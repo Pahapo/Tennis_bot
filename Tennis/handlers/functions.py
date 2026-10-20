@@ -14,7 +14,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from sqlalchemy.exc import IntegrityError, OperationalError, DatabaseError
 from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile, Message
 from aiogram import F, Router
-from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR, DIVISION_EDITOR, WEBAPP_URL
+from config.config import CHANNEL, ADMINS, MAIN_EDITOR, EDITOR, WEBAPP_URL
 
 import keywords.kw_start as kb
 import keywords.kw_any as ka
@@ -188,12 +188,13 @@ async def register_skill(message: Message, state:FSMContext, bot):
 
 
 async def check_subscription(user_id: int, bot) -> bool: # Проверяет, подписан ли пользователь на канал
+    # В CHANNEL хранится ссылка (https://t.me/имя_канала), а Telegram для проверки нужен @имя_канала
+    channel = CHANNEL.replace("https://t.me/", "@")
     try:
-        for channel in CHANNELS_SUB:
-            member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-            if member.status not in ["member", "administrator", "creator"]:
-                return False  # Не подписан на текущий канал
-        return True  # Подписан на все каналы
+        member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
+        if member.status not in ["member", "administrator", "creator"]:
+            return False  # Не подписан на канал
+        return True  # Подписан
     except TelegramBadRequest:
         return False
     
@@ -257,17 +258,17 @@ def app_keyboard():  # Кнопка "Открыть приложение" (го�
 
 
 async def create_tournament_table_keyboard_user(user_id):
-    # Игроки пользуются приложением — в чате одна кнопка (действия редактора дивизионов остаются в чате)
+    # Игроки пользуются приложением — в чате одна кнопка (действия главного редактора остаются в чате)
     if WEBAPP_URL:
         buttons = [[InlineKeyboardButton(text = '🎾 Открыть приложение', web_app=WebAppInfo(url=WEBAPP_URL), style='primary')]]
-        if str(user_id) == DIVISION_EDITOR:
+        if user_id in MAIN_EDITOR:
             buttons.append([InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')])
         return InlineKeyboardMarkup(inline_keyboard=buttons)
 
     async with get_db_readonly() as session:  # Используем контекстный менеджер
         last_tournament = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()))).first()
 
-    if str(user_id) == DIVISION_EDITOR:
+    if user_id in MAIN_EDITOR:
         if last_tournament is None:
             buttons = [
                 [InlineKeyboardButton(text = 'Запись на турнир 🏆', callback_data='tournament_info')],

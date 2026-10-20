@@ -2,7 +2,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, LinkPreviewOptions
 from aiogram.enums import ParseMode
 from aiogram import F, Router
-from config.config import MAIN_EDITOR, EDITOR, DIVISION_EDITOR
+from config.config import MAIN_EDITOR, EDITOR
 
 import keywords.kw_any as kb
 import keywords.kw_start as ks
@@ -38,7 +38,7 @@ async def find_users_for_division(callback: CallbackQuery, state:FSMContext, bot
     await state.set_state(cl.FindUser.name_division)
     
     user_id = callback.from_user.id
-    if user_id in MAIN_EDITOR or user_id in EDITOR or str(user_id) == DIVISION_EDITOR:
+    if user_id in MAIN_EDITOR or user_id in EDITOR:
         await callback.message.answer('Введите <b>username</b> игрока 👇', parse_mode=ParseMode.HTML)
     else:
         await callback.message.answer('Функция недоступна! Вы не главный редактор / редактор! ❌')

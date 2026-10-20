@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, LinkPreviewOptions
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.enums import ParseMode
-from config.config import ADMINS, MAIN_EDITOR, EDITOR, DIVISION_EDITOR
+from config.config import ADMINS, MAIN_EDITOR, EDITOR
 
 import keywords.kw_tournament as kb
 import keywords.kw_any as ka
@@ -30,7 +30,7 @@ async def player_without_division(callback: CallbackQuery, state: FSMContext, bo
     )
 
     user_id = callback.from_user.id
-    if user_id in ADMINS or user_id in MAIN_EDITOR or user_id in EDITOR or str(user_id) == DIVISION_EDITOR:
+    if user_id in ADMINS or user_id in MAIN_EDITOR or user_id in EDITOR:
 
         async with get_db_readonly() as session:  # Используем контекстный менеджер
             users_without_division = (await session.scalars(select(User).where(User.division_level == None))).all()
