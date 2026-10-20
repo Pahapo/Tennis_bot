@@ -5,8 +5,8 @@ tg.expand();  // Раскрываем приложение на весь экр�
 tg.setHeaderColor('#0d1730');
 tg.setBackgroundColor('#14213d');
 
-let currentScreen = 'profile';
-let previousScreen = 'arena';  // Куда вернуться из профиля по кнопке "Назад"
+let currentScreen = 'arena';     // Главный экран — лиги (центральная кнопка)
+let previousScreen = 'arena';    // Куда вернуться из профиля и новостей по кнопке "Назад"
 let profile = null;
 
 
@@ -55,7 +55,9 @@ function handleError(result) {
 // ---------- Навигация ----------
 
 function showScreen(name) {
-    if (name === 'profile' && currentScreen !== 'profile') {
+    // Профиль и новости открываются поверх — запоминаем, куда вернуться
+    const overlay = name === 'profile' || name === 'news';
+    if (overlay && currentScreen !== 'profile' && currentScreen !== 'news') {
         previousScreen = currentScreen;
     }
 
@@ -76,21 +78,28 @@ function showScreen(name) {
         }
     }
 
-    // Круглая кнопка счёта — только на главном экране (профиль)
+    // Круглые кнопки (счёт и ежедневная награда) — только на главном экране
     const scoreButton = document.getElementById('score-fab');
-    if (name === 'profile') {
+    const dailyButton = document.getElementById('daily-fab');
+    if (name === 'arena') {
         scoreButton.classList.remove('hidden');
+        dailyButton.classList.remove('hidden');
     } else {
         scoreButton.classList.add('hidden');
+        dailyButton.classList.add('hidden');
     }
 
     // Аватар подсвечен, когда открыт профиль
     const avatarButton = document.getElementById('avatar-btn');
     if (name === 'profile') {
         avatarButton.classList.add('active');
-        tg.BackButton.show();
     } else {
         avatarButton.classList.remove('active');
+    }
+
+    if (overlay) {
+        tg.BackButton.show();
+    } else {
         tg.BackButton.hide();
     }
 
@@ -111,6 +120,13 @@ function setupNavigation() {
         tg.HapticFeedback.selectionChanged();
         showScreen('profile');
     });
+
+    document.getElementById('news-btn').addEventListener('click', function () {
+        tg.HapticFeedback.selectionChanged();
+        openNews();
+    });
+
+    document.getElementById('daily-fab').addEventListener('click', claimDaily);
 
     // Кнопка "Назад" в шапке Telegram: из профиля возвращаемся на прошлый экран
     tg.BackButton.onClick(function () {
@@ -314,6 +330,130 @@ function fillLeague() {
 
 // ---------- Ежедневная награда ----------
 
+// Красный кружок на подарке, если награду ещё не забрали
+function fillDaily() {
+    const dot = document.getElementById('daily-dot');
+    if (profile.daily_available) {
+        dot.classList.remove('hidden');
+    } else {
+        dot.classList.add('hidden');
+    }
+}
+
+async function claimDaily() {
+    tg.HapticFeedback.selectionChanged();
+
+    if (!profile.daily_available) {
+        tg.showAlert('Сегодня награда уже получена 🎁 Приходите завтра! Серия: ' + profile.streak + ' дн. подряд 🔥');
+        return;
+    }
+
+    const result = await apiPost('/api/visit');
+    if (handleError(result)) {
+        return;
+    }
+
+    showReward(result.data, function () {});
+    await reloadProfile();
+}
+
+// Обновить профиль, монеты, лигу и историю (после награды)
+async function reloadProfile() {
+    const result = await apiGet('/api/me');
+    if (result.status !== 200) {
+        return;
+    }
+    profile = result.data;
+    fillProfile();
+    fillLeague();
+    fillDaily();
+    fillNewsDot();
+
+    const history = await apiGet('/api/gold_history');
+    fillHistory(history.data);
+}
+
+
+// ---------- Новости ----------
+
+function fillNewsDot() {
+    const dot = document.getElementById('news-dot');
+    if (profile.unread_news > 0) {
+        dot.classList.remove('hidden');
+    } else {
+        dot.classList.add('hidden');
+    }
+}
+
+async function openNews() {
+    showScreen('news');
+
+    const list = document.getElementById('news-list');
+    list.innerHTML = '';
+
+    const result = await apiGet('/api/news');
+    if (result.status !== 200) {
+        return;
+    }
+
+    if (result.data.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Новостей пока нет';
+        list.appendChild(empty);
+    }
+
+    for (const news of result.data) {
+        const box = document.createElement('div');
+        box.className = 'card';
+        if (news.is_new) {
+            box.classList.add('news-new');
+        }
+
+        const date = document.createElement('div');
+        date.className = 'muted';
+        date.textContent = (news.is_new ? '🔴 Новое · ' : '') + news.date;
+        box.appendChild(date);
+
+        if (news.photo) {
+            const photo = document.createElement('img');
+            photo.className = 'news-photo';
+            photo.src = news.photo;
+            photo.alt = '';
+            box.appendChild(photo);
+        }
+
+        if (news.text) {
+            const text = document.createElement('div');
+            text.className = 'news-text';
+            text.textContent = news.text;
+            box.appendChild(text);
+        }
+
+        if (news.link_url) {
+            const button = document.createElement('button');
+            button.className = 'btn btn-gold btn-wide';
+            button.type = 'button';
+            button.textContent = news.link_text || 'Открыть';
+            button.addEventListener('click', function () {
+                if (news.link_url.startsWith('https://t.me/')) {
+                    tg.openTelegramLink(news.link_url);
+                } else {
+                    tg.openLink(news.link_url);
+                }
+            });
+            box.appendChild(button);
+        }
+
+        list.appendChild(box);
+    }
+
+    // Отмечаем прочитанными — красный кружок пропадает
+    await apiPost('/api/news_seen');
+    profile.unread_news = 0;
+    fillNewsDot();
+}
+
 function showReward(reward, onClose) {
     if (reward.gold === 0) {
         onClose();  // Сегодня награду уже получали
@@ -462,7 +602,7 @@ function tournamentCard(tournament) {
 
     if (tournament.status === 'can_register' || tournament.status === 'can_register_second') {
         const button = document.createElement('button');
-        button.className = 'btn btn-gold btn-wide';
+        button.className = 'btn btn-gold btn-wide tournament-card-button';
         button.type = 'button';
         if (tournament.status === 'can_register') {
             button.textContent = 'Записаться';
@@ -475,9 +615,38 @@ function tournamentCard(tournament) {
         box.appendChild(button);
     } else {
         const status = document.createElement('div');
-        status.className = 'status';
+        status.className = 'status tournament-card-button';
         status.textContent = TOURNAMENT_STATUS[tournament.status];
         box.appendChild(status);
+    }
+
+    return box;
+}
+
+// Карточка идущего турнира (вкладка "Активные турниры")
+function runningCard(tournament) {
+    const box = document.createElement('div');
+    box.className = 'card';
+
+    const title = document.createElement('div');
+    title.className = 'match-date';
+    title.textContent = '🏆 ' + tournament.name;
+    box.appendChild(title);
+
+    const dates = document.createElement('div');
+    dates.className = 'match-line';
+    dates.textContent = '📅 ' + tournament.start + (tournament.end ? ' — ' + tournament.end : '') + ' · соперников: ' + tournament.players.length;
+    box.appendChild(dates);
+
+    if (tournament.link) {
+        const button = document.createElement('button');
+        button.className = 'btn btn-wide tournament-card-button';
+        button.type = 'button';
+        button.textContent = '📋 Турнирная таблица';
+        button.addEventListener('click', function () {
+            tg.openLink(tournament.link);
+        });
+        box.appendChild(button);
     }
 
     return box;
@@ -540,12 +709,22 @@ function fillTournaments() {
         tables.appendChild(tableButton(table));
     }
 
-    // Кнопка счёта — если я играю в идущем турнире
+    // Активные турниры: кнопка счёта и турниры, в которых я играю
+    const running = document.getElementById('tournament-running');
+    running.innerHTML = '';
     const scoreButton = document.getElementById('btn-tournament-score');
-    if (tournamentData.running.length > 0) {
-        scoreButton.classList.remove('hidden');
-    } else {
+
+    if (tournamentData.running.length === 0) {
         scoreButton.classList.add('hidden');
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Сейчас вы не играете ни в одном турнире';
+        running.appendChild(empty);
+    } else {
+        scoreButton.classList.remove('hidden');
+    }
+    for (const tournament of tournamentData.running) {
+        running.appendChild(runningCard(tournament));
     }
 }
 
@@ -597,7 +776,7 @@ function showPaymentStep() {
     // Кристаллы
     const crystalsField = document.getElementById('tournament-crystals-field');
     if (tournamentData.can_use_crystals && tournamentData.crystals >= tournamentData.min_crystals) {
-        document.getElementById('tournament-crystals-label').textContent = 'Применить кристаллы 💎 (у вас ' + tournamentData.crystals + ', от ' + tournamentData.min_crystals + ', ' + tournamentData.crystals_per_ruble + ' 💎 = 1 бел.руб.)';
+        document.getElementById('tournament-crystals-label').textContent = 'Применить кристаллы 💎 (у вас ' + tournamentData.crystals + ', мин. ' + tournamentData.min_crystals + ')';
         crystalsField.classList.remove('hidden');
     } else {
         crystalsField.classList.add('hidden');
@@ -1263,6 +1442,8 @@ function showError(title, text) {
     showScreen('error');
     document.querySelector('.tabbar').classList.add('hidden');
     document.getElementById('score-fab').classList.add('hidden');
+    document.getElementById('daily-fab').classList.add('hidden');
+    document.getElementById('news-btn').classList.add('hidden');
 }
 
 
@@ -1283,7 +1464,6 @@ async function start() {
     }
 
     try {
-        const visit = await apiPost('/api/visit');  // Ежедневная награда и серия (сервер выдаёт её 1 раз в день)
         const result = await apiGet('/api/me');
 
         if (result.status === 404) {
@@ -1298,6 +1478,8 @@ async function start() {
         profile = result.data;
         fillProfile();
         fillLeague();
+        fillDaily();
+        fillNewsDot();
 
         const history = await apiGet('/api/gold_history');
         fillHistory(history.data);
@@ -1305,14 +1487,11 @@ async function start() {
         await loadOpponent();
         await loadPending();
         await loadTournaments();
-        showScreen('profile');
-        tg.BackButton.hide();  // При первом открытии "Назад" не нужен
+        showScreen('arena');  // Приложение открывается на главном экране
 
-        // Сначала ежедневная награда, потом итоги прошлого года (если есть)
-        showReward(visit.data, function () {
-            showSeasonSummary();
-            openFromLink();
-        });
+        // Итоги прошлого года (если есть) и экран из ссылки бота
+        showSeasonSummary();
+        openFromLink();
     } catch (error) {
         showError('Нет связи с сервером', 'Проверьте интернет и попробуйте ещё раз');
     }

@@ -12,11 +12,12 @@ class PlayerProgress(AsyncAttrs, Base):
     season_summary_seen = Column(Boolean)                   # Игрок уже посмотрел итоги прошлого года
     streak_days = Column(Integer, nullable=False)           # Серия заходов в приложение (дней подряд)
     best_streak = Column(Integer, nullable=False)           # Лучшая серия
-    last_visit = Column(Date)                               # Дата последнего захода
+    last_visit = Column(Date)                               # Дата, когда последний раз забрал ежедневную награду
+    last_news_seen = Column(Integer, nullable=False)        # ID последней прочитанной новости
 
 
     # Конструктор __init__
-    def __init__(self, tg_user_id, season_year, gold=0, season_gold=0, last_season_gold=None, season_summary_seen=True, streak_days=0, best_streak=0, last_visit=None):
+    def __init__(self, tg_user_id, season_year, gold=0, season_gold=0, last_season_gold=None, season_summary_seen=True, streak_days=0, best_streak=0, last_visit=None, last_news_seen=0):
         self.tg_user_id = tg_user_id
         self.season_year = season_year
         self.gold = gold
@@ -26,3 +27,4 @@ class PlayerProgress(AsyncAttrs, Base):
         self.streak_days = streak_days
         self.best_streak = best_streak
         self.last_visit = last_visit
+        self.last_news_seen = last_news_seen

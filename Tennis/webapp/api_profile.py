@@ -3,6 +3,7 @@ from aiohttp import web
 import handlers.referrals as r
 import handlers.gold as g
 from webapp.auth import get_tg_user
+from webapp.api_news import count_unread_news
 
 from config.db_utils import get_db
 from sqlalchemy import select
@@ -60,6 +61,11 @@ async def api_me(request):
         # Монеты, лига и серия
         progress = await g.get_progress(user_id, session)
 
+        # Ежедневную награду игрок забирает сам — кнопкой на главном экране
+        daily_available = progress.last_visit != g.now_moscow().date()
+
+        unread_news = await count_unread_news(user, progress.last_news_seen, session)
+
         season_summary = None
         if progress.season_summary_seen == False:
             season_summary = {
@@ -98,5 +104,7 @@ async def api_me(request):
         'leagues': g.LEAGUES,
         'streak': progress.streak_days,
         'best_streak': progress.best_streak,
-        'season_summary': season_summary
+        'season_summary': season_summary,
+        'daily_available': daily_available,
+        'unread_news': unread_news
     })

@@ -1,3 +1,5 @@
 .env
 **/__pycache__/
 credentials_tennisbot.json
+
+Tennis/img/news/

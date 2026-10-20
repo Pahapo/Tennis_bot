@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=4">
+    <link rel="stylesheet" href="/static/css/style.css?v=5">
 </head>
 <body>
 
@@ -13,6 +13,10 @@
     <header class="topbar">
         <button class="avatar-btn" id="avatar-btn" type="button">
             <img id="avatar" src="/static/img/icons/avatar.svg" alt="Профиль">
+        </button>
+        <button class="news-btn" id="news-btn" type="button">
+            📰
+            <span class="dot hidden" id="news-dot"></span>
         </button>
         <div class="topbar-name" id="topbar-name">Загрузка...</div>
         <div class="currency" title="Монеты">
@@ -27,8 +31,8 @@
 
     <main class="content">
 
-        <!-- Профиль -->
-        <section class="screen" id="screen-profile">
+        <!-- Профиль (открывается по аватару) -->
+        <section class="screen hidden" id="screen-profile">
             <div class="card profile-head">
                 <img class="profile-avatar" id="profile-avatar" src="/static/img/icons/avatar.svg" alt="">
                 <div>
@@ -81,13 +85,17 @@
         <!-- Турнир -->
         <section class="screen hidden" id="screen-tournament">
             <h2 class="screen-title">Турнир</h2>
-            <div class="segmented" id="tournament-tabs">
+            <div class="segmented segmented-grid" id="tournament-tabs">
                 <button class="segment active" data-tournament="list" type="button">Запись на турнир</button>
                 <button class="segment" data-tournament="tables" type="button">Турнирные таблицы</button>
+                <button class="segment segment-wide" data-tournament="active" type="button">Активные турниры</button>
             </div>
-            <button class="btn btn-gold btn-wide hidden" id="btn-tournament-score" type="button">✍️ Записать счёт турнирной игры</button>
             <div id="tournament-list"></div>
             <div class="hidden" id="tournament-tables"></div>
+            <div class="hidden" id="tournament-active">
+                <button class="btn btn-gold btn-wide" id="btn-tournament-score" type="button">✍️ Записать счёт турнирной игры</button>
+                <div id="tournament-running"></div>
+            </div>
         </section>
 
         <!-- Соперник -->
@@ -104,8 +112,14 @@
             <div class="hidden" id="opponent-games"></div>
         </section>
 
-        <!-- Локации (лиги) -->
-        <section class="screen hidden" id="screen-arena">
+        <!-- Новости (рассылки админа) -->
+        <section class="screen hidden" id="screen-news">
+            <h2 class="screen-title">Новости</h2>
+            <div id="news-list"></div>
+        </section>
+
+        <!-- Главный экран: локации (лиги) -->
+        <section class="screen" id="screen-arena">
             <h2 class="screen-title">Лиги</h2>
 
             <div class="card league-current">
@@ -161,7 +175,13 @@
 
     </main>
 
-    <!-- Круглая кнопка: игры, где нужно записать счёт -->
+    <!-- Круглая кнопка справа: ежедневная награда (только на главном экране) -->
+    <button class="daily-fab" id="daily-fab" type="button">
+        <span class="score-fab-icon">🎁</span>
+        <span class="dot hidden" id="daily-dot"></span>
+    </button>
+
+    <!-- Круглая кнопка слева: игры, где нужно записать счёт (только на главном экране) -->
     <button class="score-fab" id="score-fab" type="button">
         <span class="score-fab-icon">✍️</span>
         <span class="fab-badge hidden" id="score-badge">0</span>
@@ -332,6 +352,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=4"></script>
+    <script src="/static/js/app.js?v=5"></script>
 </body>
 </html>

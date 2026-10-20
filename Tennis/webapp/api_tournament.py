@@ -94,7 +94,7 @@ async def api_tournaments(request):
                     players.append({'id': player.tg_user_id, 'name': player.name_user, 'division': division_names.get(player.division_level, 'Не определён')})
 
             players.sort(key=lambda player: player['name'] or '')
-            running.append({'id': tournament.tournament_id, 'name': tournament.name_tournament, 'players': players})
+            running.append({'id': tournament.tournament_id, 'name': tournament.name_tournament, 'start': tournament.start_tournament, 'end': tournament.end_tournament, 'link': tournament.link_table, 'players': players})
 
         payment_method = (await session.scalars(select(PaymentMethod).where(PaymentMethod.payment_method_id == 1))).first()
         payment = None

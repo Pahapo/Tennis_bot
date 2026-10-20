@@ -185,3 +185,17 @@ CREATE TABLE `payment_requests` (
   PRIMARY KEY (`id_request`),
   KEY `payment_requests_user` (`tg_user_id`, `tournament_id`)
 );
+
+CREATE TABLE `news` (
+  `id_news` int NOT NULL AUTO_INCREMENT,
+  `text` text,
+  `photo` varchar(100) DEFAULT NULL,
+  `link_text` varchar(100) DEFAULT NULL,
+  `link_url` varchar(300) DEFAULT NULL,
+  `division` int DEFAULT NULL,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`id_news`)
+);
+
+ALTER TABLE `player_progress`
+  ADD COLUMN `last_news_seen` int NOT NULL DEFAULT 0;
