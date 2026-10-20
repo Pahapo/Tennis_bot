@@ -53,7 +53,7 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
 
             # Регистрация (сказка и анкета) теперь проходит в приложении
             if WEBAPP_URL:
-                await message.answer(f"Привет <b>{user_name}!</b> 👋\n\nЯ - 🤖 Бот по теннису. Нажми кнопку ниже — там тебя ждёт одна история и короткая регистрация 🎾", parse_mode=ParseMode.HTML, reply_markup=app_keyboard())
+                await message.answer(f"Привет <b>{user_name}</b>! 👋\n\nЯ - 🤖 Бот по теннису, провожу турниры и помогаю найти соперников в Минск Мире!\n\nНажми кнопку ниже — там тебя ждёт обновлённое приложение, которое наша команда создала в виде игры. Быстрее заходи, чтобы протестировать первым! 🎾", parse_mode=ParseMode.HTML, reply_markup=app_keyboard())
                 return
 
             # СКАЗКА (~30 секунд)
