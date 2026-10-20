@@ -517,3 +517,184 @@ button {
     width: 100%;
     height: 100%;
 }
+
+/* Соперник */
+.btn-wide {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.btn-small {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font-size: 14px;
+}
+
+.btn-red {
+    background: var(--red);
+    border-bottom-color: #922b21;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+}
+
+.match-date {
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.match-line {
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: var(--muted);
+}
+
+.match-comment {
+    margin: 8px 0;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 3px solid var(--gold);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+.player-name {
+    font-weight: 700;
+    color: var(--text);
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font-size: 14px;
+}
+
+.status {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.35);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.empty {
+    padding: 24px 8px;
+    text-align: center;
+    color: var(--muted);
+}
+
+/* Поля формы */
+.field {
+    display: block;
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.field span {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--card-border);
+    border-radius: 10px;
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+}
+
+.modal-scroll {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Круглая кнопка счёта (слева, выше центра) */
+.score-fab {
+    position: fixed;
+    left: 12px;
+    top: 38%;
+    z-index: 20;
+    width: 58px;
+    height: 58px;
+    padding: 0;
+    border: 3px solid var(--gold-dark);
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 4px 0 #c47f00, 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+.score-fab:active {
+    transform: translateY(2px);
+}
+
+.score-fab-icon {
+    font-size: 26px;
+}
+
+.fab-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 12px;
+    background: var(--red);
+    border: 2px solid #fff;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 20px;
+}
+
+/* Ввод счёта */
+.score-game {
+    text-align: left;
+}
+
+.sets-header,
+.set-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.sets-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.set-row input {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid var(--card-border);
+    border-radius: 10px;
+    background: var(--bg-dark);
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 800;
+    text-align: center;
+}

@@ -138,3 +138,27 @@ CREATE TABLE `gold_history` (
   KEY `gold_history_users_fk` (`tg_user_id`),
   CONSTRAINT `gold_history_users_fk` FOREIGN KEY (`tg_user_id`) REFERENCES `users` (`tg_user_id`)
 );
+
+ALTER TABLE `match`
+  ADD COLUMN `status` varchar(20) DEFAULT NULL,
+  ADD COLUMN `score` varchar(50) DEFAULT NULL,
+  ADD COLUMN `team_1` varchar(50) DEFAULT NULL,
+  ADD COLUMN `team_2` varchar(50) DEFAULT NULL,
+  ADD COLUMN `score_author` bigint DEFAULT NULL,
+  ADD COLUMN `score_turn` bigint DEFAULT NULL,
+  ADD COLUMN `confirmed_by` varchar(100) DEFAULT NULL,
+  ADD COLUMN `reject_count` int NOT NULL DEFAULT 0,
+  ADD COLUMN `reminder_sent` tinyint(1) NOT NULL DEFAULT 0;
+
+CREATE TABLE `match_rewards` (
+  `id_reward` int NOT NULL AUTO_INCREMENT,
+  `match_id` int NOT NULL,
+  `tg_user_id` bigint NOT NULL,
+  `opponents` varchar(60) NOT NULL,
+  `is_win` tinyint(1) NOT NULL,
+  `amount` int NOT NULL,
+  `counted` tinyint(1) NOT NULL,
+  `game_date` datetime NOT NULL,
+  PRIMARY KEY (`id_reward`),
+  KEY `match_rewards_user` (`tg_user_id`, `game_date`)
+);

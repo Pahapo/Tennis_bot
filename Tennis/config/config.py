@@ -21,3 +21,4 @@ EMAILS = list(map(str, os.getenv('EMAILS').split(',')))
 DATABASE_URL = os.getenv('DATABASE_URL')
 WEBAPP_URL = os.getenv('WEBAPP_URL')                                    # HTTPS-адрес Mini App (например, https://example.com)
 WEBAPP_PORT = int(os.getenv('WEBAPP_PORT', '8080'))                     # Порт, на котором бот раздаёт Mini App
+ADMIN_CHAT = os.getenv('ADMIN_CHAT')                                    # Чат админов для спорных моментов (если пусто — пишем каждому из ADMINS)

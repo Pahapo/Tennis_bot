@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=2">
+    <link rel="stylesheet" href="/static/css/style.css?v=3">
 </head>
 <body>
 
@@ -94,10 +94,15 @@
         <!-- Соперник -->
         <section class="screen hidden" id="screen-opponent">
             <h2 class="screen-title">Соперник</h2>
-            <div class="card stub">
-                <div class="card-title">Поиск соперника</div>
-                <div class="muted">Скоро здесь можно будет найти соперника, записать счёт и получить монеты</div>
+            <div class="segmented" id="opponent-tabs">
+                <button class="segment active" data-opponent="search" type="button">Найти игру</button>
+                <button class="segment" data-opponent="requests" type="button">Мои заявки</button>
+                <button class="segment" data-opponent="games" type="button">Мои игры</button>
             </div>
+            <button class="btn btn-gold btn-wide" id="btn-create-match" type="button">+ Создать заявку</button>
+            <div id="opponent-search"></div>
+            <div class="hidden" id="opponent-requests"></div>
+            <div class="hidden" id="opponent-games"></div>
         </section>
 
         <!-- Локации (лиги) -->
@@ -157,6 +162,70 @@
 
     </main>
 
+    <!-- Круглая кнопка: игры, где нужно записать счёт -->
+    <button class="score-fab" id="score-fab" type="button">
+        <span class="score-fab-icon">✍️</span>
+        <span class="fab-badge hidden" id="score-badge">0</span>
+    </button>
+
+    <!-- Окно: записать счёт -->
+    <div class="modal hidden" id="score-modal">
+        <div class="modal-box modal-scroll">
+            <div class="modal-title">Счёт матчей</div>
+            <div id="score-list"></div>
+            <button class="btn" id="score-close" type="button">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Окно: новая заявка на игру -->
+    <div class="modal hidden" id="create-modal">
+        <div class="modal-box modal-scroll">
+            <div class="modal-title">Новая заявка</div>
+
+            <label class="field">
+                <span>Тип игры</span>
+                <select id="create-type">
+                    <option value="Одиночный">Одиночный</option>
+                    <option value="Парный">Парный</option>
+                </select>
+            </label>
+
+            <label class="field">
+                <span>Корт</span>
+                <select id="create-court"></select>
+            </label>
+
+            <label class="field">
+                <span>Дата и время</span>
+                <input type="datetime-local" id="create-date">
+            </label>
+
+            <label class="field">
+                <span>Комментарий (необязательно)</span>
+                <textarea id="create-comment" maxlength="300" rows="3"></textarea>
+            </label>
+
+            <label class="field hidden" id="create-age-field">
+                <span>Ваш возраст</span>
+                <input type="number" id="create-age" min="6" max="100">
+            </label>
+
+            <label class="field hidden" id="create-sex-field">
+                <span>Ваш пол</span>
+                <select id="create-sex">
+                    <option value="">—</option>
+                    <option value="Мужчина">Мужчина</option>
+                    <option value="Женщина">Женщина</option>
+                </select>
+            </label>
+
+            <div class="buttons-row">
+                <button class="btn" id="create-cancel" type="button">Отмена</button>
+                <button class="btn btn-gold" id="create-submit" type="button">Создать</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Окно: ежедневная награда -->
     <div class="modal hidden" id="reward-modal">
         <div class="modal-box">
@@ -198,6 +267,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=2"></script>
+    <script src="/static/js/app.js?v=3"></script>
 </body>
 </html>

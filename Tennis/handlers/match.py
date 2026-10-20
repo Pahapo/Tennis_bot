@@ -9,6 +9,7 @@ from datetime import datetime
 
 import keywords.kw_user as kb
 import handlers.functions as f
+import handlers.match_app as ma
 
 from config.db_utils import get_db_readonly, get_db
 from sqlalchemy import select
@@ -65,9 +66,10 @@ async def search_match(callback: CallbackQuery, state:FSMContext):
             )
         ]
 
-        # Удаляем их
+        # Удаляем их (сыгранные игры оставляем — по ним нужен счёт)
         for match in expired_matches:
-            await session.delete(match)
+            if not ma.is_match_full(match):
+                await session.delete(match)
 
 
     async with get_db_readonly() as session:  # Используем контекстный менеджер
@@ -234,26 +236,8 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
                             except Exception as e:
                                 print(f"⚠️ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
 
-                            # напоминание о игре
-                            time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
-                            time_before_match = time_before_match.total_seconds()
-
-                            if time_before_match > 0:  # Проверяем, чтобы время было положительным
-                                await asyncio.sleep(time_before_match - 7200) # напоминание за 2 часа до начала
-
-                                options = LinkPreviewOptions(
-                                    is_disabled=True
-                                )
-
-                                text_notification = f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с <a href='{user.link}'><b>{user.name_user}</b></a> осталось 2 часа"
-                                try:
-                                    await bot.send_message(chat_id=contestant.tg_user_id, text=text_notification, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                                    print("Отправлено напоминание пользователям о предстоящей игре")
-                                except Exception as e:
-                                    print(f"Не удалось отправить напоминания пользователям об игре из-за ошибки: {e}")
-
-                                await callback.message.answer(f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                                return
+                            # Напоминание за 2 часа до игры и запрос счёта отправляет планировщик (handlers/match_app.py)
+                            return
                         else:
                             await callback.message.answer(f"❌ <b>Вы не можете принять эту игру</b>\n\nВы уже приняли приглашение от этого пользователя! Проверьте Ваши 'подтверждённые игры 🎾'</b>", parse_mode=ParseMode.HTML, reply_markup=kb.confirm_match)
 
@@ -281,40 +265,8 @@ async def accept_match(callback: types.CallbackQuery, state:FSMContext, bot):
                             except Exception as e:
                                 print(f"⚠️ Не удалось отправить сообщение о подтверждённой игре пользователю с id: {user_id} из-за ошибки: {e}")
 
-                            # напоминание о игре
-                            if user_match.player_3 != None:
-                                time_before_match = datetime.strptime(date, "%H:%M %d.%m.%Y") - datetime.now()
-                                time_before_match = time_before_match.total_seconds()
-
-                                if time_before_match > 0:  # Проверяем, чтобы время было положительным
-                                    await asyncio.sleep(time_before_match - 7200) # напоминание за 2 часа до начала
-
-                                    options = LinkPreviewOptions(
-                                        is_disabled=True
-                                    )
-
-                                    try:
-                                        user_id_player = [user_match.player_2, user_match.player_3]
-                                        contestants = []
-
-                                        for i in range(len(user_id_player)):
-                                            contestants.append(await session.scalars(select(User).where(User.tg_user_id == user_id_player[i])).first())
-                                        contestants.append(contestant)
-
-                                        contestant_links = ""
-                                        for contestant in contestants:
-                                            contestant_links += f" <a href='{contestant.link}'><b>{contestant.name_user}</b></a>"
-                                            
-                                        text_notification = f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с{contestant_links} осталось 2 часа"
-                                        
-                                        for contestant in contestants:
-                                            await bot.send_message(chat_id=contestant.tg_user_id, text=text_notification, parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                                        print("Отправлено напоминание пользователям о предстоящей игре")
-                                    except Exception as e:
-                                        print(f"Не удалось отправить напоминания пользователям об игре из-за ошибки: {e}")
-
-                                    await callback.message.answer(f"⏰ <b>Напоминание!</b>\n\n⚡️До {type_match} игры с <a href='{contestant.link}'><b>{contestant.name_user}</b></a> осталось 2 часа", parse_mode=ParseMode.HTML, link_preview_options=options, disable_web_page_preview=True, reply_markup=kb.exit)
-                                    return
+                            # Напоминание за 2 часа до игры и запрос счёта отправляет планировщик (handlers/match_app.py)
+                            return
                         else:
                             await callback.message.answer(f"❌ <b>Вы не можете принять эту игру</b>\n\nВы уже приняли приглашение от этого пользователя! Проверьте Ваши 'подтверждённые игры 🎾'</b>", parse_mode=ParseMode.HTML, reply_markup=kb.confirm_match)
 
@@ -360,7 +312,8 @@ async def my_match(callback: CallbackQuery, state: FSMContext):
         # Удаляем их
         try:
             for match in expired_matches:
-                await session.delete(match)
+                if not ma.is_match_full(match):  # Сыгранные игры оставляем — по ним нужен счёт
+                    await session.delete(match)
         except Exception as e:
             # обработка ошибки
             print(f"Произошла ошибка: {e}")

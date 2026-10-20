@@ -4,6 +4,7 @@ from config.config import WEBAPP_PORT
 
 from webapp.api_profile import api_me
 from webapp.api_gold import api_visit, api_gold_history, api_season_seen
+from webapp.api_match import api_matches_search, api_matches_mine, api_matches_create, api_matches_delete, api_matches_apply, api_score_pending, api_score_submit
 
 # Папка с файлами Mini App (html, css, js, картинки)
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webapp_static')
@@ -15,14 +16,24 @@ async def index(request):
 
 
 # Запуск веб-сервера рядом с ботом (в том же процессе)
-async def start_webapp():
+async def start_webapp(bot):
     app = web.Application()
+    app['bot'] = bot  # Бот нужен API, чтобы отправлять уведомления игрокам
 
     app.router.add_get('/', index)
     app.router.add_get('/api/me', api_me)
     app.router.add_post('/api/visit', api_visit)
     app.router.add_get('/api/gold_history', api_gold_history)
     app.router.add_post('/api/season_seen', api_season_seen)
+
+    app.router.add_get('/api/matches/search', api_matches_search)
+    app.router.add_get('/api/matches/mine', api_matches_mine)
+    app.router.add_post('/api/matches/create', api_matches_create)
+    app.router.add_post('/api/matches/delete', api_matches_delete)
+    app.router.add_post('/api/matches/apply', api_matches_apply)
+    app.router.add_get('/api/score/pending', api_score_pending)
+    app.router.add_post('/api/score/submit', api_score_submit)
+
     app.router.add_static('/static/', STATIC_DIR)
 
     runner = web.AppRunner(app)

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from config.db import Base
 
@@ -15,6 +15,15 @@ class Match(AsyncAttrs, Base):
     player_2 = Column(Integer, nullable=False)
     player_3 = Column(Integer, nullable=False)
     player_4 = Column(Integer, nullable=False)
+    status = Column(String(20))             # None — игра впереди, wait_score — ждём счёт, confirming — счёт на подтверждении, done — завершена
+    score = Column(String(50))              # Счёт со стороны команды 1, например "6:4 3:6 7:5"
+    team_1 = Column(String(50))             # ID игроков команды 1 через запятую
+    team_2 = Column(String(50))             # ID игроков команды 2 через запятую
+    score_author = Column(Integer)          # Кто ввёл счёт
+    score_turn = Column(Integer)            # Если счёт отклонили — только этот игрок может ввести новый
+    confirmed_by = Column(String(100))      # Кто уже подтвердил счёт (ID через запятую)
+    reject_count = Column(Integer)          # Сколько раз счёт отклоняли
+    reminder_sent = Column(Boolean)         # Напоминание за 2 часа до игры отправлено
 
 
     # Конструктор __init__
@@ -29,3 +38,5 @@ class Match(AsyncAttrs, Base):
         self.player_2 = player_2
         self.player_3 = player_3
         self.player_4 = player_4
+        self.reject_count = 0
+        self.reminder_sent = False

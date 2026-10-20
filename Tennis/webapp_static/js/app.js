@@ -21,14 +21,34 @@ async function apiGet(url) {
     return { status: response.status, data: data };
 }
 
-// POST-запрос к API бота
-async function apiPost(url) {
+// POST-запрос к API бота (body — данные, которые отправляем)
+async function apiPost(url, body) {
     const response = await fetch(url, {
         method: 'POST',
-        headers: { 'X-Init-Data': tg.initData }
+        headers: { 'X-Init-Data': tg.initData, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {})
     });
     const data = await response.json();
     return { status: response.status, data: data };
+}
+
+// Показываем ошибку от сервера. true — если ошибка была
+function handleError(result) {
+    if (result.status === 200) {
+        return false;
+    }
+
+    if (result.data.error === 'not_subscribed') {
+        tg.showConfirm('Чтобы продолжить, подпишитесь на наш канал. Открыть канал?', function (ok) {
+            if (ok) {
+                tg.openTelegramLink(result.data.channel);
+            }
+        });
+        return true;
+    }
+
+    tg.showAlert(result.data.error || 'Что-то пошло не так, попробуйте ещё раз');
+    return true;
 }
 
 
@@ -392,6 +412,449 @@ function stopFireworks() {
 }
 
 
+// ---------- Соперник ----------
+
+let courts = [];
+
+function myId() {
+    return tg.initDataUnsafe.user.id;
+}
+
+// Строка с игроком: имя (нажатие открывает чат с ним), дивизион и рейтинг
+function playerRow(player) {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+
+    const name = document.createElement('button');
+    name.className = 'player-name';
+    name.type = 'button';
+    name.textContent = '🙋‍♂️ ' + player.name;
+    if (player.link) {
+        name.addEventListener('click', function () {
+            tg.openTelegramLink(player.link);
+        });
+    }
+
+    const info = document.createElement('span');
+    info.className = 'muted';
+    info.textContent = player.division + (player.rating !== null ? ' ⚡️ ' + player.rating : '');
+
+    row.appendChild(name);
+    row.appendChild(info);
+    return row;
+}
+
+function playerNames(card, ids) {
+    const names = [];
+    for (const player of card.players) {
+        if (ids.includes(player.id)) {
+            names.push(player.name);
+        }
+    }
+    return names.join(', ');
+}
+
+// Статус игры для вкладки "Мои игры"
+function gameStatus(card) {
+    if (card.status === 'done') {
+        let text = '✅ ' + playerNames(card, card.team_1) + ' ' + card.score + ' ' + playerNames(card, card.team_2);
+        if (card.my_reward !== null) {
+            text += ' · +' + card.my_reward + ' 🪙';
+        }
+        return text;
+    }
+    if (card.status === 'confirming') {
+        return '⏳ Счёт ' + card.score + ' на подтверждении';
+    }
+    if (card.status === 'wait_score') {
+        return '✍️ Ждём счёт — нажмите круглую кнопку слева';
+    }
+    if (card.players.length < card.places) {
+        return '⏳ Ждём игроков (' + card.players.length + ' из ' + card.places + ')';
+    }
+    return '🎾 Игра впереди';
+}
+
+// Карточка игры. mode: search — можно откликнуться, request — моя заявка, game — моя игра
+function matchCard(card, mode) {
+    const box = document.createElement('div');
+    box.className = 'card';
+
+    const date = document.createElement('div');
+    date.className = 'match-date';
+    date.textContent = '⏰ ' + card.date;
+    box.appendChild(date);
+
+    const court = document.createElement('div');
+    court.className = 'match-line';
+    if (card.booked) {
+        court.textContent = '✅ Корт забронирован: ' + card.court;
+    } else {
+        court.textContent = '❌ Корт не забронирован';
+    }
+    box.appendChild(court);
+
+    const type = document.createElement('div');
+    type.className = 'match-line';
+    type.textContent = '🎾 ' + card.type + ' · игроков ' + card.players.length + ' из ' + card.places;
+    box.appendChild(type);
+
+    if (card.comment) {
+        const comment = document.createElement('div');
+        comment.className = 'match-comment';
+        comment.textContent = card.comment;
+        box.appendChild(comment);
+    }
+
+    for (const player of card.players) {
+        box.appendChild(playerRow(player));
+    }
+
+    if (mode === 'search') {
+        const button = document.createElement('button');
+        button.className = 'btn btn-gold btn-wide';
+        button.type = 'button';
+        button.textContent = 'Откликнуться';
+        button.addEventListener('click', async function () {
+            button.disabled = true;
+            const result = await apiPost('/api/matches/apply', { match_id: card.id });
+            if (handleError(result)) {
+                button.disabled = false;
+                return;
+            }
+            tg.HapticFeedback.notificationOccurred('success');
+            button.textContent = '✅ Заявка отправлена';
+        });
+        box.appendChild(button);
+    }
+
+    if (mode === 'request') {
+        const button = document.createElement('button');
+        button.className = 'btn btn-red btn-wide';
+        button.type = 'button';
+        button.textContent = 'Удалить заявку';
+        button.addEventListener('click', function () {
+            tg.showConfirm('Удалить заявку на ' + card.date + '?', async function (ok) {
+                if (!ok) {
+                    return;
+                }
+                const result = await apiPost('/api/matches/delete', { match_id: card.id });
+                if (!handleError(result)) {
+                    loadOpponent();
+                }
+            });
+        });
+        box.appendChild(button);
+    }
+
+    if (mode === 'game') {
+        const status = document.createElement('div');
+        status.className = 'status';
+        status.textContent = gameStatus(card);
+        box.appendChild(status);
+    }
+
+    return box;
+}
+
+function fillList(containerId, cards, mode, emptyText) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    if (cards.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = emptyText;
+        container.appendChild(empty);
+        return;
+    }
+
+    for (const card of cards) {
+        container.appendChild(matchCard(card, mode));
+    }
+}
+
+async function loadOpponent() {
+    const search = await apiGet('/api/matches/search');
+    const mine = await apiGet('/api/matches/mine');
+
+    fillList('opponent-search', search.data, 'search', 'Пока никто не ищет соперника. Создайте свою заявку! 🎾');
+    fillList('opponent-requests', mine.data.requests, 'request', 'У вас нет открытых заявок');
+    fillList('opponent-games', mine.data.games, 'game', 'Здесь появятся игры, в которых собран состав');
+
+    courts = mine.data.courts;
+}
+
+function setupOpponent() {
+    const segments = document.querySelectorAll('#opponent-tabs .segment');
+    for (const segment of segments) {
+        segment.addEventListener('click', function () {
+            for (const other of segments) {
+                other.classList.remove('active');
+                document.getElementById('opponent-' + other.dataset.opponent).classList.add('hidden');
+            }
+            segment.classList.add('active');
+            document.getElementById('opponent-' + segment.dataset.opponent).classList.remove('hidden');
+        });
+    }
+
+    document.getElementById('btn-create-match').addEventListener('click', openCreateModal);
+    document.getElementById('create-cancel').addEventListener('click', function () {
+        document.getElementById('create-modal').classList.add('hidden');
+    });
+    document.getElementById('create-submit').addEventListener('click', submitCreate);
+}
+
+function openCreateModal() {
+    // Список кортов
+    const select = document.getElementById('create-court');
+    select.innerHTML = '';
+
+    const noCourt = document.createElement('option');
+    noCourt.value = '';
+    noCourt.textContent = 'Корт не забронирован';
+    select.appendChild(noCourt);
+
+    for (const court of courts) {
+        const option = document.createElement('option');
+        option.value = court;
+        option.textContent = court;
+        select.appendChild(option);
+    }
+
+    // Возраст и пол спрашиваем, только если их ещё нет в профиле
+    if (profile.age) {
+        document.getElementById('create-age-field').classList.add('hidden');
+    } else {
+        document.getElementById('create-age-field').classList.remove('hidden');
+    }
+    if (profile.sex) {
+        document.getElementById('create-sex-field').classList.add('hidden');
+    } else {
+        document.getElementById('create-sex-field').classList.remove('hidden');
+    }
+
+    document.getElementById('create-modal').classList.remove('hidden');
+}
+
+async function submitCreate() {
+    const court = document.getElementById('create-court').value;
+
+    const body = {
+        type: document.getElementById('create-type').value,
+        booked: court !== '',
+        court: court,
+        date: document.getElementById('create-date').value,
+        comment: document.getElementById('create-comment').value,
+        age: document.getElementById('create-age').value,
+        sex: document.getElementById('create-sex').value
+    };
+
+    const button = document.getElementById('create-submit');
+    button.disabled = true;
+    const result = await apiPost('/api/matches/create', body);
+    button.disabled = false;
+
+    if (handleError(result)) {
+        return;
+    }
+
+    tg.HapticFeedback.notificationOccurred('success');
+    document.getElementById('create-modal').classList.add('hidden');
+    document.getElementById('create-comment').value = '';
+
+    // Возраст и пол сохранились — больше не спрашиваем
+    if (body.age) {
+        profile.age = body.age;
+    }
+    if (body.sex) {
+        profile.sex = body.sex;
+    }
+
+    await loadOpponent();
+    document.querySelector('#opponent-tabs .segment[data-opponent=requests]').click();
+    tg.showAlert('✅ Заявка создана! Когда кто-то откликнется, бот пришлёт вам сообщение');
+}
+
+
+// ---------- Счёт ----------
+
+let pendingGames = [];
+
+async function loadPending() {
+    const result = await apiGet('/api/score/pending');
+    pendingGames = result.data;
+
+    const badge = document.getElementById('score-badge');
+    if (pendingGames.length > 0) {
+        badge.textContent = pendingGames.length;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function openScoreModal() {
+    const list = document.getElementById('score-list');
+    list.innerHTML = '';
+
+    if (pendingGames.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Нет матчей для выставления счёта';
+        list.appendChild(empty);
+    }
+
+    for (const card of pendingGames) {
+        list.appendChild(scoreForm(card));
+    }
+
+    document.getElementById('score-modal').classList.remove('hidden');
+}
+
+// Форма счёта для одной игры
+function scoreForm(card) {
+    const box = document.createElement('div');
+    box.className = 'card score-game';
+
+    const date = document.createElement('div');
+    date.className = 'match-date';
+    date.textContent = '⏰ ' + card.date + ' · ' + card.type;
+    box.appendChild(date);
+
+    // Остальные игроки
+    const others = [];
+    for (const player of card.players) {
+        if (player.id !== myId()) {
+            others.push(player);
+        }
+    }
+
+    // В парной игре выбираем партнёра — остальные двое станут соперниками
+    let partnerSelect = null;
+    if (card.type === 'Парный') {
+        const field = document.createElement('label');
+        field.className = 'field';
+
+        const label = document.createElement('span');
+        label.textContent = 'Мой партнёр по команде';
+        field.appendChild(label);
+
+        partnerSelect = document.createElement('select');
+        for (const player of others) {
+            const option = document.createElement('option');
+            option.value = player.id;
+            option.textContent = player.name;
+            partnerSelect.appendChild(option);
+        }
+        field.appendChild(partnerSelect);
+        box.appendChild(field);
+    } else {
+        const line = document.createElement('div');
+        line.className = 'match-line';
+        line.textContent = 'Соперник: ' + others[0].name;
+        box.appendChild(line);
+    }
+
+    // Сеты: левый столбик — моя команда, правый — соперники
+    const header = document.createElement('div');
+    header.className = 'sets-header';
+    header.innerHTML = '<span></span><span>Мы</span><span>Соперники</span>';
+    box.appendChild(header);
+
+    const inputs = [];
+    for (let i = 1; i <= 3; i++) {
+        const row = document.createElement('div');
+        row.className = 'set-row';
+
+        const label = document.createElement('span');
+        label.className = 'muted';
+        label.textContent = 'Сет ' + i;
+
+        const mine = document.createElement('input');
+        mine.type = 'number';
+        mine.min = '0';
+        mine.inputMode = 'numeric';
+
+        const theirs = document.createElement('input');
+        theirs.type = 'number';
+        theirs.min = '0';
+        theirs.inputMode = 'numeric';
+
+        row.appendChild(label);
+        row.appendChild(mine);
+        row.appendChild(theirs);
+        box.appendChild(row);
+
+        inputs.push([mine, theirs]);
+    }
+
+    const hint = document.createElement('div');
+    hint.className = 'muted';
+    hint.textContent = 'Третий сет оставьте пустым, если играли два';
+    box.appendChild(hint);
+
+    const button = document.createElement('button');
+    button.className = 'btn btn-gold btn-wide';
+    button.type = 'button';
+    button.textContent = 'Отправить на подтверждение';
+    button.addEventListener('click', async function () {
+        const sets = [];
+        for (const pair of inputs) {
+            if (pair[0].value === '' && pair[1].value === '') {
+                continue;  // Пустой сет пропускаем
+            }
+            sets.push([Number(pair[0].value), Number(pair[1].value)]);
+        }
+
+        const body = { match_id: card.id, sets: sets };
+        if (partnerSelect) {
+            body.partner_id = Number(partnerSelect.value);
+        }
+
+        button.disabled = true;
+        const result = await apiPost('/api/score/submit', body);
+        button.disabled = false;
+
+        if (handleError(result)) {
+            return;
+        }
+
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.showAlert('✅ Счёт отправлен на подтверждение. Монеты придут, когда все подтвердят');
+        await loadPending();
+        await loadOpponent();
+        openScoreModal();
+    });
+    box.appendChild(button);
+
+    return box;
+}
+
+function setupScore() {
+    document.getElementById('score-fab').addEventListener('click', async function () {
+        tg.HapticFeedback.selectionChanged();
+        await loadPending();
+        openScoreModal();
+    });
+
+    document.getElementById('score-close').addEventListener('click', function () {
+        document.getElementById('score-modal').classList.add('hidden');
+    });
+}
+
+// Открытие нужного экрана по ссылке из сообщения бота (?screen=score / opponent / arena)
+function openFromLink() {
+    const screen = new URLSearchParams(window.location.search).get('screen');
+
+    if (screen === 'score') {
+        openScoreModal();
+    } else if (screen === 'opponent' || screen === 'arena') {
+        showScreen(screen);
+    }
+}
+
+
 // ---------- Остальные экраны ----------
 
 function setupBooking() {
@@ -401,7 +864,7 @@ function setupBooking() {
 }
 
 function setupShop() {
-    const segments = document.querySelectorAll('.segment');
+    const segments = document.querySelectorAll('#screen-shop .segment');
     for (const segment of segments) {
         segment.addEventListener('click', function () {
             for (const other of segments) {
@@ -426,6 +889,7 @@ function showError(title, text) {
     document.getElementById('error-text').textContent = text;
     showScreen('error');
     document.querySelector('.tabbar').classList.add('hidden');
+    document.getElementById('score-fab').classList.add('hidden');
 }
 
 
@@ -436,6 +900,8 @@ async function start() {
     setupReferralButtons();
     setupBooking();
     setupShop();
+    setupOpponent();
+    setupScore();
 
     if (!tg.initData) {
         showError('Откройте приложение в Telegram', 'Приложение работает только внутри Telegram — нажмите кнопку «Приложение» в боте');
@@ -461,11 +927,17 @@ async function start() {
 
         const history = await apiGet('/api/gold_history');
         fillHistory(history.data);
+
+        await loadOpponent();
+        await loadPending();
         showScreen('profile');
         tg.BackButton.hide();  // При первом открытии "Назад" не нужен
 
         // Сначала ежедневная награда, потом итоги прошлого года (если есть)
-        showReward(visit.data, showSeasonSummary);
+        showReward(visit.data, function () {
+            showSeasonSummary();
+            openFromLink();
+        });
     } catch (error) {
         showError('Нет связи с сервером', 'Проверьте интернет и попробуйте ещё раз');
     }

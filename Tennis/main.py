@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.types import MenuButtonWebApp, WebAppInfo
 import handlers.functions as f
+import handlers.match_app as ma
 from config.router import router
 from config.config import TOKEN, WEBAPP_URL
 from webapp.server import start_webapp
@@ -15,7 +16,8 @@ dp.include_router(router)
 # Запуск бота
 async def main():
     asyncio.create_task(f.check_players(bot))  # Запускаем трекер игроков без дивизиона
-    await start_webapp()  # Запускаем Mini App (веб-сервер)
+    asyncio.create_task(ma.match_scheduler(bot))  # Напоминания об играх и запрос счёта
+    await start_webapp(bot)  # Запускаем Mini App (веб-сервер)
 
     if WEBAPP_URL:
         # Кнопка "Приложение" слева от поля ввода сообщения
