@@ -698,3 +698,54 @@ button {
     font-weight: 800;
     text-align: center;
 }
+
+/* Турниры */
+.tournament-details {
+    margin-bottom: 12px;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.regulations {
+    max-height: 40vh;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: var(--bg-dark);
+    border-radius: 10px;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+
+#tournament-step-rules,
+#tournament-step-pay {
+    text-align: left;
+}
+
+.pay-path {
+    white-space: pre-line;
+}
+
+.pay-price {
+    margin: 12px 0;
+    font-size: 18px;
+}
+
+.table-link {
+    width: 100%;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.section-title {
+    margin: 16px 0 8px;
+    font-weight: 800;
+    color: var(--muted);
+}
+
+#tournament-crystals-field {
+    margin-top: 14px;
+}

@@ -1,4 +1,5 @@
 import os
+from html import escape
 from aiogram import F, Router, Bot
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from sqlalchemy.exc import IntegrityError, OperationalError, DatabaseError
@@ -20,9 +21,14 @@ from sqlalchemy import select
 from models.Referrals import Referrals
 from models.Tournament import Tournament
 from models.User import User
+from models.PendingReferral import PendingReferral
 
 
 router = Router()
+
+
+REFERRAL_CRYSTALS = 100  # Кристаллы за друга (вместе с монетами g.REFERRAL_GOLD)
+REFERRAL_RULES = f"😎 Приглашайте друзей и получайте <b>+{g.REFERRAL_GOLD} 🪙 и +{REFERRAL_CRYSTALS} 💎</b> за каждого!\n\n⚠️ Награда приходит, когда друг закончит регистрацию и сыграет первую игру — с соперником или в турнире"
 
 
 async def generate_referral_link(user_id: int):
@@ -60,9 +66,9 @@ async def referral_system(callback: CallbackQuery, state:FSMContext, bot):
 
                 if os.path.exists("Tennis/img/referral/referral.png"):  # Проверка, есть ли файл
                     photo = FSInputFile("Tennis/img/referral/referral.png")  # Загружаем файл
-                    await callback.message.answer_photo(photo, caption=f'<b>📊 Ваша реферальная статистика</b>\n\n💰 <b>Монеты:</b> {coins}\n{friends}🔗 <b>Ваша ссылка:</b> <code>{referral_link}</code>\n\n😎 Приглашайте друзей и <b>получайте 100 монет</b> за каждого приглашённого!\n\n🛍 Накопленные монеты скоро можно будет потратить для уменьшения взноса за турнир', parse_mode=ParseMode.HTML, reply_markup=referral_system)
+                    await callback.message.answer_photo(photo, caption=f'<b>📊 Ваша реферальная статистика</b>\n\n💎 <b>Кристаллы:</b> {coins}\n{friends}🔗 <b>Ваша ссылка:</b> <code>{referral_link}</code>\n\n{REFERRAL_RULES}\n\n🛍 Кристаллы можно потратить для уменьшения взноса за турнир', parse_mode=ParseMode.HTML, reply_markup=referral_system)
                 else:
-                    await callback.message.answer(f'<b>📊 Ваша реферальная статистика</b>\n\n💰 <b>Монеты:</b> {coins}\n{friends}🔗 <b>Ваша ссылка:</b> <code>{referral_link}</code>\n\n😎 Приглашайте друзей и <b>получайте 100 монет</b> за каждого приглашённого!\n\n🛍 Накопленные монеты скоро можно будет потратить для уменьшения взноса за турнир', parse_mode=ParseMode.HTML, reply_markup=referral_system)
+                    await callback.message.answer(f'<b>📊 Ваша реферальная статистика</b>\n\n💎 <b>Кристаллы:</b> {coins}\n{friends}🔗 <b>Ваша ссылка:</b> <code>{referral_link}</code>\n\n{REFERRAL_RULES}\n\n🛍 Кристаллы можно потратить для уменьшения взноса за турнир', parse_mode=ParseMode.HTML, reply_markup=referral_system)
             else:
                 await callback.message.answer(f'<b>Произошла ошибка загрузки страницы!</b>\n\n• Пожалуйста, свяжитесь с поддержкой бота! Их контакт есть в описании бота', parse_mode=ParseMode.HTML, reply_markup=ka.exit)
         else:
@@ -91,11 +97,10 @@ async def check_referral(args, user_id, bot):
                         if not referrer_user:
                             return  # Пригласивший не найден в БД
 
-                        # В БД кристаллы хранятся строкой, поэтому переводим в число
-                        coins = 0
-                        if referrer_user.coins:
-                            coins = int(referrer_user.coins)
-                        
+                        already_pending = (await session.scalars(select(PendingReferral).where(PendingReferral.friend_id == user_id))).first()
+                        if already_pending:
+                            return  # Этого друга уже кто-то пригласил
+
                         if referrer:
                             referrers_id_list = [x.strip() for x in referrer.referrals.split(",")]  # Разбиваем строку на список (без пробелов)
                             
@@ -104,10 +109,6 @@ async def check_referral(args, user_id, bot):
                                 referrer.referrals += f", {user_id}"
                                 referrer.count += 1
 
-                                # Увеличиваем баллы у реферера
-                                coins += 100
-                                referrer_user.coins = coins
-
                             else:
                                 return
                         else:
@@ -115,15 +116,11 @@ async def check_referral(args, user_id, bot):
                             if new_referrer:
                                 session.add(new_referrer)  # Добавляем объект в сессию
 
-                            # Увеличиваем баллы у реферера
-                            coins += 100
-                            referrer_user.coins = coins
-
-                        # Монеты 🪙 за друга (один раз за каждого)
-                        await g.add_gold(referrer_id, g.REFERRAL_GOLD, 'referral', session, comment = f"Приглашён друг {user_id}")
+                        # Награда придёт позже — когда друг закончит регистрацию и сыграет первую игру (reward_referral)
+                        session.add(PendingReferral(friend_id = user_id, referrer_id = referrer_id, date = g.now_moscow()))
 
                         # Оповещаем рефереру о новом реферале
-                        message_text_send = f"<b>По Вашей ссылке зарегистрировался новый реферал! 🚀</b>\n\n🪙 <b>Монеты:</b> +{g.REFERRAL_GOLD}\n💎 <b>Кристаллы:</b> {coins}"
+                        message_text_send = f"<b>По Вашей ссылке пришёл новый друг! 🚀</b>\n\n🎁 Награда <b>+{g.REFERRAL_GOLD} 🪙 и +{REFERRAL_CRYSTALS} 💎</b> придёт, когда друг закончит регистрацию и сыграет первую игру — с соперником или в турнире"
 
                         try:
                             await bot.send_message(chat_id=referrer_id, text=message_text_send, parse_mode="HTML", reply_markup=ka.exit)
@@ -203,3 +200,35 @@ async def register_age(message: Message, state:FSMContext):
             await message.answer('<b>У Вас нет столько монет! 😅</b>\n\n💰 Хотите использовать монеты?', parse_mode=ParseMode.HTML, reply_markup=kb.use_coins_q)
     else:
         await message.answer('<b>Вы не можете применить монеты из-за проходного ограничения! 🥲</b>\n\n• Минимальное использование монет - 300\n\n💰 Хотите использовать монеты?', parse_mode=ParseMode.HTML, reply_markup=kb.use_coins_q)
+
+
+async def reward_referral(friend_id, session, bot):  # Друг сыграл первую игру — награда тому, кто пригласил
+    pending = (await session.scalars(select(PendingReferral).where((PendingReferral.friend_id == friend_id) & (PendingReferral.rewarded == False)).with_for_update())).first()
+
+    if not pending:
+        return  # Друга никто не приглашал или награда уже выдана
+
+    referrer_user = (await session.scalars(select(User).where(User.tg_user_id == pending.referrer_id))).first()
+    friend = (await session.scalars(select(User).where(User.tg_user_id == friend_id))).first()
+
+    if not referrer_user or not friend:
+        return
+
+    pending.rewarded = True
+
+    # В БД кристаллы хранятся строкой, поэтому переводим в число
+    coins = 0
+    if referrer_user.coins:
+        coins = int(referrer_user.coins)
+    coins += REFERRAL_CRYSTALS
+    referrer_user.coins = coins
+
+    await g.add_gold(pending.referrer_id, g.REFERRAL_GOLD, 'referral', session, comment = f"Друг {friend.name_user} сыграл первую игру"[:100])
+
+    friend_name = friend.name_user or ''
+    message_text_send = f"<b>Ваш друг {escape(friend_name)} сыграл первую игру! 🎉</b>\n\n🪙 <b>Монеты:</b> +{g.REFERRAL_GOLD}\n💎 <b>Кристаллы:</b> +{REFERRAL_CRYSTALS} (всего {coins})"
+    try:
+        await bot.send_message(chat_id=pending.referrer_id, text=message_text_send, parse_mode="HTML", reply_markup=ka.exit)
+        print(f"Игроку с id {pending.referrer_id} выдана награда за реферала ({friend_id})!")
+    except Exception as e:
+        print(f"❌ Игроку с id {pending.referrer_id} НЕ было отправлено уведомление о награде за реферала ({friend_id}) из-за ошибки: {e}")

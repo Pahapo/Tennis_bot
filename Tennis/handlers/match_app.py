@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.config import WEBAPP_URL, ADMINS, ADMIN_CHAT
 
 import handlers.gold as g
+import handlers.referrals as r
 
 from config.db_utils import get_db
 from sqlalchemy import select, func
@@ -216,6 +217,10 @@ async def finish_match(match, session: AsyncSession, bot):  # Счёт подт�
 
     for player in team_2:
         await reward_player(match, player, team_1, not winner_is_team_1, game_date, text, session, bot)
+
+    # Первая игра приглашённого друга — награда тому, кто пригласил
+    for player in team_1 + team_2:
+        await r.reward_referral(player, session, bot)
 
 
 async def count_rewarded_games(user_id, date_from, date_to, session: AsyncSession, opponent_id=None):  # Сколько засчитанных игр за период

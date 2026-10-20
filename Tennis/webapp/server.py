@@ -4,6 +4,7 @@ from config.config import WEBAPP_PORT
 
 from webapp.api_profile import api_me
 from webapp.api_gold import api_visit, api_gold_history, api_season_seen
+from webapp.api_tournament import api_tournaments, api_tournaments_pay, api_tournaments_score
 from webapp.api_match import api_matches_search, api_matches_mine, api_matches_create, api_matches_delete, api_matches_apply, api_score_pending, api_score_submit
 
 # Папка с файлами Mini App (html, css, js, картинки)
@@ -17,7 +18,7 @@ async def index(request):
 
 # Запуск веб-сервера рядом с ботом (в том же процессе)
 async def start_webapp(bot):
-    app = web.Application()
+    app = web.Application(client_max_size=11 * 1024 * 1024)  # Чек об оплате — до 10 МБ
     app['bot'] = bot  # Бот нужен API, чтобы отправлять уведомления игрокам
 
     app.router.add_get('/', index)
@@ -33,6 +34,10 @@ async def start_webapp(bot):
     app.router.add_post('/api/matches/apply', api_matches_apply)
     app.router.add_get('/api/score/pending', api_score_pending)
     app.router.add_post('/api/score/submit', api_score_submit)
+
+    app.router.add_get('/api/tournaments', api_tournaments)
+    app.router.add_post('/api/tournaments/pay', api_tournaments_pay)
+    app.router.add_post('/api/tournaments/score', api_tournaments_score)
 
     app.router.add_static('/static/', STATIC_DIR)
 

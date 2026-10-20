@@ -76,6 +76,14 @@ function showScreen(name) {
         }
     }
 
+    // Круглая кнопка счёта — только на главном экране (профиль)
+    const scoreButton = document.getElementById('score-fab');
+    if (name === 'profile') {
+        scoreButton.classList.remove('hidden');
+    } else {
+        scoreButton.classList.add('hidden');
+    }
+
     // Аватар подсвечен, когда открыт профиль
     const avatarButton = document.getElementById('avatar-btn');
     if (name === 'profile') {
@@ -163,6 +171,8 @@ function fillProfile() {
 
     // Рефералы
     document.getElementById('profile-friends').textContent = profile.friends;
+    document.getElementById('profile-friends-played').textContent = profile.friends_played;
+    document.getElementById('profile-ref-rules').textContent = '+' + profile.referral_gold + ' 🪙 и +' + profile.referral_crystals + ' 💎 за каждого друга. Награда придёт, когда друг закончит регистрацию и сыграет первую игру — с соперником или в турнире';
     document.getElementById('profile-ref-link').textContent = profile.referral_link;
 
     // Серия заходов
@@ -409,6 +419,369 @@ function startFireworks() {
 
 function stopFireworks() {
     clearInterval(fireworksTimer);
+}
+
+
+// ---------- Турнир ----------
+
+let tournamentData = null;
+let selectedTournament = null;
+
+// Что показать под турниром в зависимости от статуса
+const TOURNAMENT_STATUS = {
+    'pending': '⏳ Чек на проверке у редактора',
+    'registered': '✅ Вы участвуете',
+    'banned': '❌ Нельзя участвовать из-за бана',
+    'no_division': '⚠️ Сначала нужно получить дивизион — напишите редактору',
+    'wrong_division': '⚠️ Турнир не для вашего дивизиона',
+    'full': '🥲 Мест в вашем дивизионе больше нет'
+};
+
+function tournamentDetails(tournament) {
+    let text = '💪 Дивизион: ' + tournament.divisions + '\n🎾 Тип: ' + tournament.type + '\n🙋‍♂️ Участников в дивизионе: до ' + tournament.quantity + '\n📅 ' + tournament.start;
+    if (tournament.end) {
+        text += ' — ' + tournament.end;
+    }
+    text += '\n💰 Взнос: ' + tournament.price + ' бел.руб.';
+    return text;
+}
+
+function tournamentCard(tournament) {
+    const box = document.createElement('div');
+    box.className = 'card';
+
+    const title = document.createElement('div');
+    title.className = 'match-date';
+    title.textContent = '🏆 ' + tournament.name;
+    box.appendChild(title);
+
+    const details = document.createElement('div');
+    details.className = 'match-line pay-path';
+    details.textContent = tournamentDetails(tournament);
+    box.appendChild(details);
+
+    if (tournament.status === 'can_register' || tournament.status === 'can_register_second') {
+        const button = document.createElement('button');
+        button.className = 'btn btn-gold btn-wide';
+        button.type = 'button';
+        if (tournament.status === 'can_register') {
+            button.textContent = 'Записаться';
+        } else {
+            button.textContent = 'Записаться ещё в дивизион «' + tournament.division_name + '»';
+        }
+        button.addEventListener('click', function () {
+            openTournamentModal(tournament);
+        });
+        box.appendChild(button);
+    } else {
+        const status = document.createElement('div');
+        status.className = 'status';
+        status.textContent = TOURNAMENT_STATUS[tournament.status];
+        box.appendChild(status);
+    }
+
+    return box;
+}
+
+function tableButton(table) {
+    const button = document.createElement('button');
+    button.className = 'btn table-link';
+    button.type = 'button';
+    button.textContent = '📋 ' + table.name;
+    button.addEventListener('click', function () {
+        tg.openLink(table.link);
+    });
+    return button;
+}
+
+function fillTournaments() {
+    const list = document.getElementById('tournament-list');
+    list.innerHTML = '';
+
+    if (tournamentData.tournaments.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Сейчас нет турниров, на которые идёт запись 🥲';
+        list.appendChild(empty);
+    }
+    for (const tournament of tournamentData.tournaments) {
+        list.appendChild(tournamentCard(tournament));
+    }
+
+    // Таблицы
+    const tables = document.getElementById('tournament-tables');
+    tables.innerHTML = '';
+
+    const activeTitle = document.createElement('div');
+    activeTitle.className = 'section-title';
+    activeTitle.textContent = 'Активные турниры';
+    tables.appendChild(activeTitle);
+    if (tournamentData.active_tables.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = 'Пока нет';
+        tables.appendChild(empty);
+    }
+    for (const table of tournamentData.active_tables) {
+        tables.appendChild(tableButton(table));
+    }
+
+    const historyTitle = document.createElement('div');
+    historyTitle.className = 'section-title';
+    historyTitle.textContent = 'Архив';
+    tables.appendChild(historyTitle);
+    if (tournamentData.history_tables.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = 'Пока нет';
+        tables.appendChild(empty);
+    }
+    for (const table of tournamentData.history_tables) {
+        tables.appendChild(tableButton(table));
+    }
+
+    // Кнопка счёта — если я играю в идущем турнире
+    const scoreButton = document.getElementById('btn-tournament-score');
+    if (tournamentData.running.length > 0) {
+        scoreButton.classList.remove('hidden');
+    } else {
+        scoreButton.classList.add('hidden');
+    }
+}
+
+async function loadTournaments() {
+    const result = await apiGet('/api/tournaments');
+    if (result.status !== 200) {
+        return;
+    }
+    tournamentData = result.data;
+    fillTournaments();
+}
+
+function updateTournamentPrice() {
+    const crystals = Number(document.getElementById('tournament-crystals').value || 0);
+    const price = Math.round((selectedTournament.price - crystals / tournamentData.crystals_per_ruble) * 10) / 10;
+    document.getElementById('tournament-price').textContent = price;
+}
+
+function openTournamentModal(tournament) {
+    selectedTournament = tournament;
+
+    document.getElementById('tournament-title').textContent = tournament.name;
+    let details = tournamentDetails(tournament);
+    if (tournament.status === 'can_register_second') {
+        details += '\n➕ Запись ещё в один дивизион: ' + tournament.division_name;
+    }
+    document.getElementById('tournament-details').textContent = details;
+    document.getElementById('tournament-details').className = 'tournament-details pay-path';
+    document.getElementById('tournament-regulations').textContent = tournament.regulations || 'Регламент не указан';
+
+    document.getElementById('tournament-step-rules').classList.remove('hidden');
+    document.getElementById('tournament-step-pay').classList.add('hidden');
+    document.getElementById('tournament-photo').value = '';
+    document.getElementById('tournament-crystals').value = '';
+
+    document.getElementById('tournament-modal').classList.remove('hidden');
+}
+
+function showPaymentStep() {
+    const payment = tournamentData.payment;
+    if (!payment) {
+        tg.showAlert('Произошла ошибка загрузки страницы оплаты! Пожалуйста, свяжитесь с поддержкой бота');
+        return;
+    }
+
+    document.getElementById('tournament-pay-path').textContent = '• Система «Расчёт» (ЕРИП)\n• Банковские, финансовые услуги\n• Банки, НКФО\n• ' + payment.bank + '\n• Пополнение счёта\n\nВведите номер счёта:';
+    document.getElementById('tournament-account').textContent = payment.account;
+
+    // Кристаллы
+    const crystalsField = document.getElementById('tournament-crystals-field');
+    if (tournamentData.can_use_crystals && tournamentData.crystals >= tournamentData.min_crystals) {
+        document.getElementById('tournament-crystals-label').textContent = 'Применить кристаллы 💎 (у вас ' + tournamentData.crystals + ', от ' + tournamentData.min_crystals + ', ' + tournamentData.crystals_per_ruble + ' 💎 = 1 бел.руб.)';
+        crystalsField.classList.remove('hidden');
+    } else {
+        crystalsField.classList.add('hidden');
+    }
+
+    updateTournamentPrice();
+    document.getElementById('tournament-step-rules').classList.add('hidden');
+    document.getElementById('tournament-step-pay').classList.remove('hidden');
+}
+
+async function sendPayment() {
+    const photo = document.getElementById('tournament-photo').files[0];
+    if (!photo) {
+        tg.showAlert('Прикрепите скриншот чека об оплате');
+        return;
+    }
+
+    // Фото отправляем формой (multipart), а не JSON
+    const form = new FormData();
+    form.append('tournament_id', selectedTournament.id);
+    form.append('crystals', document.getElementById('tournament-crystals').value || '0');
+    form.append('photo', photo);
+
+    const button = document.getElementById('tournament-send');
+    button.disabled = true;
+    button.textContent = 'Отправляем...';
+
+    let result;
+    try {
+        const response = await fetch('/api/tournaments/pay', {
+            method: 'POST',
+            headers: { 'X-Init-Data': tg.initData },
+            body: form
+        });
+        result = { status: response.status, data: await response.json() };
+    } catch (error) {
+        result = { status: 0, data: { error: 'Не удалось отправить чек. Проверьте интернет и попробуйте ещё раз' } };
+    }
+
+    button.disabled = false;
+    button.textContent = 'Отправить чек';
+
+    if (handleError(result)) {
+        return;
+    }
+
+    tg.HapticFeedback.notificationOccurred('success');
+    document.getElementById('tournament-modal').classList.add('hidden');
+    tg.showAlert('Спасибо за оплату! 😎 Редакторы уже проверяют чек — бот пришлёт сообщение, когда регистрацию подтвердят');
+    await loadTournaments();
+}
+
+// Счёт турнирной игры
+function fillTournamentOpponents() {
+    const tournamentId = Number(document.getElementById('tscore-tournament').value);
+    const select = document.getElementById('tscore-opponent');
+    select.innerHTML = '';
+
+    for (const tournament of tournamentData.running) {
+        if (tournament.id !== tournamentId) {
+            continue;
+        }
+        for (const player of tournament.players) {
+            const option = document.createElement('option');
+            option.value = player.id;
+            option.textContent = player.name + ' (' + player.division + ')';
+            select.appendChild(option);
+        }
+    }
+}
+
+function openTournamentScore() {
+    if (!tournamentData || tournamentData.running.length === 0) {
+        tg.showAlert('Записать счёт можно, когда идёт турнир, в котором вы участвуете');
+        return;
+    }
+
+    const select = document.getElementById('tscore-tournament');
+    select.innerHTML = '';
+    for (const tournament of tournamentData.running) {
+        const option = document.createElement('option');
+        option.value = tournament.id;
+        option.textContent = tournament.name;
+        select.appendChild(option);
+    }
+    fillTournamentOpponents();
+
+    // Поля для 3 сетов
+    const sets = document.getElementById('tscore-sets');
+    sets.innerHTML = '';
+    for (let i = 1; i <= 3; i++) {
+        const row = document.createElement('div');
+        row.className = 'set-row';
+
+        const label = document.createElement('span');
+        label.className = 'muted';
+        label.textContent = 'Сет ' + i;
+
+        const mine = document.createElement('input');
+        mine.type = 'number';
+        mine.min = '0';
+        mine.inputMode = 'numeric';
+
+        const theirs = document.createElement('input');
+        theirs.type = 'number';
+        theirs.min = '0';
+        theirs.inputMode = 'numeric';
+
+        row.appendChild(label);
+        row.appendChild(mine);
+        row.appendChild(theirs);
+        sets.appendChild(row);
+    }
+
+    document.getElementById('score-modal').classList.add('hidden');
+    document.getElementById('tscore-modal').classList.remove('hidden');
+}
+
+async function sendTournamentScore() {
+    const sets = [];
+    const rows = document.querySelectorAll('#tscore-sets .set-row');
+    for (const row of rows) {
+        const inputs = row.querySelectorAll('input');
+        if (inputs[0].value === '' && inputs[1].value === '') {
+            continue;  // Пустой сет пропускаем
+        }
+        sets.push([Number(inputs[0].value), Number(inputs[1].value)]);
+    }
+
+    const body = {
+        tournament_id: Number(document.getElementById('tscore-tournament').value),
+        opponent_id: Number(document.getElementById('tscore-opponent').value),
+        sets: sets
+    };
+
+    const button = document.getElementById('tscore-send');
+    button.disabled = true;
+    const result = await apiPost('/api/tournaments/score', body);
+    button.disabled = false;
+
+    if (handleError(result)) {
+        return;
+    }
+
+    tg.HapticFeedback.notificationOccurred('success');
+    document.getElementById('tscore-modal').classList.add('hidden');
+    tg.showAlert('✅ Счёт отправлен сопернику на подтверждение');
+}
+
+function setupTournament() {
+    const segments = document.querySelectorAll('#tournament-tabs .segment');
+    for (const segment of segments) {
+        segment.addEventListener('click', function () {
+            for (const other of segments) {
+                other.classList.remove('active');
+                document.getElementById('tournament-' + other.dataset.tournament).classList.add('hidden');
+            }
+            segment.classList.add('active');
+            document.getElementById('tournament-' + segment.dataset.tournament).classList.remove('hidden');
+        });
+    }
+
+    document.getElementById('tournament-to-pay').addEventListener('click', showPaymentStep);
+    document.getElementById('tournament-crystals').addEventListener('input', updateTournamentPrice);
+    document.getElementById('tournament-send').addEventListener('click', sendPayment);
+    document.getElementById('tournament-close').addEventListener('click', function () {
+        document.getElementById('tournament-modal').classList.add('hidden');
+    });
+    document.getElementById('tournament-copy-account').addEventListener('click', async function () {
+        try {
+            await navigator.clipboard.writeText(tournamentData.payment.account);
+            tg.showAlert('Номер счёта скопирован!');
+        } catch (error) {
+            tg.showAlert(tournamentData.payment.account);
+        }
+    });
+
+    document.getElementById('btn-tournament-score').addEventListener('click', openTournamentScore);
+    document.getElementById('score-tournament-btn').addEventListener('click', openTournamentScore);
+    document.getElementById('tscore-tournament').addEventListener('change', fillTournamentOpponents);
+    document.getElementById('tscore-send').addEventListener('click', sendTournamentScore);
+    document.getElementById('tscore-close').addEventListener('click', function () {
+        document.getElementById('tscore-modal').classList.add('hidden');
+    });
 }
 
 
@@ -849,7 +1222,7 @@ function openFromLink() {
 
     if (screen === 'score') {
         openScoreModal();
-    } else if (screen === 'opponent' || screen === 'arena') {
+    } else if (screen === 'opponent' || screen === 'arena' || screen === 'tournament') {
         showScreen(screen);
     }
 }
@@ -902,6 +1275,7 @@ async function start() {
     setupShop();
     setupOpponent();
     setupScore();
+    setupTournament();
 
     if (!tg.initData) {
         showError('Откройте приложение в Telegram', 'Приложение работает только внутри Telegram — нажмите кнопку «Приложение» в боте');
@@ -930,6 +1304,7 @@ async function start() {
 
         await loadOpponent();
         await loadPending();
+        await loadTournaments();
         showScreen('profile');
         tg.BackButton.hide();  // При первом открытии "Назад" не нужен
 

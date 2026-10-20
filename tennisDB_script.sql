@@ -162,3 +162,26 @@ CREATE TABLE `match_rewards` (
   PRIMARY KEY (`id_reward`),
   KEY `match_rewards_user` (`tg_user_id`, `game_date`)
 );
+
+CREATE TABLE `pending_referrals` (
+  `friend_id` bigint NOT NULL,
+  `referrer_id` bigint NOT NULL,
+  `rewarded` tinyint(1) NOT NULL DEFAULT 0,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`friend_id`),
+  KEY `pending_referrals_referrer` (`referrer_id`)
+);
+
+CREATE TABLE `payment_requests` (
+  `id_request` int NOT NULL AUTO_INCREMENT,
+  `tg_user_id` bigint NOT NULL,
+  `tournament_id` int NOT NULL,
+  `division_level` int NOT NULL,
+  `price` float NOT NULL,
+  `crystals` int NOT NULL DEFAULT 0,
+  `photo` varchar(100) NOT NULL,
+  `status` varchar(20) NOT NULL,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`id_request`),
+  KEY `payment_requests_user` (`tg_user_id`, `tournament_id`)
+);

@@ -11,6 +11,7 @@ from models.Division import Division
 from models.Tournament import Tournament
 from models.TournamentPlayers import TournamentPlayers
 from models.Referrals import Referrals
+from models.PendingReferral import PendingReferral
 
 
 # GET /api/me — данные профиля игрока
@@ -53,6 +54,9 @@ async def api_me(request):
         if user_referrals and user_referrals.count:
             friends = user_referrals.count
 
+        # Сколько приглашённых уже сыграли первую игру (за них пришла награда)
+        friends_played = len((await session.scalars(select(PendingReferral).where((PendingReferral.referrer_id == user_id) & (PendingReferral.rewarded == True)))).all())
+
         # Монеты, лига и серия
         progress = await g.get_progress(user_id, session)
 
@@ -85,6 +89,9 @@ async def api_me(request):
         'tournaments': tournaments,
         'referral_link': await r.generate_referral_link(user_id),
         'friends': friends,
+        'friends_played': friends_played,
+        'referral_gold': g.REFERRAL_GOLD,
+        'referral_crystals': r.REFERRAL_CRYSTALS,
         'gold': progress.gold,
         'season_gold': progress.season_gold,
         'league': g.get_league(progress.season_gold),

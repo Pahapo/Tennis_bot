@@ -10,6 +10,7 @@ from config.config import CHANNEL_SCORES
 import keywords.kw_any as kb
 import handlers.classes as cl
 import handlers.validation as valid
+import handlers.referrals as r
 
 from config.db_utils import get_db_readonly, get_db
 from sqlalchemy import select
@@ -262,6 +263,10 @@ async def handle_button_click_confirm_score(callback: types.CallbackQuery, bot: 
 
                 await update_division_if_needed(winner, session, callback, bot)
                 await update_division_if_needed(loser, session, callback, bot)
+
+                # Первая игра приглашённого друга — награда тому, кто пригласил
+                await r.reward_referral(winner.tg_user_id, session, bot)
+                await r.reward_referral(loser.tg_user_id, session, bot)
 
             else:
                 await callback.message.answer(f"<b>Запрос на подтверждение счёта не был отправлен!</b> Ошибка на стороне сервера!", parse_mode=ParseMode.HTML, reply_markup=kb.exit) 
