@@ -18,6 +18,10 @@ for name in REQUIRED_VARIABLES:
 if missing_variables:
     raise SystemExit(f"❌ В файле {dotenv_path} не хватает переменных: {', '.join(missing_variables)}")
 
+# Бот асинхронный — к MySQL он подключается только через драйвер aiomysql
+if not os.getenv('DATABASE_URL').startswith('mysql+aiomysql://'):
+    raise SystemExit("❌ DATABASE_URL в .env должен начинаться с mysql+aiomysql://\nПример: DATABASE_URL=mysql+aiomysql://root:ПАРОЛЬ@localhost:3306/tennis?charset=utf8mb4")
+
 TOKEN = os.getenv('TOKEN')
 BOT_USERNAME = os.getenv('BOT_USERNAME')
 CHANNEL = os.getenv('CHANNEL')
