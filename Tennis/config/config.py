@@ -1,7 +1,22 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()  # Загружает переменные из .env
+# Ищем .env: от папки этого файла вверх (Tennis/config -> Tennis -> Tennis_bot)
+dotenv_path = find_dotenv()
+if not dotenv_path:
+    raise SystemExit("❌ Файл .env не найден. Он должен лежать в папке Tennis_bot (рядом с requirements.txt) и называться ровно .env (не .env.txt)")
+
+load_dotenv(dotenv_path)  # Загружает переменные из .env
+
+# Без этих переменных бот не запустится — проверяем все сразу, чтобы показать понятную ошибку
+REQUIRED_VARIABLES = ['TOKEN', 'DATABASE_URL', 'CHANNELS_SUB', 'ADMINS', 'MAIN_EDITOR', 'EDITOR', 'EMAILS']
+missing_variables = []
+for name in REQUIRED_VARIABLES:
+    if not os.getenv(name):
+        missing_variables.append(name)
+
+if missing_variables:
+    raise SystemExit(f"❌ В файле {dotenv_path} не хватает переменных: {', '.join(missing_variables)}")
 
 TOKEN = os.getenv('TOKEN')
 BOT_USERNAME = os.getenv('BOT_USERNAME')
