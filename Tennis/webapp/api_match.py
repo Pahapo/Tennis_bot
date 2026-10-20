@@ -5,6 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config.config import CHANNEL
 
 import handlers.gold as g
+import handlers.skins as sk
 import handlers.functions as f
 import handlers.match_app as ma
 import handlers.validation as valid
@@ -17,6 +18,7 @@ from models.User import User
 from models.Division import Division
 from models.Match import Match
 from models.MatchReward import MatchReward
+from models.PlayerProgress import PlayerProgress
 
 
 # ---------- Вспомогательные функции ----------
@@ -35,7 +37,7 @@ async def player_card(user_id, session: AsyncSession):  # Короткие да�
     user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
 
     if user == None:
-        return {'id': user_id, 'name': 'Игрок', 'link': '', 'division': 'Не определён', 'rating': None}
+        return {'id': user_id, 'hero': sk.DEFAULT_HERO, 'name': 'Игрок', 'link': '', 'division': 'Не определён', 'rating': None}
 
     division_name = 'Не определён'
     if user.division_level != None:
@@ -43,8 +45,15 @@ async def player_card(user_id, session: AsyncSession):  # Короткие да�
         if division:
             division_name = division.name_division
 
+    # Герой игрока — показываем мини-аватаром в карточках игр
+    hero = sk.DEFAULT_HERO
+    progress = (await session.scalars(select(PlayerProgress).where(PlayerProgress.tg_user_id == user_id))).first()
+    if progress:
+        hero = sk.get_hero(progress)
+
     return {
         'id': user.tg_user_id,
+        'hero': hero,
         'name': user.name_user,
         'link': user.link,
         'division': division_name,

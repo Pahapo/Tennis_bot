@@ -1,7 +1,7 @@
 import re
 import asyncio
 from html import escape, unescape
-from datetime import datetime, timedelta
+from datetime import datetime
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 from aiogram.enums import ParseMode
@@ -136,9 +136,13 @@ async def get_open_tournaments(session: AsyncSession):  # Турниры, на �
     return result
 
 
-async def get_running_tournaments(user_id, session: AsyncSession):  # Мои турниры, которые уже идут (для записи счёта)
+def is_started(tournament):  # Турнир уже начался. Дату окончания не проверяем — на практике турниры затягиваются
     today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    start = parse_day(tournament.start_tournament)
+    return start != None and start <= today
 
+
+async def get_my_tournaments(user_id, session: AsyncSession):  # Все турниры, в которых игрок участвовал (сначала новые)
     my_rows = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == user_id))).all()
     tournament_ids = []
     for row in my_rows:
@@ -147,12 +151,9 @@ async def get_running_tournaments(user_id, session: AsyncSession):  # Мои т�
 
     result = []
     if tournament_ids:
-        tournaments = (await session.scalars(select(Tournament).where(Tournament.tournament_id.in_(tournament_ids)))).all()
+        tournaments = (await session.scalars(select(Tournament).where(Tournament.tournament_id.in_(tournament_ids)).order_by(Tournament.tournament_id.desc()))).all()
         for tournament in tournaments:
-            start = parse_day(tournament.start_tournament)
-            end = parse_day(tournament.end_tournament)
-            if start and start <= today and (end == None or end >= today - timedelta(days=3)):
-                result.append(tournament)
+            result.append(tournament)
     return result
 
 

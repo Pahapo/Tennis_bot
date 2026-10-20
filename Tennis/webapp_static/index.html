@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=5">
+    <link rel="stylesheet" href="/static/css/style.css?v=6">
 </head>
 <body>
 
@@ -39,6 +39,14 @@
                     <div class="profile-name" id="profile-name"></div>
                     <div class="muted" id="profile-link"></div>
                 </div>
+            </div>
+
+            <div class="card">
+                <div class="scene" id="profile-scene">
+                    <img class="scene-bg" id="profile-scene-bg" src="/static/img/locations/1.svg" alt="">
+                    <img class="scene-hero" id="profile-scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
+                </div>
+                <button class="btn btn-wide scene-button" id="btn-change-skin" type="button">🎨 Сменить скин</button>
             </div>
 
             <div class="card ban hidden" id="profile-ban"></div>
@@ -88,7 +96,7 @@
             <div class="segmented segmented-grid" id="tournament-tabs">
                 <button class="segment active" data-tournament="list" type="button">Запись на турнир</button>
                 <button class="segment" data-tournament="tables" type="button">Турнирные таблицы</button>
-                <button class="segment segment-wide" data-tournament="active" type="button">Активные турниры</button>
+                <button class="segment segment-wide" data-tournament="active" type="button">Мои турниры</button>
             </div>
             <div id="tournament-list"></div>
             <div class="hidden" id="tournament-tables"></div>
@@ -123,7 +131,10 @@
             <h2 class="screen-title">Лиги</h2>
 
             <div class="card league-current">
-                <img class="league-picture" id="league-picture" src="/static/img/locations/1.svg" alt="">
+                <div class="scene" id="main-scene">
+                    <img class="scene-bg" id="scene-bg" src="/static/img/locations/1.svg" alt="">
+                    <img class="scene-hero" id="scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
+                </div>
                 <div class="league-name" id="league-name"></div>
                 <div class="progress">
                     <div class="progress-fill" id="league-progress"></div>
@@ -155,13 +166,30 @@
                 <button class="segment active" data-shop="skins" type="button">Скины</button>
                 <button class="segment" data-shop="market" type="button">Барахолка</button>
             </div>
-            <div class="card stub" id="shop-skins">
-                <div class="card-title">Скины</div>
-                <div class="muted">Скоро здесь можно будет потратить монеты на скины</div>
+            <div id="shop-skins">
+                <div class="card">
+                    <div class="scene" id="shop-scene">
+                        <img class="scene-bg" id="shop-scene-bg" src="/static/img/locations/1.svg" alt="">
+                        <img class="scene-hero" id="shop-scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
+                    </div>
+                </div>
+                <div class="section-title">Герои</div>
+                <div class="skins-grid" id="skins-heroes"></div>
+                <div class="section-title">Фоны</div>
+                <div class="skins-grid" id="skins-backgrounds"></div>
             </div>
-            <div class="card stub hidden" id="shop-market">
-                <div class="card-title">Барахолка</div>
-                <div class="muted">Скоро здесь появится инвентарь, который выставили игроки</div>
+
+            <div class="hidden" id="shop-market">
+                <button class="btn btn-gold btn-wide" id="btn-create-listing" type="button">+ Создать объявление</button>
+
+                <div class="section-title">Товары клуба:</div>
+                <div class="club-row" id="market-club"></div>
+
+                <div class="section-title">Товары от игроков:</div>
+                <div id="market-listings"></div>
+
+                <div class="section-title">Мои объявления</div>
+                <div id="market-mine"></div>
             </div>
         </section>
 
@@ -177,13 +205,13 @@
 
     <!-- Круглая кнопка справа: ежедневная награда (только на главном экране) -->
     <button class="daily-fab" id="daily-fab" type="button">
-        <span class="score-fab-icon">🎁</span>
+        <img class="fab-image" src="/static/img/icons/chest.svg" alt="Награда">
         <span class="dot hidden" id="daily-dot"></span>
     </button>
 
     <!-- Круглая кнопка слева: игры, где нужно записать счёт (только на главном экране) -->
     <button class="score-fab" id="score-fab" type="button">
-        <span class="score-fab-icon">✍️</span>
+        <span class="score-fab-text">0:0</span>
         <span class="fab-badge hidden" id="score-badge">0</span>
     </button>
 
@@ -258,6 +286,60 @@
             <div class="buttons-row">
                 <button class="btn" id="tscore-close" type="button">Отмена</button>
                 <button class="btn btn-gold" id="tscore-send" type="button">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Окно: товар клуба -->
+    <div class="modal hidden" id="club-modal">
+        <div class="modal-box modal-scroll">
+            <img class="news-photo hidden" id="club-photo" src="" alt="">
+            <div class="modal-title" id="club-title"></div>
+            <div class="news-text left" id="club-text"></div>
+            <button class="btn" id="club-close" type="button">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Окно: новое объявление на барахолке -->
+    <div class="modal hidden" id="listing-modal">
+        <div class="modal-box modal-scroll">
+            <div class="modal-title">Новое объявление</div>
+
+            <label class="field">
+                <span>Название</span>
+                <input type="text" id="listing-title" maxlength="60">
+            </label>
+
+            <label class="field">
+                <span>Цена, бел.руб.</span>
+                <input type="number" id="listing-price" min="0" step="0.5" inputmode="decimal">
+            </label>
+
+            <label class="field">
+                <span>Категория</span>
+                <select id="listing-category"></select>
+            </label>
+
+            <label class="field">
+                <span>Состояние</span>
+                <select id="listing-condition"></select>
+            </label>
+
+            <label class="field">
+                <span>Описание (необязательно)</span>
+                <textarea id="listing-description" maxlength="500" rows="3"></textarea>
+            </label>
+
+            <label class="field">
+                <span id="listing-photos-label">Фото (от 1 до 3)</span>
+                <input type="file" id="listing-photos" accept="image/*" multiple>
+            </label>
+
+            <div class="muted">Объявление появится после проверки админом и будет видно 30 дней</div>
+
+            <div class="buttons-row">
+                <button class="btn" id="listing-cancel" type="button">Отмена</button>
+                <button class="btn btn-gold" id="listing-submit" type="button">Отправить</button>
             </div>
         </div>
     </div>
@@ -352,6 +434,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=5"></script>
+    <script src="/static/js/app.js?v=6"></script>
 </body>
 </html>

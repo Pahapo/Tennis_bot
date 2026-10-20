@@ -2,6 +2,7 @@ from aiohttp import web
 
 import handlers.referrals as r
 import handlers.gold as g
+import handlers.skins as sk
 from webapp.auth import get_tg_user
 from webapp.api_news import count_unread_news
 
@@ -106,5 +107,7 @@ async def api_me(request):
         'best_streak': progress.best_streak,
         'season_summary': season_summary,
         'daily_available': daily_available,
-        'unread_news': unread_news
+        'unread_news': unread_news,
+        'hero': sk.get_hero(progress),
+        'background': sk.get_background(progress)
     })

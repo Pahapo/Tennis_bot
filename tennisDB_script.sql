@@ -199,3 +199,33 @@ CREATE TABLE `news` (
 
 ALTER TABLE `player_progress`
   ADD COLUMN `last_news_seen` int NOT NULL DEFAULT 0;
+
+CREATE TABLE `player_skins` (
+  `id_skin` int NOT NULL AUTO_INCREMENT,
+  `tg_user_id` bigint NOT NULL,
+  `skin_id` varchar(30) NOT NULL,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`id_skin`),
+  UNIQUE KEY `player_skins_unique` (`tg_user_id`, `skin_id`)
+);
+
+ALTER TABLE `player_progress`
+  ADD COLUMN `skin_hero` varchar(30) DEFAULT NULL,
+  ADD COLUMN `skin_background` varchar(30) DEFAULT NULL;
+
+CREATE TABLE `market_listings` (
+  `id_listing` int NOT NULL AUTO_INCREMENT,
+  `tg_user_id` bigint NOT NULL,
+  `title` varchar(60) NOT NULL,
+  `description` varchar(500) DEFAULT NULL,
+  `price` float NOT NULL,
+  `category` varchar(30) NOT NULL,
+  `item_condition` varchar(20) NOT NULL,
+  `photos` varchar(300) NOT NULL,
+  `status` varchar(20) NOT NULL,
+  `created` datetime NOT NULL,
+  `expires` datetime DEFAULT NULL,
+  PRIMARY KEY (`id_listing`),
+  KEY `market_listings_user` (`tg_user_id`),
+  KEY `market_listings_status` (`status`, `expires`)
+);

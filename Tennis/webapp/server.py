@@ -4,6 +4,8 @@ from config.config import WEBAPP_PORT
 
 from webapp.api_profile import api_me
 from webapp.api_gold import api_visit, api_gold_history, api_season_seen
+from webapp.api_shop import api_skins, api_skins_buy, api_skins_equip, api_market, api_market_create, api_market_action, INVENTORY_DIR
+import handlers.market_app as mk
 from webapp.api_news import api_news, api_news_seen, NEWS_DIR
 from webapp.api_tournament import api_tournaments, api_tournaments_pay, api_tournaments_score
 from webapp.api_match import api_matches_search, api_matches_mine, api_matches_create, api_matches_delete, api_matches_apply, api_score_pending, api_score_submit
@@ -40,6 +42,13 @@ async def start_webapp(bot):
     app.router.add_post('/api/tournaments/pay', api_tournaments_pay)
     app.router.add_post('/api/tournaments/score', api_tournaments_score)
 
+    app.router.add_get('/api/skins', api_skins)
+    app.router.add_post('/api/skins/buy', api_skins_buy)
+    app.router.add_post('/api/skins/equip', api_skins_equip)
+    app.router.add_get('/api/market', api_market)
+    app.router.add_post('/api/market/create', api_market_create)
+    app.router.add_post('/api/market/action', api_market_action)
+
     app.router.add_get('/api/news', api_news)
     app.router.add_post('/api/news_seen', api_news_seen)
 
@@ -47,6 +56,10 @@ async def start_webapp(bot):
 
     os.makedirs(NEWS_DIR, exist_ok=True)
     app.router.add_static('/news_img/', NEWS_DIR)  # Фото из рассылок
+
+    os.makedirs(mk.MARKET_DIR, exist_ok=True)
+    app.router.add_static('/market_img/', mk.MARKET_DIR)  # Фото объявлений барахолки
+    app.router.add_static('/inventory_img/', INVENTORY_DIR)  # Фото товаров клуба
 
     runner = web.AppRunner(app)
     await runner.setup()

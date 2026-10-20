@@ -78,9 +78,9 @@ async def api_tournaments(request):
             if link:
                 history_tables.append({'name': name, 'link': link})
 
-        # Мои идущие турниры и их участники — для записи счёта
-        running = []
-        for tournament in await ta.get_running_tournaments(user_id, session):
+        # Мои турниры и их участники — для записи счёта
+        my_tournaments = []
+        for tournament in await ta.get_my_tournaments(user_id, session):
             rows = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tournament == tournament.tournament_id))).all()
 
             players = []
@@ -94,7 +94,7 @@ async def api_tournaments(request):
                     players.append({'id': player.tg_user_id, 'name': player.name_user, 'division': division_names.get(player.division_level, 'Не определён')})
 
             players.sort(key=lambda player: player['name'] or '')
-            running.append({'id': tournament.tournament_id, 'name': tournament.name_tournament, 'start': tournament.start_tournament, 'end': tournament.end_tournament, 'link': tournament.link_table, 'players': players})
+            my_tournaments.append({'id': tournament.tournament_id, 'name': tournament.name_tournament, 'start': tournament.start_tournament, 'end': tournament.end_tournament, 'link': tournament.link_table, 'started': ta.is_started(tournament), 'players': players})
 
         payment_method = (await session.scalars(select(PaymentMethod).where(PaymentMethod.payment_method_id == 1))).first()
         payment = None
@@ -107,7 +107,7 @@ async def api_tournaments(request):
         'tournaments': tournaments,
         'active_tables': active_tables,
         'history_tables': history_tables,
-        'running': running,
+        'my_tournaments': my_tournaments,
         'payment': payment,
         'crystals': crystals,
         'can_use_crystals': not ta.is_staff(user_id),
@@ -219,13 +219,14 @@ async def api_tournaments_score(request):
 
     async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-        running = await ta.get_running_tournaments(user_id, session)
+        # Счёт можно записать в любом моём турнире, который уже начался
         tournament_ids = []
-        for tournament in running:
-            tournament_ids.append(tournament.tournament_id)
+        for tournament in await ta.get_my_tournaments(user_id, session):
+            if ta.is_started(tournament):
+                tournament_ids.append(tournament.tournament_id)
 
         if data.get('tournament_id') not in tournament_ids:
-            return web.json_response({'error': 'Выберите турнир, в котором вы играете'}, status=400)
+            return web.json_response({'error': 'Выберите турнир, в котором вы играете (и который уже начался)'}, status=400)
 
         opponent_row = (await session.scalars(select(TournamentPlayers).where((TournamentPlayers.id_tournament == data.get('tournament_id')) & (TournamentPlayers.id_tg_user == data.get('opponent_id'))))).first()
 

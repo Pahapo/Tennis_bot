@@ -254,7 +254,7 @@ function fillLeague() {
     const number = profile.league;          // Текущая лига (1-10)
     const current = leagues[number - 1];
 
-    document.getElementById('league-picture').src = '/static/img/locations/' + number + '.svg';
+    fillScenes();
     document.getElementById('league-name').textContent = 'Лига ' + number + ': ' + current.name;
 
     // Прогресс до следующей лиги
@@ -432,7 +432,7 @@ async function openNews() {
 
         if (news.link_url) {
             const button = document.createElement('button');
-            button.className = 'btn btn-gold btn-wide';
+            button.className = 'btn btn-gold btn-wide news-button';
             button.type = 'button';
             button.textContent = news.link_text || 'Открыть';
             button.addEventListener('click', function () {
@@ -638,6 +638,13 @@ function runningCard(tournament) {
     dates.textContent = '📅 ' + tournament.start + (tournament.end ? ' — ' + tournament.end : '') + ' · соперников: ' + tournament.players.length;
     box.appendChild(dates);
 
+    if (!tournament.started) {
+        const status = document.createElement('div');
+        status.className = 'status';
+        status.textContent = '⏳ Турнир ещё не начался';
+        box.appendChild(status);
+    }
+
     if (tournament.link) {
         const button = document.createElement('button');
         button.className = 'btn btn-wide tournament-card-button';
@@ -709,23 +716,37 @@ function fillTournaments() {
         tables.appendChild(tableButton(table));
     }
 
-    // Активные турниры: кнопка счёта и турниры, в которых я играю
+    // Мои турниры: все, в которых я участвовал. Счёт можно записать в любом начавшемся
+    // (дату окончания не проверяем — турниры часто затягиваются)
     const running = document.getElementById('tournament-running');
     running.innerHTML = '';
     const scoreButton = document.getElementById('btn-tournament-score');
 
-    if (tournamentData.running.length === 0) {
+    if (startedTournaments().length === 0) {
         scoreButton.classList.add('hidden');
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = 'Сейчас вы не играете ни в одном турнире';
-        running.appendChild(empty);
     } else {
         scoreButton.classList.remove('hidden');
     }
-    for (const tournament of tournamentData.running) {
+
+    if (tournamentData.my_tournaments.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Вы ещё не участвовали в турнирах';
+        running.appendChild(empty);
+    }
+    for (const tournament of tournamentData.my_tournaments) {
         running.appendChild(runningCard(tournament));
     }
+}
+
+function startedTournaments() {  // Мои турниры, которые уже начались
+    const result = [];
+    for (const tournament of tournamentData.my_tournaments) {
+        if (tournament.started) {
+            result.push(tournament);
+        }
+    }
+    return result;
 }
 
 async function loadTournaments() {
@@ -835,7 +856,7 @@ function fillTournamentOpponents() {
     const select = document.getElementById('tscore-opponent');
     select.innerHTML = '';
 
-    for (const tournament of tournamentData.running) {
+    for (const tournament of tournamentData.my_tournaments) {
         if (tournament.id !== tournamentId) {
             continue;
         }
@@ -849,14 +870,14 @@ function fillTournamentOpponents() {
 }
 
 function openTournamentScore() {
-    if (!tournamentData || tournamentData.running.length === 0) {
-        tg.showAlert('Записать счёт можно, когда идёт турнир, в котором вы участвуете');
+    if (!tournamentData || startedTournaments().length === 0) {
+        tg.showAlert('Записать счёт можно в турнире, в котором вы участвуете и который уже начался');
         return;
     }
 
     const select = document.getElementById('tscore-tournament');
     select.innerHTML = '';
-    for (const tournament of tournamentData.running) {
+    for (const tournament of startedTournaments()) {
         const option = document.createElement('option');
         option.value = tournament.id;
         option.textContent = tournament.name;
@@ -980,7 +1001,12 @@ function playerRow(player) {
     const name = document.createElement('button');
     name.className = 'player-name';
     name.type = 'button';
-    name.textContent = '🙋‍♂️ ' + player.name;
+    const hero = document.createElement('img');
+    hero.className = 'hero-mini';
+    hero.src = '/static/img/skins/' + player.hero + '.svg';
+    hero.alt = '';
+    name.appendChild(hero);
+    name.appendChild(document.createTextNode(player.name));
     if (player.link) {
         name.addEventListener('click', function () {
             tg.openTelegramLink(player.link);
@@ -1401,9 +1427,493 @@ function openFromLink() {
 
     if (screen === 'score') {
         openScoreModal();
-    } else if (screen === 'opponent' || screen === 'arena' || screen === 'tournament') {
+    } else if (screen === 'opponent' || screen === 'arena' || screen === 'tournament' || screen === 'shop') {
         showScreen(screen);
+    } else if (screen === 'market') {
+        showScreen('shop');
+        document.querySelector('#screen-shop .segment[data-shop=market]').click();
     }
+}
+
+
+// ---------- Сцена: фон + герой ----------
+
+function backgroundUrl(background, league) {  // Свой фон или картинка текущей лиги
+    if (background) {
+        return '/static/img/skins/' + background + '.svg';
+    }
+    return '/static/img/locations/' + league + '.svg';
+}
+
+function fillScenes() {
+    const background = backgroundUrl(profile.background, profile.league);
+    const hero = '/static/img/skins/' + profile.hero + '.svg';
+
+    const prefixes = ['scene', 'profile-scene', 'shop-scene'];
+    for (const prefix of prefixes) {
+        document.getElementById(prefix + '-bg').src = background;
+        document.getElementById(prefix + '-hero').src = hero;
+    }
+}
+
+
+// ---------- Магазин: скины ----------
+
+let skinsData = null;
+
+function skinCard(skin) {
+    const box = document.createElement('div');
+    box.className = 'card skin-card';
+
+    const equipped = skin.id === skinsData.hero || skin.id === skinsData.background;
+    if (equipped) {
+        box.classList.add('equipped');
+    }
+
+    const image = document.createElement('img');
+    image.className = 'skin-image';
+    if (skin.type === 'background') {
+        image.classList.add('background');
+    }
+    image.src = '/static/img/skins/' + skin.id + '.svg';
+    image.alt = skin.name;
+    box.appendChild(image);
+
+    const name = document.createElement('div');
+    name.className = 'skin-name';
+    name.textContent = skin.name;
+    box.appendChild(name);
+
+    const rarity = document.createElement('div');
+    rarity.className = 'rarity rarity-' + skin.rarity;
+    rarity.textContent = skin.rarity_name + (skin.seasonal ? ' · сезонный' : '');
+    box.appendChild(rarity);
+
+    if (equipped) {
+        const button = document.createElement('button');
+        button.className = 'btn';
+        button.type = 'button';
+        button.disabled = true;
+        button.textContent = '✅ Надето';
+        box.appendChild(button);
+    } else if (skin.owned) {
+        const button = document.createElement('button');
+        button.className = 'btn';
+        button.type = 'button';
+        button.textContent = 'Надеть';
+        button.addEventListener('click', function () {
+            equipSkin(skin.id);
+        });
+        box.appendChild(button);
+    } else if (skin.locked_text) {
+        const locked = document.createElement('div');
+        locked.className = 'skin-locked';
+        locked.textContent = skin.locked_text;
+        box.appendChild(locked);
+    } else {
+        const button = document.createElement('button');
+        button.className = 'btn btn-gold';
+        button.type = 'button';
+        button.textContent = 'Купить за ' + skin.price + ' 🪙';
+        button.addEventListener('click', function () {
+            buySkin(skin);
+        });
+        box.appendChild(button);
+    }
+
+    return box;
+}
+
+// Карточка "фон текущей лиги" — бесплатный фон по умолчанию
+function leagueBackgroundCard() {
+    const box = document.createElement('div');
+    box.className = 'card skin-card';
+    const equipped = skinsData.background === null;
+    if (equipped) {
+        box.classList.add('equipped');
+    }
+
+    const image = document.createElement('img');
+    image.className = 'skin-image background';
+    image.src = '/static/img/locations/' + profile.league + '.svg';
+    image.alt = '';
+    box.appendChild(image);
+
+    const name = document.createElement('div');
+    name.className = 'skin-name';
+    name.textContent = 'Фон моей лиги';
+    box.appendChild(name);
+
+    const rarity = document.createElement('div');
+    rarity.className = 'rarity rarity-common';
+    rarity.textContent = 'Бесплатно';
+    box.appendChild(rarity);
+
+    const button = document.createElement('button');
+    button.className = 'btn';
+    button.type = 'button';
+    if (equipped) {
+        button.disabled = true;
+        button.textContent = '✅ Надето';
+    } else {
+        button.textContent = 'Надеть';
+        button.addEventListener('click', function () {
+            equipSkin('league');
+        });
+    }
+    box.appendChild(button);
+
+    return box;
+}
+
+function fillSkins() {
+    const heroes = document.getElementById('skins-heroes');
+    const backgrounds = document.getElementById('skins-backgrounds');
+    heroes.innerHTML = '';
+    backgrounds.innerHTML = '';
+
+    backgrounds.appendChild(leagueBackgroundCard());
+
+    for (const skin of skinsData.skins) {
+        if (skin.type === 'hero') {
+            heroes.appendChild(skinCard(skin));
+        } else {
+            backgrounds.appendChild(skinCard(skin));
+        }
+    }
+}
+
+async function loadSkins() {
+    const result = await apiGet('/api/skins');
+    if (result.status !== 200) {
+        return;
+    }
+    skinsData = result.data;
+    fillSkins();
+}
+
+function buySkin(skin) {
+    tg.showConfirm('Купить «' + skin.name + '» за ' + skin.price + ' 🪙?', async function (ok) {
+        if (!ok) {
+            return;
+        }
+        const result = await apiPost('/api/skins/buy', { skin_id: skin.id });
+        if (handleError(result)) {
+            return;
+        }
+        tg.HapticFeedback.notificationOccurred('success');
+        await reloadProfile();
+        await loadSkins();
+    });
+}
+
+async function equipSkin(skinId) {
+    const result = await apiPost('/api/skins/equip', { skin_id: skinId });
+    if (handleError(result)) {
+        return;
+    }
+    tg.HapticFeedback.selectionChanged();
+    await reloadProfile();
+    await loadSkins();
+}
+
+
+// ---------- Магазин: барахолка ----------
+
+let marketData = null;
+
+const LISTING_STATUS = {
+    'moderation': '⏳ На проверке у админа',
+    'rejected': '❌ Не прошло проверку',
+    'sold': '✅ Продано'
+};
+
+function clubCard(item) {
+    const box = document.createElement('div');
+    box.className = 'card club-card';
+
+    if (item.photo) {
+        const photo = document.createElement('img');
+        photo.src = item.photo;
+        photo.alt = '';
+        box.appendChild(photo);
+    }
+
+    const title = document.createElement('div');
+    title.className = 'skin-name';
+    title.textContent = item.category;
+    box.appendChild(title);
+
+    const text = document.createElement('div');
+    text.className = 'club-card-text';
+    text.textContent = item.description;
+    box.appendChild(text);
+
+    box.addEventListener('click', function () {
+        const photo = document.getElementById('club-photo');
+        if (item.photo) {
+            photo.src = item.photo;
+            photo.classList.remove('hidden');
+        } else {
+            photo.classList.add('hidden');
+        }
+        document.getElementById('club-title').textContent = item.category;
+        document.getElementById('club-text').textContent = item.description;
+        document.getElementById('club-modal').classList.remove('hidden');
+    });
+
+    return box;
+}
+
+// Объявление игрока. mine — в разделе "Мои объявления" (с кнопками продавца)
+function listingCard(listing, mine) {
+    const box = document.createElement('div');
+    box.className = 'card';
+
+    const photos = document.createElement('div');
+    photos.className = 'listing-photos';
+    for (const url of listing.photos) {
+        const photo = document.createElement('img');
+        photo.src = url;
+        photo.alt = '';
+        photos.appendChild(photo);
+    }
+    box.appendChild(photos);
+
+    const title = document.createElement('div');
+    title.className = 'match-date';
+    title.textContent = listing.title;
+    box.appendChild(title);
+
+    const price = document.createElement('div');
+    price.className = 'listing-price';
+    price.textContent = listing.price + ' бел.руб.';
+    box.appendChild(price);
+
+    const info = document.createElement('div');
+    info.className = 'match-line';
+    info.textContent = listing.category + ' · ' + listing.condition + (mine ? '' : ' · продавец: ' + listing.seller_name);
+    box.appendChild(info);
+
+    if (listing.description) {
+        const description = document.createElement('div');
+        description.className = 'match-comment';
+        description.textContent = listing.description;
+        box.appendChild(description);
+    }
+
+    if (!mine) {
+        if (listing.mine) {
+            const status = document.createElement('div');
+            status.className = 'status';
+            status.textContent = 'Это ваше объявление';
+            box.appendChild(status);
+        } else {
+            const button = document.createElement('button');
+            button.className = 'btn btn-gold btn-wide tournament-card-button';
+            button.type = 'button';
+            button.textContent = '✉️ Написать продавцу';
+            button.addEventListener('click', function () {
+                tg.openTelegramLink(listing.seller_link);
+            });
+            box.appendChild(button);
+        }
+        return box;
+    }
+
+    // Мои объявления: статус и действия
+    const status = document.createElement('div');
+    status.className = 'status';
+    if (listing.status === 'active' && listing.expired) {
+        status.textContent = '⌛ Срок показа истёк ' + listing.expires;
+    } else if (listing.status === 'active') {
+        status.textContent = '🟢 В продаже до ' + listing.expires;
+    } else {
+        status.textContent = LISTING_STATUS[listing.status];
+    }
+    box.appendChild(status);
+
+    const buttons = document.createElement('div');
+    buttons.className = 'buttons-row';
+
+    if (listing.status === 'active') {
+        const prolong = document.createElement('button');
+        prolong.className = 'btn';
+        prolong.type = 'button';
+        prolong.textContent = 'Продлить';
+        prolong.addEventListener('click', function () {
+            listingAction(listing, 'prolong', 'Продлить показ ещё на 30 дней?');
+        });
+        buttons.appendChild(prolong);
+
+        const sold = document.createElement('button');
+        sold.className = 'btn btn-gold';
+        sold.type = 'button';
+        sold.textContent = 'Продано';
+        sold.addEventListener('click', function () {
+            listingAction(listing, 'sold', 'Отметить «' + listing.title + '» проданным?');
+        });
+        buttons.appendChild(sold);
+    }
+
+    const remove = document.createElement('button');
+    remove.className = 'btn btn-red';
+    remove.type = 'button';
+    remove.textContent = 'Удалить';
+    remove.addEventListener('click', function () {
+        listingAction(listing, 'delete', 'Удалить объявление «' + listing.title + '»?');
+    });
+    buttons.appendChild(remove);
+
+    box.appendChild(buttons);
+    return box;
+}
+
+function listingAction(listing, action, question) {
+    tg.showConfirm(question, async function (ok) {
+        if (!ok) {
+            return;
+        }
+        const result = await apiPost('/api/market/action', { listing_id: listing.id, action: action });
+        if (!handleError(result)) {
+            await loadMarket();
+        }
+    });
+}
+
+function fillMarket() {
+    const club = document.getElementById('market-club');
+    club.innerHTML = '';
+    for (const item of marketData.club) {
+        club.appendChild(clubCard(item));
+    }
+    if (marketData.club.length === 0) {
+        club.innerHTML = '<div class="muted">Пока пусто</div>';
+    }
+
+    const listings = document.getElementById('market-listings');
+    listings.innerHTML = '';
+    if (marketData.listings.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Пока никто ничего не продаёт. Выставьте свой инвентарь первым!';
+        listings.appendChild(empty);
+    }
+    for (const listing of marketData.listings) {
+        listings.appendChild(listingCard(listing, false));
+    }
+
+    const mine = document.getElementById('market-mine');
+    mine.innerHTML = '';
+    if (marketData.mine.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'У вас нет объявлений';
+        mine.appendChild(empty);
+    }
+    for (const listing of marketData.mine) {
+        mine.appendChild(listingCard(listing, true));
+    }
+}
+
+async function loadMarket() {
+    const result = await apiGet('/api/market');
+    if (result.status !== 200) {
+        return;
+    }
+    marketData = result.data;
+    fillMarket();
+}
+
+function openListingModal() {
+    const category = document.getElementById('listing-category');
+    category.innerHTML = '';
+    for (const name of marketData.categories) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        category.appendChild(option);
+    }
+
+    const condition = document.getElementById('listing-condition');
+    condition.innerHTML = '';
+    for (const name of marketData.conditions) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        condition.appendChild(option);
+    }
+
+    document.getElementById('listing-modal').classList.remove('hidden');
+}
+
+async function submitListing() {
+    const photos = document.getElementById('listing-photos').files;
+    if (photos.length === 0) {
+        tg.showAlert('Добавьте хотя бы одно фото');
+        return;
+    }
+    if (photos.length > marketData.max_photos) {
+        tg.showAlert('Не больше ' + marketData.max_photos + ' фото');
+        return;
+    }
+
+    // Фото отправляем формой (multipart), а не JSON
+    const form = new FormData();
+    form.append('title', document.getElementById('listing-title').value);
+    form.append('price', document.getElementById('listing-price').value);
+    form.append('category', document.getElementById('listing-category').value);
+    form.append('condition', document.getElementById('listing-condition').value);
+    form.append('description', document.getElementById('listing-description').value);
+    for (const photo of photos) {
+        form.append('photos', photo);
+    }
+
+    const button = document.getElementById('listing-submit');
+    button.disabled = true;
+
+    let result;
+    try {
+        const response = await fetch('/api/market/create', {
+            method: 'POST',
+            headers: { 'X-Init-Data': tg.initData },
+            body: form
+        });
+        result = { status: response.status, data: await response.json() };
+    } catch (error) {
+        result = { status: 0, data: { error: 'Не удалось отправить. Проверьте интернет и попробуйте ещё раз' } };
+    }
+    button.disabled = false;
+
+    if (handleError(result)) {
+        return;
+    }
+
+    tg.HapticFeedback.notificationOccurred('success');
+    document.getElementById('listing-modal').classList.add('hidden');
+    document.getElementById('listing-title').value = '';
+    document.getElementById('listing-price').value = '';
+    document.getElementById('listing-description').value = '';
+    document.getElementById('listing-photos').value = '';
+    tg.showAlert('✅ Объявление отправлено на проверку. Бот напишет, когда его опубликуют');
+    await loadMarket();
+}
+
+function setupMarket() {
+    document.getElementById('btn-create-listing').addEventListener('click', openListingModal);
+    document.getElementById('listing-cancel').addEventListener('click', function () {
+        document.getElementById('listing-modal').classList.add('hidden');
+    });
+    document.getElementById('listing-submit').addEventListener('click', submitListing);
+    document.getElementById('club-close').addEventListener('click', function () {
+        document.getElementById('club-modal').classList.add('hidden');
+    });
+
+    // Кнопка "Сменить скин" в профиле — в магазин скинов
+    document.getElementById('btn-change-skin').addEventListener('click', function () {
+        showScreen('shop');
+        document.querySelector('#screen-shop .segment[data-shop=skins]').click();
+    });
 }
 
 
@@ -1457,6 +1967,7 @@ async function start() {
     setupOpponent();
     setupScore();
     setupTournament();
+    setupMarket();
 
     if (!tg.initData) {
         showError('Откройте приложение в Telegram', 'Приложение работает только внутри Telegram — нажмите кнопку «Приложение» в боте');
@@ -1487,6 +1998,8 @@ async function start() {
         await loadOpponent();
         await loadPending();
         await loadTournaments();
+        await loadSkins();
+        await loadMarket();
         showScreen('arena');  // Приложение открывается на главном экране
 
         // Итоги прошлого года (если есть) и экран из ссылки бота

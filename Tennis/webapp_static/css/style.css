@@ -824,3 +824,198 @@ button {
     margin-top: 18px;
     margin-bottom: 2px;
 }
+
+/* Сцена: фон + герой (как арена в Clash Royale) */
+.scene {
+    position: relative;
+    border-radius: 12px;
+    border: 3px solid var(--gold);
+    overflow: hidden;
+}
+
+.scene-bg {
+    display: block;
+    width: 100%;
+}
+
+.scene-hero {
+    position: absolute;
+    left: 50%;
+    bottom: 3%;
+    height: 74%;
+    transform: translateX(-50%);
+}
+
+.scene-button {
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+/* Иконки круглых кнопок */
+.score-fab-text {
+    font-size: 19px;
+    font-weight: 900;
+    color: var(--gold-dark);
+    letter-spacing: -0.5px;
+}
+
+.fab-image {
+    width: 40px;
+    height: 40px;
+}
+
+.daily-fab {
+    background: #f39c12;
+    border-color: #7a4a00;
+    box-shadow: 0 4px 0 #b9770e, 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+/* Кнопка в новостях — ниже текста */
+.news-button {
+    margin-top: 16px;
+    margin-bottom: 0;
+}
+
+/* Скины */
+.skins-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.skin-card {
+    padding: 10px;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.skin-card.equipped {
+    border-color: var(--gold);
+}
+
+.skin-image {
+    display: block;
+    width: 100%;
+    height: 110px;
+    object-fit: contain;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background: var(--bg-dark);
+}
+
+.skin-image.background {
+    object-fit: cover;
+}
+
+.skin-name {
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.rarity {
+    display: inline-block;
+    margin: 4px 0 8px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.rarity-common { background: #5d6d7e; }
+.rarity-rare { background: #2e86de; }
+.rarity-epic { background: #8e44ad; }
+.rarity-legendary { background: linear-gradient(90deg, #f39c12, #e74c3c); }
+
+.skin-card .btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 13px;
+}
+
+.skin-locked {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 0;
+}
+
+/* Барахолка: товары клуба листаются вправо */
+.club-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    scroll-snap-type: x mandatory;
+}
+
+.club-card {
+    flex: 0 0 42%;
+    margin-bottom: 0;
+    padding: 10px;
+    scroll-snap-align: start;
+    text-align: left;
+}
+
+.club-card img {
+    display: block;
+    width: 100%;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid var(--gold);
+    margin-bottom: 8px;
+}
+
+.club-card-text {
+    font-size: 13px;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Товары от игроков */
+.listing-photos {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-bottom: 10px;
+    scroll-snap-type: x mandatory;
+}
+
+.listing-photos img {
+    flex: 0 0 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 3px solid var(--gold);
+    scroll-snap-align: start;
+}
+
+.listing-price {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--gold);
+}
+
+.left {
+    text-align: left;
+}
+
+/* Мини-аватар героя в карточках игр */
+.hero-mini {
+    width: 26px;
+    height: 34px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+/* Круглые кнопки — на уровне картинки арены, чтобы не закрывать название лиги */
+.score-fab,
+.daily-fab {
+    top: 22%;
+}
