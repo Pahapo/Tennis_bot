@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from sqlalchemy.exc import IntegrityError, OperationalError, DatabaseError
 from aiogram.types import CallbackQuery, LinkPreviewOptions, FSInputFile, Message
 from aiogram import F, Router
-from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR, DIVISION_EDITOR
+from config.config import CHANNEL, CHANNELS_SUB, ADMINS, MAIN_EDITOR, EDITOR, DIVISION_EDITOR, WEBAPP_URL
 
 import keywords.kw_start as kb
 import keywords.kw_any as ka
@@ -50,6 +50,11 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
 
         if not user:
             print(f"🙋‍♂️ Новый пользователь!")
+
+            # Регистрация (сказка и анкета) теперь проходит в приложении
+            if WEBAPP_URL:
+                await message.answer(f"Привет <b>{user_name}!</b> 👋\n\nЯ - 🤖 Бот по теннису. Нажми кнопку ниже — там тебя ждёт одна история и короткая регистрация 🎾", parse_mode=ParseMode.HTML, reply_markup=app_keyboard())
+                return
 
             # СКАЗКА (~30 секунд)
 
@@ -247,7 +252,18 @@ async def start_message(callback: Optional[CallbackQuery] = None, message: Optio
 
 # Вывод кнопок для user
 
+def app_keyboard():  # Кнопка "Открыть приложение" (голубая — если Telegram поддерживает цвет кнопок)
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '🎾 Открыть приложение', web_app=WebAppInfo(url=WEBAPP_URL), style='primary')]])
+
+
 async def create_tournament_table_keyboard_user(user_id):
+    # Игроки пользуются приложением — в чате одна кнопка (действия редактора дивизионов остаются в чате)
+    if WEBAPP_URL:
+        buttons = [[InlineKeyboardButton(text = '🎾 Открыть приложение', web_app=WebAppInfo(url=WEBAPP_URL), style='primary')]]
+        if str(user_id) == DIVISION_EDITOR:
+            buttons.append([InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')])
+        return InlineKeyboardMarkup(inline_keyboard=buttons)
+
     async with get_db_readonly() as session:  # Используем контекстный менеджер
         last_tournament = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()))).first()
 

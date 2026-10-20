@@ -4,6 +4,7 @@ from config.config import WEBAPP_PORT
 
 from webapp.api_profile import api_me
 from webapp.api_gold import api_visit, api_gold_history, api_season_seen
+from webapp.api_register import api_register
 from webapp.api_shop import api_skins, api_skins_buy, api_skins_equip, api_market, api_market_create, api_market_action, INVENTORY_DIR
 import handlers.market_app as mk
 from webapp.api_news import api_news, api_news_seen, NEWS_DIR
@@ -26,6 +27,7 @@ async def start_webapp(bot):
 
     app.router.add_get('/', index)
     app.router.add_get('/api/me', api_me)
+    app.router.add_post('/api/register', api_register)
     app.router.add_post('/api/visit', api_visit)
     app.router.add_get('/api/gold_history', api_gold_history)
     app.router.add_post('/api/season_seen', api_season_seen)

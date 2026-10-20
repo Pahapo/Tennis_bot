@@ -5,8 +5,8 @@ tg.expand();  // Раскрываем приложение на весь экр�
 tg.setHeaderColor('#0d1730');
 tg.setBackgroundColor('#14213d');
 
-let currentScreen = 'arena';     // Главный экран — лиги (центральная кнопка)
-let previousScreen = 'arena';    // Куда вернуться из профиля и новостей по кнопке "Назад"
+let currentScreen = 'home';      // Главный экран (центральная кнопка)
+let previousScreen = 'home';     // Куда вернуться по кнопке "Назад"
 let profile = null;
 
 
@@ -55,9 +55,10 @@ function handleError(result) {
 // ---------- Навигация ----------
 
 function showScreen(name) {
-    // Профиль и новости открываются поверх — запоминаем, куда вернуться
-    const overlay = name === 'profile' || name === 'news';
-    if (overlay && currentScreen !== 'profile' && currentScreen !== 'news') {
+    // Профиль, новости и список лиг открываются поверх — запоминаем, куда вернуться
+    const overlay = name === 'profile' || name === 'news' || name === 'arena';
+    const currentIsOverlay = currentScreen === 'profile' || currentScreen === 'news' || currentScreen === 'arena';
+    if (overlay && !currentIsOverlay) {
         previousScreen = currentScreen;
     }
 
@@ -71,22 +72,20 @@ function showScreen(name) {
     // Подсвечиваем активную кнопку снизу
     const tabs = document.querySelectorAll('.tab');
     for (const tab of tabs) {
-        if (tab.dataset.screen === name) {
+        // Список лиг открывается с главного экрана — подсвечиваем центральную кнопку
+        if (tab.dataset.screen === name || (name === 'arena' && tab.dataset.screen === 'home')) {
             tab.classList.add('active');
         } else {
             tab.classList.remove('active');
         }
     }
 
-    // Круглые кнопки (счёт и ежедневная награда) — только на главном экране
-    const scoreButton = document.getElementById('score-fab');
-    const dailyButton = document.getElementById('daily-fab');
-    if (name === 'arena') {
-        scoreButton.classList.remove('hidden');
-        dailyButton.classList.remove('hidden');
+    // На главном экране в шапке только валюты (аватар и новости — на самом экране)
+    const topbar = document.querySelector('.topbar');
+    if (name === 'home') {
+        topbar.classList.add('topbar-home');
     } else {
-        scoreButton.classList.add('hidden');
-        dailyButton.classList.add('hidden');
+        topbar.classList.remove('topbar-home');
     }
 
     // Аватар подсвечен, когда открыт профиль
@@ -128,6 +127,32 @@ function setupNavigation() {
 
     document.getElementById('daily-fab').addEventListener('click', claimDaily);
 
+    // Кнопки главного экрана
+    document.getElementById('home-avatar-btn').addEventListener('click', function () {
+        tg.HapticFeedback.selectionChanged();
+        showScreen('profile');
+    });
+    document.getElementById('home-news-btn').addEventListener('click', function () {
+        tg.HapticFeedback.selectionChanged();
+        openNews();
+    });
+    document.getElementById('home-arena').addEventListener('click', function () {
+        tg.HapticFeedback.selectionChanged();
+        showScreen('arena');
+    });
+    document.getElementById('home-banner').addEventListener('click', function () {
+        tg.HapticFeedback.selectionChanged();
+        showScreen('shop');
+        document.querySelector('#screen-shop .segment[data-shop=skins]').click();
+    });
+    const actions = document.querySelectorAll('.home-action');
+    for (const action of actions) {
+        action.addEventListener('click', function () {
+            tg.HapticFeedback.selectionChanged();
+            showScreen(action.dataset.go);
+        });
+    }
+
     // Кнопка "Назад" в шапке Telegram: из профиля возвращаемся на прошлый экран
     tg.BackButton.onClick(function () {
         showScreen(previousScreen);
@@ -142,8 +167,18 @@ function fillProfile() {
     const tgUser = tg.initDataUnsafe.user;
     if (tgUser && tgUser.photo_url) {
         document.getElementById('avatar').src = tgUser.photo_url;
+        document.getElementById('home-avatar').src = tgUser.photo_url;
         document.getElementById('profile-avatar').src = tgUser.photo_url;
     }
+
+    // Табличка на главном экране
+    document.getElementById('home-name').textContent = profile.name;
+    if (profile.division === 'Не определён') {
+        document.getElementById('home-division').textContent = 'Дивизион не определён';
+    } else {
+        document.getElementById('home-division').textContent = profile.division + ' дивизион';
+    }
+    document.getElementById('home-rating').textContent = profile.rating !== null ? profile.rating : '—';
 
     // textContent, а не innerHTML — так имя игрока не сможет сломать страницу
     document.getElementById('topbar-name').textContent = profile.name;
@@ -255,7 +290,17 @@ function fillLeague() {
     const current = leagues[number - 1];
 
     fillScenes();
+    document.getElementById('league-picture').src = '/static/img/locations/' + number + '.svg';
     document.getElementById('league-name').textContent = 'Лига ' + number + ': ' + current.name;
+
+    // Арена на главном экране
+    document.getElementById('home-arena-img').src = '/static/img/locations/' + number + '.svg';
+    document.getElementById('home-league-name').textContent = 'ЛИГА ' + number + ': ' + current.name;
+    if (number === leagues.length) {
+        document.getElementById('home-progress').textContent = profile.season_gold + ' 🪙';
+    } else {
+        document.getElementById('home-progress').textContent = profile.season_gold + ' / ' + leagues[number].from + ' 🪙';
+    }
 
     // Прогресс до следующей лиги
     const fill = document.getElementById('league-progress');
@@ -377,11 +422,13 @@ async function reloadProfile() {
 // ---------- Новости ----------
 
 function fillNewsDot() {
-    const dot = document.getElementById('news-dot');
-    if (profile.unread_news > 0) {
-        dot.classList.remove('hidden');
-    } else {
-        dot.classList.add('hidden');
+    const dots = [document.getElementById('news-dot'), document.getElementById('home-news-dot')];
+    for (const dot of dots) {
+        if (profile.unread_news > 0) {
+            dot.classList.remove('hidden');
+        } else {
+            dot.classList.add('hidden');
+        }
     }
 }
 
@@ -1449,7 +1496,7 @@ function fillScenes() {
     const background = backgroundUrl(profile.background, profile.league);
     const hero = '/static/img/skins/' + profile.hero + '.svg';
 
-    const prefixes = ['scene', 'profile-scene', 'shop-scene'];
+    const prefixes = ['home-scene', 'profile-scene', 'shop-scene'];
     for (const prefix of prefixes) {
         document.getElementById(prefix + '-bg').src = background;
         document.getElementById(prefix + '-hero').src = hero;
@@ -1644,9 +1691,10 @@ function clubCard(item) {
     title.textContent = item.category;
     box.appendChild(title);
 
+    // В карточке — только первая строка описания (название), цена видна после открытия
     const text = document.createElement('div');
     text.className = 'club-card-text';
-    text.textContent = item.description;
+    text.textContent = item.description.split('\n')[0];
     box.appendChild(text);
 
     box.addEventListener('click', function () {
@@ -1917,6 +1965,92 @@ function setupMarket() {
 }
 
 
+// ---------- Регистрация нового игрока ----------
+
+// Сказка — та же, что раньше была в чате (текст и пауза в секундах)
+const STORY = [
+    ['Привет! 👋', 2],
+    ['Давай я расскажу тебе 1 историю... 🎾', 2.5],
+    ['Где-то в далёком-придалёком королевстве 👑', 2.5],
+    ['Среди замков и драконов 🐉', 1.9],
+    ['Основался легендарный теннисный клуб! 🛡️', 2.5],
+    ['Только самые смелые выходили на корт ⚡️', 2.5],
+    ['Их ждали великие дуэли, турниры и таинственные награды...', 3],
+    ['Хочешь очутиться в далёком-придалёком королевстве? 👑', 2.8],
+    ['Сразиться с соперниками?!', 2],
+    ['Выиграть турнир?! 🏆', 2],
+    ['Стать теннисным лордом?! 👑', 2.1],
+    ['Пора начинать наше приключение! 🚀', 2.3],
+    ['Корт ждёт героя, готового вписать своё имя в историю! 🎾', 3]
+];
+
+let storyTimer = null;
+
+function startRegistration() {
+    showScreen('register');
+    document.querySelector('.tabbar').classList.add('hidden');
+    document.querySelector('.topbar').classList.add('hidden');
+
+    // Имя из Telegram — в первую строку сказки
+    const tgUser = tg.initDataUnsafe.user;
+    if (tgUser && tgUser.first_name) {
+        STORY[0][0] = 'Привет, ' + tgUser.first_name + '! 👋';
+    }
+
+    document.getElementById('register-story').classList.remove('hidden');
+    showStoryLine(0);
+}
+
+function showStoryLine(index) {
+    if (index >= STORY.length) {
+        finishStory();
+        return;
+    }
+
+    // Пересоздаём элемент, чтобы анимация появления запускалась каждый раз
+    const old = document.getElementById('story-text');
+    const text = document.createElement('div');
+    text.className = 'story-text';
+    text.id = 'story-text';
+    text.textContent = STORY[index][0];
+    old.replaceWith(text);
+
+    storyTimer = setTimeout(function () {
+        showStoryLine(index + 1);
+    }, STORY[index][1] * 1000);
+}
+
+function finishStory() {
+    clearTimeout(storyTimer);
+    document.getElementById('register-story').classList.add('hidden');
+    document.getElementById('register-form').classList.remove('hidden');
+}
+
+async function submitRegistration() {
+    const body = {
+        name: document.getElementById('register-name').value,
+        skill: document.getElementById('register-skill').value
+    };
+
+    const button = document.getElementById('register-submit');
+    button.disabled = true;
+    const result = await apiPost('/api/register', body);
+    button.disabled = false;
+
+    if (handleError(result)) {
+        return;
+    }
+
+    tg.HapticFeedback.notificationOccurred('success');
+    window.location.reload();  // Открываем приложение уже зарегистрированным
+}
+
+function setupRegistration() {
+    document.getElementById('story-skip').addEventListener('click', finishStory);
+    document.getElementById('register-submit').addEventListener('click', submitRegistration);
+}
+
+
 // ---------- Остальные экраны ----------
 
 function setupBooking() {
@@ -1968,6 +2102,7 @@ async function start() {
     setupScore();
     setupTournament();
     setupMarket();
+    setupRegistration();
 
     if (!tg.initData) {
         showError('Откройте приложение в Telegram', 'Приложение работает только внутри Telegram — нажмите кнопку «Приложение» в боте');
@@ -1978,7 +2113,7 @@ async function start() {
         const result = await apiGet('/api/me');
 
         if (result.status === 404) {
-            showError('Вы ещё не зарегистрированы', 'Отправьте боту команду /start и пройдите регистрацию');
+            startRegistration();  // Новый игрок — сказка и анкета
             return;
         }
         if (result.status !== 200) {
@@ -2000,7 +2135,7 @@ async function start() {
         await loadTournaments();
         await loadSkins();
         await loadMarket();
-        showScreen('arena');  // Приложение открывается на главном экране
+        showScreen('home');  // Приложение открывается на главном экране
 
         // Итоги прошлого года (если есть) и экран из ссылки бота
         showSeasonSummary();

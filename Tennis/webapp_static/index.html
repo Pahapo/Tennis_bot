@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=6">
+    <link rel="stylesheet" href="/static/css/style.css?v=7">
 </head>
 <body>
 
@@ -126,15 +126,97 @@
             <div id="news-list"></div>
         </section>
 
-        <!-- Главный экран: локации (лиги) -->
-        <section class="screen" id="screen-arena">
+        <!-- Главный экран -->
+        <section class="screen" id="screen-home">
+            <div class="home-top">
+                <div class="home-left">
+                    <!-- Флаг со скином (фон + герой из магазина) -->
+                    <button class="banner" id="home-banner" type="button">
+                        <div class="banner-flag">
+                            <img class="banner-bg" id="home-scene-bg" src="/static/img/locations/1.svg" alt="">
+                            <img class="banner-hero" id="home-scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
+                        </div>
+                    </button>
+                    <div class="name-plate">
+                        <div class="plate-text">
+                            <div class="plate-name" id="home-name"></div>
+                            <div class="plate-division" id="home-division"></div>
+                        </div>
+                        <div class="plate-rating">⚡ <span id="home-rating"></span></div>
+                    </div>
+                </div>
+
+                <div class="home-right">
+                    <div class="home-icons">
+                        <button class="avatar-btn" id="home-avatar-btn" type="button">
+                            <img id="home-avatar" src="/static/img/icons/avatar.svg" alt="Профиль">
+                        </button>
+                        <button class="news-btn" id="home-news-btn" type="button">
+                            📰
+                            <span class="dot hidden" id="home-news-dot"></span>
+                        </button>
+                    </div>
+                    <button class="daily-btn" id="daily-fab" type="button">
+                        <img src="/static/img/icons/chest.svg" alt="">
+                        <span>Ежедневная награда</span>
+                        <span class="dot hidden" id="daily-dot"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Круглая кнопка: игры, где нужно записать счёт -->
+            <button class="score-round" id="score-fab" type="button">
+                <span class="score-fab-text">0:0</span>
+                <span class="fab-badge hidden" id="score-badge">0</span>
+            </button>
+
+            <!-- Арена текущей лиги: по нажатию — список лиг -->
+            <button class="home-arena" id="home-arena" type="button">
+                <img id="home-arena-img" src="/static/img/locations/1.svg" alt="Лиги">
+            </button>
+            <div class="home-league" id="home-league-name"></div>
+            <div class="home-progress" id="home-progress"></div>
+
+            <div class="home-actions">
+                <button class="home-action" data-go="tournament" type="button">
+                    <img src="/static/img/icons/tournament.svg" alt="Турнир">
+                </button>
+                <button class="home-action" data-go="opponent" type="button">
+                    <img src="/static/img/icons/opponent.svg" alt="Соперник">
+                </button>
+            </div>
+        </section>
+
+        <!-- Регистрация нового игрока: сказка и анкета -->
+        <section class="screen hidden" id="screen-register">
+            <div class="story hidden" id="register-story">
+                <div class="story-text" id="story-text"></div>
+                <button class="btn" id="story-skip" type="button">Пропустить</button>
+            </div>
+
+            <div class="hidden" id="register-form">
+                <h2 class="screen-title">Давай знакомиться!</h2>
+                <div class="card">
+                    <label class="field">
+                        <span>Полное Имя и Фамилия</span>
+                        <input type="text" id="register-name" maxlength="64">
+                    </label>
+                    <label class="field">
+                        <span>Твой уровень игры</span>
+                        <div class="muted register-questions">Ответь на несколько вопросов:<br>1. Сколько лет/месяцев в теннисе?<br>2. Был ли опыт каких-то турниров до этого? (если играл только в Raketo, укажи сколько матчей и какой рейтинг)<br>3. Занимался ли когда-то с тренером?<br>4. Играл ли против кого-то из наших игроков, если да — то как сыграли?</div>
+                        <textarea id="register-skill" maxlength="300" rows="5"></textarea>
+                    </label>
+                    <button class="btn btn-gold btn-wide" id="register-submit" type="button">Начать приключение 🚀</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Список лиг (открывается с главного экрана по арене) -->
+        <section class="screen hidden" id="screen-arena">
             <h2 class="screen-title">Лиги</h2>
 
             <div class="card league-current">
-                <div class="scene" id="main-scene">
-                    <img class="scene-bg" id="scene-bg" src="/static/img/locations/1.svg" alt="">
-                    <img class="scene-hero" id="scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
-                </div>
+                <img class="league-picture" id="league-picture" src="/static/img/locations/1.svg" alt="">
                 <div class="league-name" id="league-name"></div>
                 <div class="progress">
                     <div class="progress-fill" id="league-progress"></div>
@@ -202,18 +284,6 @@
         </section>
 
     </main>
-
-    <!-- Круглая кнопка справа: ежедневная награда (только на главном экране) -->
-    <button class="daily-fab" id="daily-fab" type="button">
-        <img class="fab-image" src="/static/img/icons/chest.svg" alt="Награда">
-        <span class="dot hidden" id="daily-dot"></span>
-    </button>
-
-    <!-- Круглая кнопка слева: игры, где нужно записать счёт (только на главном экране) -->
-    <button class="score-fab" id="score-fab" type="button">
-        <span class="score-fab-text">0:0</span>
-        <span class="fab-badge hidden" id="score-badge">0</span>
-    </button>
 
     <!-- Окно: записать счёт -->
     <div class="modal hidden" id="score-modal">
@@ -423,8 +493,8 @@
         <button class="tab" data-screen="opponent" type="button">
             <img src="/static/img/icons/opponent.svg" alt="Соперник">
         </button>
-        <button class="tab tab-center" data-screen="arena" type="button">
-            <img src="/static/img/icons/arena.svg" alt="Лиги">
+        <button class="tab tab-center" data-screen="home" type="button">
+            <img src="/static/img/icons/arena.svg" alt="Главная">
         </button>
         <button class="tab" data-screen="booking" type="button">
             <img src="/static/img/icons/booking.svg" alt="Бронь корта">
@@ -434,6 +504,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=6"></script>
+    <script src="/static/js/app.js?v=7"></script>
 </body>
 </html>
