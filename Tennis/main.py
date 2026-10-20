@@ -1,8 +1,10 @@
 import asyncio
 from aiogram import Bot, Dispatcher
+from aiogram.types import MenuButtonWebApp, WebAppInfo
 import handlers.functions as f
 from config.router import router
-from config.config import TOKEN
+from config.config import TOKEN, WEBAPP_URL
+from webapp.server import start_webapp
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -13,6 +15,12 @@ dp.include_router(router)
 # Запуск бота
 async def main():
     asyncio.create_task(f.check_players(bot))  # Запускаем трекер игроков без дивизиона
+    await start_webapp()  # Запускаем Mini App (веб-сервер)
+
+    if WEBAPP_URL:
+        # Кнопка "Приложение" слева от поля ввода сообщения
+        await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text='Приложение', web_app=WebAppInfo(url=WEBAPP_URL)))
+
     await dp.start_polling(bot) # start_polling обращается к серверу телеграмм и спрашивает не пришло ли какое-то сообщение
 
 # Завершение бота

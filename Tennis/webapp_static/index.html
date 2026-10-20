@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tennis</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=1">
+</head>
+<body>
+
+    <!-- Верхняя панель: аватар (открывает профиль) и валюты -->
+    <header class="topbar">
+        <button class="avatar-btn" id="avatar-btn" type="button">
+            <img id="avatar" src="/static/img/icons/avatar.svg" alt="Профиль">
+        </button>
+        <div class="topbar-name" id="topbar-name">Загрузка...</div>
+        <div class="currency" title="Монеты">
+            <img src="/static/img/icons/coin.svg" alt="">
+            <span id="coins">0</span>
+        </div>
+        <div class="currency" title="Кристаллы">
+            <img src="/static/img/icons/crystal.svg" alt="">
+            <span id="crystals">0</span>
+        </div>
+    </header>
+
+    <main class="content">
+
+        <!-- Профиль -->
+        <section class="screen" id="screen-profile">
+            <div class="card profile-head">
+                <img class="profile-avatar" id="profile-avatar" src="/static/img/icons/avatar.svg" alt="">
+                <div>
+                    <div class="profile-name" id="profile-name"></div>
+                    <div class="muted" id="profile-link"></div>
+                </div>
+            </div>
+
+            <div class="card ban hidden" id="profile-ban"></div>
+
+            <div class="card">
+                <div class="card-title">Дивизион</div>
+                <div class="division">
+                    <span id="profile-division"></span>
+                    <span class="rating">⚡️ <span id="profile-rating"></span></span>
+                </div>
+                <div class="muted" id="profile-info"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">История турниров</div>
+                <div class="chips" id="profile-tournaments"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Пригласи друга</div>
+                <div class="muted">Приглашено: <b id="profile-friends">0</b> чел.</div>
+                <div class="ref-link" id="profile-ref-link"></div>
+                <div class="buttons-row">
+                    <button class="btn" id="btn-copy-ref" type="button">Скопировать</button>
+                    <button class="btn btn-gold" id="btn-share-ref" type="button">Поделиться</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Турнир -->
+        <section class="screen hidden" id="screen-tournament">
+            <h2 class="screen-title">Турнир</h2>
+            <div class="card stub">
+                <div class="card-title">Запись на турнир</div>
+                <div class="muted">Скоро здесь появится список турниров и запись на них</div>
+            </div>
+            <div class="card stub">
+                <div class="card-title">Турнирные таблицы</div>
+                <div class="muted">Скоро здесь появятся таблицы активных и прошедших турниров</div>
+            </div>
+        </section>
+
+        <!-- Соперник -->
+        <section class="screen hidden" id="screen-opponent">
+            <h2 class="screen-title">Соперник</h2>
+            <div class="card stub">
+                <div class="card-title">Поиск соперника</div>
+                <div class="muted">Скоро здесь можно будет найти соперника, записать счёт и получить монеты</div>
+            </div>
+        </section>
+
+        <!-- Локации (лиги) -->
+        <section class="screen hidden" id="screen-arena">
+            <h2 class="screen-title">Лиги</h2>
+            <div class="muted center">Играй матчи, собирай монеты и открывай новые локации. Лиги обнуляются 31 декабря</div>
+            <div class="locations" id="locations"></div>
+        </section>
+
+        <!-- Бронь корта -->
+        <section class="screen hidden" id="screen-booking">
+            <h2 class="screen-title">Бронь корта</h2>
+            <div class="card">
+                <div class="card-title">Бронирование кортов</div>
+                <div class="muted">• Бронь любого корта на 5 дней вперёд<br>• Бронирование зависит от вашей скорости<br>• До 2 броней в неделю</div>
+                <div class="buttons-row">
+                    <button class="btn btn-gold" id="btn-booking" type="button">Забронировать корт</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Магазин -->
+        <section class="screen hidden" id="screen-shop">
+            <h2 class="screen-title">Магазин</h2>
+            <div class="segmented">
+                <button class="segment active" data-shop="skins" type="button">Скины</button>
+                <button class="segment" data-shop="market" type="button">Барахолка</button>
+            </div>
+            <div class="card stub" id="shop-skins">
+                <div class="card-title">Скины</div>
+                <div class="muted">Скоро здесь можно будет потратить монеты на скины</div>
+            </div>
+            <div class="card stub hidden" id="shop-market">
+                <div class="card-title">Барахолка</div>
+                <div class="muted">Скоро здесь появится инвентарь, который выставили игроки</div>
+            </div>
+        </section>
+
+        <!-- Сообщение об ошибке (не из Telegram / не зарегистрирован) -->
+        <section class="screen hidden" id="screen-error">
+            <div class="card center">
+                <div class="card-title" id="error-title"></div>
+                <div class="muted" id="error-text"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Нижняя навигация -->
+    <nav class="tabbar">
+        <button class="tab" data-screen="tournament" type="button">
+            <img src="/static/img/icons/tournament.svg" alt="Турнир">
+        </button>
+        <button class="tab" data-screen="opponent" type="button">
+            <img src="/static/img/icons/opponent.svg" alt="Соперник">
+        </button>
+        <button class="tab tab-center" data-screen="arena" type="button">
+            <img src="/static/img/icons/arena.svg" alt="Лиги">
+        </button>
+        <button class="tab" data-screen="booking" type="button">
+            <img src="/static/img/icons/booking.svg" alt="Бронь корта">
+        </button>
+        <button class="tab" data-screen="shop" type="button">
+            <img src="/static/img/icons/shop.svg" alt="Магазин">
+        </button>
+    </nav>
+
+    <script src="/static/js/app.js?v=1"></script>
+</body>
+</html>
