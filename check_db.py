@@ -44,15 +44,62 @@ def read_expected_schema():  # Таблицы и колонки из tennisDB_sc
     return tables, create_statements, table_order
 
 
-def read_database_schema(connection):  # Таблицы и колонки, которые реально есть в базе
-    rows = connection.execute(text("SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()")).fetchall()
+def read_database_schema(connection):  # Таблицы и колонки, которые реально есть в базе: {таблица: {колонка: (тип, extra)}}
+    rows = connection.execute(text("SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, EXTRA FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()")).fetchall()
 
     tables = {}
-    for table, column in rows:
+    for table, column, column_type, extra in rows:
         if table not in tables:
-            tables[table] = []
-        tables[table].append(column)
+            tables[table] = {}
+        tables[table][column] = (column_type.lower(), extra.lower())
     return tables
+
+
+INTEGER_TYPES = ('int', 'bigint', 'smallint', 'tinyint', 'mediumint')
+
+
+def plan_column_changes(expected, actual, table_order):  # Что поменять в уже существующих таблицах: [(сообщение, SQL)]
+    changes = []
+
+    for table in table_order:
+        if table not in actual:
+            continue
+
+        for column, definition in expected[table].items():
+            if column not in actual[table]:
+
+                # Колонка-счётчик (AUTO_INCREMENT) может быть только одна. Если в старой таблице она называлась
+                # по-другому (например, payment.id_player), переименовываем её, а не добавляем вторую
+                if 'auto_increment' in definition.lower():
+                    old_column = None
+                    for name, info in actual[table].items():
+                        if 'auto_increment' in info[1] and name not in expected[table]:
+                            old_column = name
+
+                    if old_column:
+                        changes.append((f"Переименовать колонку {table}.{old_column} → {column}", f"ALTER TABLE `{table}` CHANGE COLUMN `{old_column}` `{column}` {definition}"))
+                    else:
+                        changes.append((f"Добавить колонку {table}.{column}  ({definition})", f"ALTER TABLE `{table}` ADD COLUMN `{column}` {definition} PRIMARY KEY"))
+                    continue
+
+                changes.append((f"Добавить колонку {table}.{column}  ({definition})", f"ALTER TABLE `{table}` ADD COLUMN `{column}` {definition}"))
+                continue
+
+            # Число -> строка (например, payment.price int -> varchar(10)) — безопасно, данные не теряются
+            expected_type = definition.split()[0].lower()
+            actual_type = actual[table][column][0]
+            if expected_type.startswith('varchar') and actual_type.startswith(INTEGER_TYPES):
+                changes.append((f"Сменить тип {table}.{column}: {actual_type} → {expected_type}", f"ALTER TABLE `{table}` MODIFY COLUMN `{column}` {definition}"))
+
+    return changes
+
+
+def run(connection, message, sql):  # Выполнить одно изменение; ошибка не останавливает остальные
+    try:
+        connection.execute(text(sql))
+        print(f"✅ {message}")
+    except Exception as e:
+        print(f"❌ Не получилось: {message}\n   {e.__class__.__name__}: {e.orig if hasattr(e, 'orig') else e}")
 
 
 def main():
@@ -70,46 +117,40 @@ def main():
 
     expected, create_statements, table_order = read_expected_schema()
 
-    with engine.begin() as connection:
+    # В MySQL изменения структуры (CREATE / ALTER) сохраняются сразу, поэтому отдельные транзакции не нужны
+    with engine.connect() as connection:
         actual = read_database_schema(connection)
 
         missing_tables = []
-        missing_columns = []  # (таблица, колонка, описание)
-
         for table in table_order:
             if table not in actual:
                 missing_tables.append(table)
-                continue
-            for column, definition in expected[table].items():
-                if column not in actual[table]:
-                    missing_columns.append((table, column, definition))
 
-        if not missing_tables and not missing_columns:
+        changes = plan_column_changes(expected, actual, table_order)
+
+        if not missing_tables and not changes:
             print("✅ База в порядке: все таблицы и колонки на месте")
             return
 
         for table in missing_tables:
             print(f"❌ Нет таблицы: {table}")
-        for table, column, definition in missing_columns:
-            print(f"❌ Нет колонки: {table}.{column}  ({definition})")
+        for message, sql in changes:
+            print(f"❌ {message}")
 
         if not fix:
-            print("\nЧтобы добавить недостающее, запустите: python3 check_db.py --fix")
+            print("\nЧтобы исправить, запустите: python3 check_db.py --fix")
             return
 
-        print("\nДобавляю...")
+        print("\nИсправляю...")
         for table in missing_tables:
-            connection.execute(text(create_statements[table]))
-            print(f"✅ Создана таблица {table}")
+            run(connection, f"Создать таблицу {table}", create_statements[table])
 
         # Читаем базу заново: у только что созданных таблиц ещё нет колонок из ALTER TABLE
         actual = read_database_schema(connection)
-        for table in table_order:
-            for column, definition in expected[table].items():
-                if column not in actual[table]:
-                    connection.execute(text(f"ALTER TABLE `{table}` ADD COLUMN `{column}` {definition}"))
-                    print(f"✅ Добавлена колонка {table}.{column}")
+        for message, sql in plan_column_changes(expected, actual, table_order):
+            run(connection, message, sql)
 
+        connection.commit()
         print("\nГотово! Запустите python3 check_db.py ещё раз, чтобы проверить")
 
 
