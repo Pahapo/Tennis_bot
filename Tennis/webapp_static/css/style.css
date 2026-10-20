@@ -1310,3 +1310,30 @@ button {
     flex: 0 0 auto;
     padding: 10px 28px;
 }
+
+/* Фон приложения: теннисный корт. Отдельный слой (::before), чтобы фон стоял на месте и на iPhone,
+   и лёгкое затемнение, чтобы текст поверх него читался */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(rgba(13, 23, 48, 0.35), rgba(13, 23, 48, 0.35)), url('/static/img/app_bg.webp') center / cover no-repeat;
+}
+
+/* Заголовки и подписи прямо на фоне — с тенью для читаемости */
+.screen-title,
+.section-title,
+.home-league {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.section-title {
+    color: #ffffff;
+}
+
+/* Текст пустых списков прямо на фоне */
+.empty {
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
