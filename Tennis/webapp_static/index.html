@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=1">
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
 </head>
 <body>
 
@@ -48,6 +48,14 @@
                 <div class="muted" id="profile-info"></div>
             </div>
 
+            <div class="card streak">
+                <div class="streak-fire">🔥</div>
+                <div>
+                    <div class="card-title"><span id="profile-streak">0</span> дн. подряд</div>
+                    <div class="muted">Заходи каждый день: +1 🪙, а за 7, 30, 100, 200 и 365 дней — бонус. Лучшая серия: <b id="profile-best-streak">0</b></div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-title">История турниров</div>
                 <div class="chips" id="profile-tournaments"></div>
@@ -61,6 +69,12 @@
                     <button class="btn" id="btn-copy-ref" type="button">Скопировать</button>
                     <button class="btn btn-gold" id="btn-share-ref" type="button">Поделиться</button>
                 </div>
+                <div class="muted ref-note">+100 🪙 за каждого приглашённого друга</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">История монет</div>
+                <div class="history" id="profile-history"></div>
             </div>
         </section>
 
@@ -89,7 +103,18 @@
         <!-- Локации (лиги) -->
         <section class="screen hidden" id="screen-arena">
             <h2 class="screen-title">Лиги</h2>
-            <div class="muted center">Играй матчи, собирай монеты и открывай новые локации. Лиги обнуляются 31 декабря</div>
+
+            <div class="card league-current">
+                <img class="league-picture" id="league-picture" src="/static/img/locations/1.svg" alt="">
+                <div class="league-name" id="league-name"></div>
+                <div class="progress">
+                    <div class="progress-fill" id="league-progress"></div>
+                    <div class="progress-text" id="league-progress-text"></div>
+                </div>
+                <div class="muted center" id="league-next"></div>
+            </div>
+
+            <div class="muted center">Играй матчи, собирай монеты и открывай новые локации. Лиги обнуляются 31 декабря, монеты и скины остаются</div>
             <div class="locations" id="locations"></div>
         </section>
 
@@ -132,6 +157,28 @@
 
     </main>
 
+    <!-- Окно: ежедневная награда -->
+    <div class="modal hidden" id="reward-modal">
+        <div class="modal-box">
+            <div class="modal-icon">🔥</div>
+            <div class="modal-title" id="reward-title"></div>
+            <div class="reward-lines" id="reward-lines"></div>
+            <button class="btn btn-gold" id="reward-ok" type="button">Забрать</button>
+        </div>
+    </div>
+
+    <!-- Окно: итоги прошлого года с салютом -->
+    <div class="modal hidden" id="season-modal">
+        <canvas class="fireworks" id="fireworks"></canvas>
+        <div class="modal-box">
+            <div class="modal-title" id="season-title"></div>
+            <img class="league-picture" id="season-picture" src="/static/img/locations/1.svg" alt="">
+            <div class="league-name" id="season-league"></div>
+            <div class="muted center" id="season-text"></div>
+            <button class="btn btn-gold" id="season-ok" type="button">Начать новый сезон</button>
+        </div>
+    </div>
+
     <!-- Нижняя навигация -->
     <nav class="tabbar">
         <button class="tab" data-screen="tournament" type="button">
@@ -151,6 +198,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=1"></script>
+    <script src="/static/js/app.js?v=2"></script>
 </body>
 </html>

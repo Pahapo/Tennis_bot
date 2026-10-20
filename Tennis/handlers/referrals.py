@@ -13,6 +13,7 @@ import handlers.btn_referrals as rf
 import handlers.validation as valid
 import handlers.functions as f
 import handlers.classes as cl
+import handlers.gold as g
 
 from config.db_utils import get_db_readonly, get_db
 from sqlalchemy import select
@@ -86,20 +87,26 @@ async def check_referral(args, user_id, bot):
                         referrer = (await session.scalars(select(Referrals).where(Referrals.tg_users_id == referrer_id))).first()
 
                         referrer_user = (await session.scalars(select(User).where(User.tg_user_id == referrer_id))).first()
-                        coins = referrer_user.coins
+
+                        if not referrer_user:
+                            return  # Пригласивший не найден в БД
+
+                        # В БД кристаллы хранятся строкой, поэтому переводим в число
+                        coins = 0
+                        if referrer_user.coins:
+                            coins = int(referrer_user.coins)
                         
                         if referrer:
-                            referrers_id_list = referrer.referrals.split(",")  # Разбиваем строку на список
+                            referrers_id_list = [x.strip() for x in referrer.referrals.split(",")]  # Разбиваем строку на список (без пробелов)
                             
-                            if user_id not in referrers_id_list:  # Проверяем, приглашал ли пользователь уже этого реферала                
+                            if str(user_id) not in referrers_id_list:  # Проверяем, приглашал ли пользователь уже этого реферала                
 
                                 referrer.referrals += f", {user_id}"
                                 referrer.count += 1
 
                                 # Увеличиваем баллы у реферера
-                                if referrer_user:
-                                    referrer_user.coins += 100
-                                    coins += 100
+                                coins += 100
+                                referrer_user.coins = coins
 
                             else:
                                 return
@@ -109,12 +116,14 @@ async def check_referral(args, user_id, bot):
                                 session.add(new_referrer)  # Добавляем объект в сессию
 
                             # Увеличиваем баллы у реферера
-                            if referrer_user:
-                                referrer_user.coins = 100
-                                coins = 100
-                        
+                            coins += 100
+                            referrer_user.coins = coins
+
+                        # Монеты 🪙 за друга (один раз за каждого)
+                        await g.add_gold(referrer_id, g.REFERRAL_GOLD, 'referral', session, comment = f"Приглашён друг {user_id}")
+
                         # Оповещаем рефереру о новом реферале
-                        message_text_send = f"<b>По Вашей ссылке зарегистрировался новый реферал! 🚀</b>\n\n🙋‍♂️ <b>Реферал:</b> {check_new_user.name_user}\n💰 <b>Монеты:</b> {coins}"
+                        message_text_send = f"<b>По Вашей ссылке зарегистрировался новый реферал! 🚀</b>\n\n🪙 <b>Монеты:</b> +{g.REFERRAL_GOLD}\n💎 <b>Кристаллы:</b> {coins}"
 
                         try:
                             await bot.send_message(chat_id=referrer_id, text=message_text_send, parse_mode="HTML", reply_markup=ka.exit)

@@ -113,3 +113,28 @@ CREATE TABLE `referrals` (
   `count` int DEFAULT NULL,
   PRIMARY KEY (`tg_users_id`)
 );
+CREATE TABLE `player_progress` (
+  `tg_user_id` bigint NOT NULL,
+  `gold` int NOT NULL DEFAULT 0,
+  `season_gold` int NOT NULL DEFAULT 0,
+  `season_year` int NOT NULL,
+  `last_season_gold` int DEFAULT NULL,
+  `season_summary_seen` tinyint(1) DEFAULT 1,
+  `streak_days` int NOT NULL DEFAULT 0,
+  `best_streak` int NOT NULL DEFAULT 0,
+  `last_visit` date DEFAULT NULL,
+  PRIMARY KEY (`tg_user_id`),
+  CONSTRAINT `player_progress_users_fk` FOREIGN KEY (`tg_user_id`) REFERENCES `users` (`tg_user_id`)
+);
+
+CREATE TABLE `gold_history` (
+  `id_history` int NOT NULL AUTO_INCREMENT,
+  `tg_user_id` bigint NOT NULL,
+  `amount` int NOT NULL,
+  `reason` varchar(30) NOT NULL,
+  `comment` varchar(100) DEFAULT NULL,
+  `date` datetime NOT NULL,
+  PRIMARY KEY (`id_history`),
+  KEY `gold_history_users_fk` (`tg_user_id`),
+  CONSTRAINT `gold_history_users_fk` FOREIGN KEY (`tg_user_id`) REFERENCES `users` (`tg_user_id`)
+);

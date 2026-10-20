@@ -5,20 +5,6 @@ tg.expand();  // Раскрываем приложение на весь экр�
 tg.setHeaderColor('#0d1730');
 tg.setBackgroundColor('#14213d');
 
-// Названия локаций (лиг). Картинки лежат в /static/img/locations/1.svg ... 10.svg
-const LOCATIONS = [
-    'Дворовый корт',
-    'Школьная площадка',
-    'Парковый корт',
-    'Грунтовый клуб',
-    'Городская арена',
-    'Травяной клуб',
-    'Ночной стадион',
-    'Крытый дворец',
-    'Арена чемпионов',
-    'Центральный корт'
-];
-
 let currentScreen = 'profile';
 let previousScreen = 'arena';  // Куда вернуться из профиля по кнопке "Назад"
 let profile = null;
@@ -29,6 +15,16 @@ let profile = null;
 // GET-запрос к API бота. В заголовке передаём initData — по нему сервер узнаёт игрока
 async function apiGet(url) {
     const response = await fetch(url, {
+        headers: { 'X-Init-Data': tg.initData }
+    });
+    const data = await response.json();
+    return { status: response.status, data: data };
+}
+
+// POST-запрос к API бота
+async function apiPost(url) {
+    const response = await fetch(url, {
+        method: 'POST',
         headers: { 'X-Init-Data': tg.initData }
     });
     const data = await response.json();
@@ -107,6 +103,7 @@ function fillProfile() {
 
     // textContent, а не innerHTML — так имя игрока не сможет сломать страницу
     document.getElementById('topbar-name').textContent = profile.name;
+    document.getElementById('coins').textContent = profile.gold;
     document.getElementById('crystals').textContent = profile.crystals;
 
     document.getElementById('profile-name').textContent = profile.name;
@@ -147,6 +144,42 @@ function fillProfile() {
     // Рефералы
     document.getElementById('profile-friends').textContent = profile.friends;
     document.getElementById('profile-ref-link').textContent = profile.referral_link;
+
+    // Серия заходов
+    document.getElementById('profile-streak').textContent = profile.streak;
+    document.getElementById('profile-best-streak').textContent = profile.best_streak;
+}
+
+function fillHistory(items) {
+    const container = document.getElementById('profile-history');
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+        container.textContent = 'Пока пусто — сыграй матч или пригласи друга';
+        container.className = 'history muted';
+        return;
+    }
+
+    for (const item of items) {
+        const row = document.createElement('div');
+        row.className = 'history-item';
+
+        const text = document.createElement('div');
+        text.textContent = item.date + ' · ' + item.comment;
+
+        const amount = document.createElement('div');
+        if (item.amount > 0) {
+            amount.className = 'history-amount plus';
+            amount.textContent = '+' + item.amount + ' 🪙';
+        } else {
+            amount.className = 'history-amount minus';
+            amount.textContent = item.amount + ' 🪙';
+        }
+
+        row.appendChild(text);
+        row.appendChild(amount);
+        container.appendChild(row);
+    }
 }
 
 function setupReferralButtons() {
@@ -170,25 +203,53 @@ function setupReferralButtons() {
 
 // ---------- Лиги ----------
 
-function fillLocations() {
+function fillLeague() {
+    const leagues = profile.leagues;
+    const number = profile.league;          // Текущая лига (1-10)
+    const current = leagues[number - 1];
+
+    document.getElementById('league-picture').src = '/static/img/locations/' + number + '.svg';
+    document.getElementById('league-name').textContent = 'Лига ' + number + ': ' + current.name;
+
+    // Прогресс до следующей лиги
+    const fill = document.getElementById('league-progress');
+    const progressText = document.getElementById('league-progress-text');
+    const nextText = document.getElementById('league-next');
+
+    if (number === leagues.length) {
+        fill.style.width = '100%';
+        progressText.textContent = profile.season_gold + ' 🪙';
+        nextText.textContent = 'Ты в высшей лиге! 🏆';
+    } else {
+        const next = leagues[number];
+        const done = profile.season_gold - current.from;
+        const need = next.from - current.from;
+        fill.style.width = Math.floor(done / need * 100) + '%';
+        progressText.textContent = profile.season_gold + ' / ' + next.from + ' 🪙';
+        nextText.textContent = 'До лиги «' + next.name + '» осталось ' + (next.from - profile.season_gold) + ' 🪙';
+    }
+
+    // Список всех локаций
     const container = document.getElementById('locations');
     container.innerHTML = '';
 
-    // Пока открыта только первая лига — прогресс появится на шаге "Лиги"
-    for (let i = 0; i < LOCATIONS.length; i++) {
-        const number = i + 1;
-        const locked = number > 1;
+    for (let i = 0; i < leagues.length; i++) {
+        const leagueNumber = i + 1;
+        const locked = leagueNumber > number;
 
         const card = document.createElement('div');
         card.className = 'location';
         if (locked) {
             card.classList.add('locked');
         }
+        if (leagueNumber === number) {
+            card.classList.add('current');
+        }
 
         const picture = document.createElement('img');
         picture.className = 'location-picture';
-        picture.src = '/static/img/locations/' + number + '.svg';
-        picture.alt = LOCATIONS[i];
+        picture.src = '/static/img/locations/' + leagueNumber + '.svg';
+        picture.alt = leagues[i].name;
         card.appendChild(picture);
 
         if (locked) {
@@ -201,11 +262,133 @@ function fillLocations() {
 
         const name = document.createElement('div');
         name.className = 'location-name';
-        name.textContent = number + '. ' + LOCATIONS[i];
+
+        const title = document.createElement('span');
+        title.textContent = leagueNumber + '. ' + leagues[i].name;
+        if (leagueNumber === number) {
+            title.textContent += ' — ты здесь';
+        }
+
+        const from = document.createElement('span');
+        from.className = 'location-from';
+        from.textContent = 'от ' + leagues[i].from + ' 🪙';
+
+        name.appendChild(title);
+        name.appendChild(from);
         card.appendChild(name);
 
         container.appendChild(card);
     }
+}
+
+
+// ---------- Ежедневная награда ----------
+
+function showReward(reward, onClose) {
+    if (reward.gold === 0) {
+        onClose();  // Сегодня награду уже получали
+        return;
+    }
+
+    document.getElementById('reward-title').textContent = 'Серия: ' + reward.streak + ' дн. подряд';
+
+    const lines = document.getElementById('reward-lines');
+    lines.innerHTML = '';
+
+    const daily = document.createElement('div');
+    daily.textContent = 'Ежедневная награда: +' + reward.gold + ' 🪙';
+    lines.appendChild(daily);
+
+    if (reward.bonus > 0) {
+        const bonus = document.createElement('div');
+        bonus.className = 'plus';
+        bonus.textContent = 'Бонус за ' + reward.streak + ' дней: +' + reward.bonus + ' 🪙';
+        lines.appendChild(bonus);
+    }
+
+    const modal = document.getElementById('reward-modal');
+    modal.classList.remove('hidden');
+    tg.HapticFeedback.notificationOccurred('success');
+
+    document.getElementById('reward-ok').onclick = function () {
+        modal.classList.add('hidden');
+        onClose();
+    };
+}
+
+
+// ---------- Итоги года с салютом ----------
+
+function showSeasonSummary() {
+    const summary = profile.season_summary;
+    if (!summary) {
+        return;
+    }
+
+    const league = profile.leagues[summary.league - 1];
+    document.getElementById('season-title').textContent = 'Итоги ' + summary.year + ' года 🎉';
+    document.getElementById('season-picture').src = '/static/img/locations/' + summary.league + '.svg';
+    document.getElementById('season-league').textContent = 'Лига ' + summary.league + ': ' + league.name;
+    document.getElementById('season-text').textContent = 'За год ты заработал(-а) ' + summary.gold + ' 🪙. Лиги обнулились — монеты и скины остались с тобой. Вперёд за новой вершиной!';
+
+    const modal = document.getElementById('season-modal');
+    modal.classList.remove('hidden');
+    startFireworks();
+
+    document.getElementById('season-ok').onclick = async function () {
+        modal.classList.add('hidden');
+        stopFireworks();
+        await apiPost('/api/season_seen');
+    };
+}
+
+let fireworksTimer = null;
+
+function startFireworks() {
+    const canvas = document.getElementById('fireworks');
+    const context = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#ffc83d', '#ff6b9d', '#7fdbff', '#2ecc71', '#b15cff', '#ffffff'];
+    let sparks = [];
+
+    fireworksTimer = setInterval(function () {
+        // Иногда запускаем новый залп в случайном месте
+        if (Math.random() < 0.06) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height * 0.5;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            for (let i = 0; i < 40; i++) {
+                const angle = Math.PI * 2 * i / 40;
+                const speed = 2 + Math.random() * 2;
+                sparks.push({ x: x, y: y, dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed, life: 60, color: color });
+            }
+        }
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        const alive = [];
+        for (const spark of sparks) {
+            spark.x += spark.dx;
+            spark.y += spark.dy;
+            spark.dy += 0.05;  // Искры падают вниз
+            spark.life -= 1;
+
+            if (spark.life > 0) {
+                context.globalAlpha = spark.life / 60;
+                context.fillStyle = spark.color;
+                context.fillRect(spark.x, spark.y, 3, 3);
+                alive.push(spark);
+            }
+        }
+        sparks = alive;
+    }, 16);
+}
+
+function stopFireworks() {
+    clearInterval(fireworksTimer);
 }
 
 
@@ -253,7 +436,6 @@ async function start() {
     setupReferralButtons();
     setupBooking();
     setupShop();
-    fillLocations();
 
     if (!tg.initData) {
         showError('Откройте приложение в Telegram', 'Приложение работает только внутри Telegram — нажмите кнопку «Приложение» в боте');
@@ -261,6 +443,7 @@ async function start() {
     }
 
     try {
+        const visit = await apiPost('/api/visit');  // Ежедневная награда и серия (сервер выдаёт её 1 раз в день)
         const result = await apiGet('/api/me');
 
         if (result.status === 404) {
@@ -274,8 +457,15 @@ async function start() {
 
         profile = result.data;
         fillProfile();
+        fillLeague();
+
+        const history = await apiGet('/api/gold_history');
+        fillHistory(history.data);
         showScreen('profile');
         tg.BackButton.hide();  // При первом открытии "Назад" не нужен
+
+        // Сначала ежедневная награда, потом итоги прошлого года (если есть)
+        showReward(visit.data, showSeasonSummary);
     } catch (error) {
         showError('Нет связи с сервером', 'Проверьте интернет и попробуйте ещё раз');
     }

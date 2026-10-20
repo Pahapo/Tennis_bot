@@ -1,9 +1,10 @@
 from aiohttp import web
 
 import handlers.referrals as r
+import handlers.gold as g
 from webapp.auth import get_tg_user
 
-from config.db_utils import get_db_readonly
+from config.db_utils import get_db
 from sqlalchemy import select
 from models.User import User
 from models.Division import Division
@@ -21,7 +22,7 @@ async def api_me(request):
 
     user_id = tg_user['id']
 
-    async with get_db_readonly() as session:  # Используем контекстный менеджер
+    async with get_db() as session:  # get_db, а не readonly: прогресс игрока может создаться при первом заходе
 
         user = (await session.scalars(select(User).where(User.tg_user_id == user_id))).first()
 
@@ -52,6 +53,17 @@ async def api_me(request):
         if user_referrals and user_referrals.count:
             friends = user_referrals.count
 
+        # Монеты, лига и серия
+        progress = await g.get_progress(user_id, session)
+
+        season_summary = None
+        if progress.season_summary_seen == False:
+            season_summary = {
+                'year': progress.season_year - 1,
+                'gold': progress.last_season_gold,
+                'league': g.get_league(progress.last_season_gold)
+            }
+
     # Кристаллы — это монеты, которые уже есть в боте (users.coins)
     crystals = 0
     if user.coins:
@@ -72,5 +84,12 @@ async def api_me(request):
         'ban_until': ban_until,
         'tournaments': tournaments,
         'referral_link': await r.generate_referral_link(user_id),
-        'friends': friends
+        'friends': friends,
+        'gold': progress.gold,
+        'season_gold': progress.season_gold,
+        'league': g.get_league(progress.season_gold),
+        'leagues': g.LEAGUES,
+        'streak': progress.streak_days,
+        'best_streak': progress.best_streak,
+        'season_summary': season_summary
     })
