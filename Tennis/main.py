@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from aiogram import Bot, Dispatcher
 from aiogram.types import MenuButtonWebApp, WebAppInfo
 import handlers.functions as f
@@ -6,6 +7,9 @@ import handlers.match_app as ma
 from config.router import router
 from config.config import TOKEN, WEBAPP_URL
 from webapp.server import start_webapp
+
+# Журнал в консоли: видно, какой бот запущен, какие сообщения он получает и ошибки обработки
+logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
