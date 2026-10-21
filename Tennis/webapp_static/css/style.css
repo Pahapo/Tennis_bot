@@ -1387,3 +1387,16 @@ body::before {
 .home-actions {
     margin-top: 46px;
 }
+
+/* Вкладки объявлений на барахолке */
+.market-tabs {
+    margin-top: 16px;
+}
+
+.market-tabs .segment {
+    font-size: 13px;
+}
+
+#market-category-back {
+    margin-bottom: 4px;
+}

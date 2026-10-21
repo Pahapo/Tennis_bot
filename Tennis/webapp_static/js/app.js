@@ -143,7 +143,7 @@ function setupNavigation() {
     document.getElementById('home-banner').addEventListener('click', function () {
         tg.HapticFeedback.selectionChanged();
         showScreen('shop');
-        document.querySelector('#screen-shop .segment[data-shop=skins]').click();
+        document.querySelector('#shop-tabs .segment[data-shop=skins]').click();
     });
     const actions = document.querySelectorAll('.home-action');
     for (const action of actions) {
@@ -1706,42 +1706,91 @@ const LISTING_STATUS = {
     'sold': '✅ Продано'
 };
 
-function clubCard(item) {
+// Категория товаров клуба: картинка и название, по нажатию — товары категории
+function clubCategoryCard(category) {
     const box = document.createElement('div');
     box.className = 'card club-card';
 
-    if (item.photo) {
+    if (category.photo) {
         const photo = document.createElement('img');
-        photo.src = item.photo;
+        photo.src = category.photo;
         photo.alt = '';
         box.appendChild(photo);
     }
 
     const title = document.createElement('div');
     title.className = 'skin-name';
-    title.textContent = item.category;
+    title.textContent = category.name;
     box.appendChild(title);
 
-    // В карточке — только первая строка описания (название), цена видна после открытия
-    const text = document.createElement('div');
-    text.className = 'club-card-text';
-    text.textContent = item.description.split('\n')[0];
-    box.appendChild(text);
+    const count = document.createElement('div');
+    count.className = 'club-card-text';
+    count.textContent = 'Товаров: ' + category.items.length;
+    box.appendChild(count);
 
     box.addEventListener('click', function () {
-        const photo = document.getElementById('club-photo');
-        if (item.photo) {
-            photo.src = item.photo;
-            photo.classList.remove('hidden');
-        } else {
-            photo.classList.add('hidden');
-        }
-        document.getElementById('club-title').textContent = item.category;
-        document.getElementById('club-text').textContent = item.description;
-        document.getElementById('club-modal').classList.remove('hidden');
+        openClubCategory(category);
     });
 
     return box;
+}
+
+// Товар клуба — карточка как у объявления: фото, название (первая строка) и описание
+function clubItemCard(item) {
+    const box = document.createElement('div');
+    box.className = 'card';
+
+    if (item.photo) {
+        const photos = document.createElement('div');
+        photos.className = 'listing-photos';
+        const photo = document.createElement('img');
+        photo.src = item.photo;
+        photo.alt = '';
+        photos.appendChild(photo);
+        box.appendChild(photos);
+    }
+
+    const lines = item.description.split('\n');
+
+    const title = document.createElement('div');
+    title.className = 'match-date';
+    title.textContent = lines[0];
+    box.appendChild(title);
+
+    const rest = lines.slice(1).join('\n').trim();
+    if (rest) {
+        const description = document.createElement('div');
+        description.className = 'match-comment';
+        description.textContent = rest;
+        box.appendChild(description);
+    }
+
+    return box;
+}
+
+function openClubCategory(category) {
+    document.getElementById('market-category-title').textContent = category.name;
+
+    const items = document.getElementById('market-category-items');
+    items.innerHTML = '';
+    if (category.items.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Пока пусто';
+        items.appendChild(empty);
+    }
+    for (const item of category.items) {
+        items.appendChild(clubItemCard(item));
+    }
+
+    document.getElementById('market-main').classList.add('hidden');
+    document.getElementById('market-category').classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+
+function closeClubCategory() {
+    document.getElementById('market-category').classList.add('hidden');
+    document.getElementById('market-main').classList.remove('hidden');
 }
 
 // Объявление игрока. mine — в разделе "Мои объявления" (с кнопками продавца)
@@ -1863,8 +1912,8 @@ function listingAction(listing, action, question) {
 function fillMarket() {
     const club = document.getElementById('market-club');
     club.innerHTML = '';
-    for (const item of marketData.club) {
-        club.appendChild(clubCard(item));
+    for (const category of marketData.club) {
+        club.appendChild(clubCategoryCard(category));
     }
     if (marketData.club.length === 0) {
         club.innerHTML = '<div class="muted">Пока пусто</div>';
@@ -1984,14 +2033,31 @@ function setupMarket() {
         document.getElementById('listing-modal').classList.add('hidden');
     });
     document.getElementById('listing-submit').addEventListener('click', submitListing);
-    document.getElementById('club-close').addEventListener('click', function () {
-        document.getElementById('club-modal').classList.add('hidden');
-    });
+    document.getElementById('market-category-back').addEventListener('click', closeClubCategory);
+
+    // Вкладки "Объявления игроков" / "Мои объявления"
+    const tabs = document.querySelectorAll('#market-tabs .segment');
+    for (const tab of tabs) {
+        tab.addEventListener('click', function () {
+            for (const other of tabs) {
+                other.classList.remove('active');
+            }
+            tab.classList.add('active');
+
+            if (tab.dataset.market === 'listings') {
+                document.getElementById('market-listings').classList.remove('hidden');
+                document.getElementById('market-mine').classList.add('hidden');
+            } else {
+                document.getElementById('market-listings').classList.add('hidden');
+                document.getElementById('market-mine').classList.remove('hidden');
+            }
+        });
+    }
 
     // Кнопка "Сменить скин" в профиле — в магазин скинов
     document.getElementById('btn-change-skin').addEventListener('click', function () {
         showScreen('shop');
-        document.querySelector('#screen-shop .segment[data-shop=skins]').click();
+        document.querySelector('#shop-tabs .segment[data-shop=skins]').click();
     });
 }
 
@@ -2091,7 +2157,7 @@ function setupBooking() {
 }
 
 function setupShop() {
-    const segments = document.querySelectorAll('#screen-shop .segment');
+    const segments = document.querySelectorAll('#shop-tabs .segment');
     for (const segment of segments) {
         segment.addEventListener('click', function () {
             for (const other of segments) {
@@ -2105,6 +2171,7 @@ function setupShop() {
             } else {
                 document.getElementById('shop-skins').classList.add('hidden');
                 document.getElementById('shop-market').classList.remove('hidden');
+                closeClubCategory();
             }
         });
     }

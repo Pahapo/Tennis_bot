@@ -160,15 +160,28 @@ async def api_market(request):
 
     async with get_db_readonly() as session:  # Используем контекстный менеджер
 
-        # Товары клуба (таблица inventory, как в боте)
+        # Товары клуба по категориям (таблица inventory, как в боте)
         club = []
+        for key in CLUB_CATEGORIES:
+            # Картинка категории: N.jpg (как в шапке категории в боте)
+            category_photo = None
+            if os.path.exists(os.path.join(INVENTORY_DIR, key + '.jpg')):
+                category_photo = '/inventory_img/' + key + '.jpg'
+
+            club.append({'key': key, 'name': CLUB_CATEGORIES[key], 'photo': category_photo, 'items': []})
+
         for item in (await session.scalars(select(Inventory).order_by(Inventory.photo))).all():
+            key = (item.photo or '')[:1]
+            if key not in CLUB_CATEGORIES:
+                continue
+
             photo = None
             if item.photo and os.path.exists(os.path.join(INVENTORY_DIR, item.photo + '.jpg')):
                 photo = '/inventory_img/' + item.photo + '.jpg'
 
-            category = CLUB_CATEGORIES.get((item.photo or '')[:1], 'Товар клуба')
-            club.append({'id': item.inventory_id, 'photo': photo, 'category': category, 'description': ta.clean_html(item.description)})
+            for category in club:
+                if category['key'] == key:
+                    category['items'].append({'id': item.inventory_id, 'photo': photo, 'description': ta.clean_html(item.description)})
 
         # Объявления игроков в продаже (сначала новые)
         listings = []
