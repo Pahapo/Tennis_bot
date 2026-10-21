@@ -124,6 +124,6 @@ CREATE TABLE `market_listings` (
 ALTER TABLE `inventory`
   ADD COLUMN `price` float DEFAULT NULL;
 
--- Ракетка на главном экране (скин из магазина). NULL — неоновая ракетка по умолчанию
+-- Ракетка на главном экране (скин из магазина). NULL — деревянная ракетка по умолчанию
 ALTER TABLE `player_progress`
   ADD COLUMN `skin_racket` varchar(30) DEFAULT NULL;

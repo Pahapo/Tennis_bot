@@ -10,7 +10,7 @@ from models.PlayerSkin import PlayerSkin
 
 DEFAULT_HERO = 'hero_novice'   # Герой по умолчанию — есть у всех бесплатно
 DEFAULT_BACKGROUND = None      # Фон по умолчанию — стандартный корт (bg_default.svg), с лигой не связан
-DEFAULT_RACKET = 'racket_neon' # Ракетка по умолчанию — неоновая, есть у всех бесплатно
+DEFAULT_RACKET = 'racket_wood' # Ракетка по умолчанию — деревянная, есть у всех бесплатно
 
 RARITY_NAMES = {
     'common': 'Обычный',
@@ -37,10 +37,11 @@ SKINS = [
     {'id': 'bg_space', 'type': 'background', 'name': 'Космос', 'rarity': 'legendary', 'price': 2000, 'min_league': 8, 'months': None},
     {'id': 'bg_newyear', 'type': 'background', 'name': 'Новогодний корт', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': [12, 1]},
 
-    {'id': 'racket_neon', 'type': 'racket', 'name': 'Карбон и неон', 'rarity': 'common', 'price': 0, 'min_league': None, 'months': None},
+    {'id': 'racket_wood', 'type': 'racket', 'name': 'Деревянная', 'rarity': 'common', 'price': 0, 'min_league': None, 'months': None},
     {'id': 'racket_teal', 'type': 'racket', 'name': 'Бирюза', 'rarity': 'common', 'price': 150, 'min_league': None, 'months': None},
     {'id': 'racket_gold', 'type': 'racket', 'name': 'Про-тур', 'rarity': 'rare', 'price': 400, 'min_league': None, 'months': None},
-    {'id': 'racket_crystal', 'type': 'racket', 'name': 'Кристалл', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': None}
+    {'id': 'racket_crystal', 'type': 'racket', 'name': 'Кристалл', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': None},
+    {'id': 'racket_neon', 'type': 'racket', 'name': 'Карбон и неон', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': None}
 ]
 
 

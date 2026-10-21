@@ -319,10 +319,11 @@ function fillLeague() {
     document.getElementById('league-name').textContent = 'Лига ' + number + ': ' + current.name;
 
     // Арена на главном экране
-    // На главном — без обложки и рамки. Картинку опускаем вниз на её собственную высоту минус 40 px
+    // На главном — без обложки и рамки. Картинку опускаем вниз на её собственную высоту минус 65 px
+    // (вместе с ней поднимаются название лиги, прогресс и кнопки "Турнир" и "Соперник")
     const arenaImage = document.getElementById('home-arena-img');
     arenaImage.onload = function () {
-        document.getElementById('home-arena').style.marginTop = (arenaImage.offsetHeight - 40) + 'px';
+        document.getElementById('home-arena').style.marginTop = (arenaImage.offsetHeight - 65) + 'px';
     };
     arenaImage.src = leagueImage(number);
     document.getElementById('home-league-name').textContent = 'ЛИГА ' + number + ': ' + current.name;

@@ -1058,10 +1058,28 @@ button {
    Цвета ракетки — переменные ниже, их меняет скин ракетки (data-racket у .home-top) */
 .home-top {
     position: relative;
+    /* Деревянная ракетка — по умолчанию у всех */
+    --rim1: #f0c48a;
+    --rim2: #c58a4a;
+    --rim3: #7a4a1d;
+    --outline: #3d1f00;
+    --grain: rgba(90, 45, 10, 0.75);
+    --grommet: #f3e3c0;
+    --highlight: rgba(255, 240, 210, 0.85);
+    --strings: #f3e3c0;
+    --strings-opacity: 0.4;
+    --shaft: #c58a4a;
+    --collar: #f3e3c0;
+    --cap: #5a2d0a;
+    --grip: repeating-linear-gradient(-62deg, #8a4a1c 0 7px, #4a2208 7px 9px);
+}
+
+.home-top[data-racket=racket_neon] {
     --rim1: #4a5f8f;
     --rim2: #1f2d4f;
     --rim3: #0a1226;
     --outline: #050a18;
+    --grain: transparent;
     --grommet: #4fe3ff;
     --highlight: rgba(79, 227, 255, 0.9);
     --strings: #4fe3ff;
@@ -1073,6 +1091,7 @@ button {
 }
 
 .home-top[data-racket=racket_teal] {
+    --grain: transparent;
     --rim1: #c9fff8;
     --rim2: #3fd6cb;
     --rim3: #0e6f7a;
@@ -1088,6 +1107,7 @@ button {
 }
 
 .home-top[data-racket=racket_gold] {
+    --grain: transparent;
     --rim1: #fff1b8;
     --rim2: #ffc83d;
     --rim3: #b5651d;
@@ -1103,6 +1123,7 @@ button {
 }
 
 .home-top[data-racket=racket_crystal] {
+    --grain: transparent;
     --rim1: #f0e0ff;
     --rim2: #a66bff;
     --rim3: #4b1f8a;

@@ -16,7 +16,7 @@ class PlayerProgress(AsyncAttrs, Base):
     last_news_seen = Column(Integer, nullable=False)        # ID последней прочитанной новости
     skin_hero = Column(String(30))                          # Надетый герой (None — Новичок)
     skin_background = Column(String(30))                    # Надетый фон (None — стандартный корт)
-    skin_racket = Column(String(30))                        # Надетая ракетка на главном экране (None — неоновая)
+    skin_racket = Column(String(30))                        # Надетая ракетка на главном экране (None — деревянная)
 
 
     # Конструктор __init__
