@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=15">
+    <link rel="stylesheet" href="/static/css/style.css?v=16">
 </head>
 <body>
 
@@ -127,12 +127,47 @@
         <section class="screen" id="screen-home">
             <div class="home-top">
                 <div class="home-left">
-                    <!-- Флаг со скином (фон + герой из магазина) -->
-                    <button class="banner" id="home-banner" type="button">
-                        <div class="banner-flag">
+                    <!-- Ракетка со скином (фон + герой из магазина). По нажатию — магазин скинов -->
+                    <button class="racket" id="home-banner" type="button">
+                        <!-- Горло ракетки: соединяет голову с рукояткой -->
+                        <svg class="racket-throat" viewBox="0 0 48 144">
+                            <defs>
+                                <linearGradient id="racket-throat-color" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" style="stop-color: var(--rim1)"/>
+                                    <stop offset="0.45" style="stop-color: var(--rim2)"/>
+                                    <stop offset="1" style="stop-color: var(--rim3)"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M2 44Q24 58 48 67M2 100Q24 86 48 77" fill="none" stroke-linecap="round" stroke-width="10" style="stroke: var(--outline)"/>
+                            <path d="M2 44Q24 58 48 67M2 100Q24 86 48 77" fill="none" stroke-linecap="round" stroke-width="5" stroke="url(#racket-throat-color)"/>
+                        </svg>
+
+                        <span class="racket-scene">
                             <img class="banner-bg" id="home-scene-bg" src="/static/img/skins/bg_default.svg" alt="">
                             <img class="banner-hero" id="home-scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
-                        </div>
+                        </span>
+
+                        <!-- Обод: струны, обод, блик и отверстия для струн -->
+                        <svg class="racket-frame">
+                            <defs>
+                                <linearGradient id="racket-rim-color" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" style="stop-color: var(--rim1)"/>
+                                    <stop offset="0.35" style="stop-color: var(--rim2)"/>
+                                    <stop offset="1" style="stop-color: var(--rim3)"/>
+                                </linearGradient>
+                                <clipPath id="racket-strings-area">
+                                    <ellipse cx="50%" cy="50%" rx="44%" ry="42%"/>
+                                </clipPath>
+                                <pattern id="racket-strings" width="11" height="11" patternUnits="userSpaceOnUse">
+                                    <path d="M0 0.5H11M0.5 0V11" stroke-width="1" style="stroke: var(--strings)"/>
+                                </pattern>
+                            </defs>
+                            <rect width="100%" height="100%" fill="url(#racket-strings)" clip-path="url(#racket-strings-area)" style="opacity: var(--strings-opacity)"/>
+                            <ellipse cx="50%" cy="50%" rx="46%" ry="45%" fill="none" stroke-width="11" style="stroke: var(--outline)"/>
+                            <ellipse cx="50%" cy="50%" rx="46%" ry="45%" fill="none" stroke-width="6.5" stroke="url(#racket-rim-color)"/>
+                            <ellipse cx="50%" cy="50%" rx="46%" ry="45%" fill="none" stroke-width="2" stroke-linecap="round" pathLength="100" stroke-dasharray="16 84" stroke-dashoffset="-56" style="stroke: var(--highlight)"/>
+                            <ellipse cx="50%" cy="50%" rx="46%" ry="45%" fill="none" stroke-width="2.2" stroke-linecap="round" pathLength="100" stroke-dasharray="0 2.5" style="stroke: var(--grommet)"/>
+                        </svg>
                     </button>
                     <div class="name-plate">
                         <div class="plate-text">
@@ -159,6 +194,9 @@
                         <span>Ежедневная<br>награда</span>
                     </button>
                 </div>
+
+                <!-- Рукоятка ракетки: идёт между кнопками справа и заканчивается по их краю -->
+                <span class="racket-grip"></span>
             </div>
 
             <!-- Круглая кнопка: игры, где нужно записать счёт -->
@@ -258,6 +296,8 @@
                 <div class="skins-grid" id="skins-heroes"></div>
                 <div class="section-title">Фоны</div>
                 <div class="skins-grid" id="skins-backgrounds"></div>
+                <div class="section-title">Ракетки</div>
+                <div class="skins-grid" id="skins-rackets"></div>
             </div>
 
             <div class="hidden" id="shop-market">
@@ -503,6 +543,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=14"></script>
+    <script src="/static/js/app.js?v=16"></script>
 </body>
 </html>

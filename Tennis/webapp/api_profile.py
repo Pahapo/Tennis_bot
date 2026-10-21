@@ -138,5 +138,6 @@ async def api_me(request):
         'daily_available': daily_available,
         'unread_news': unread_news,
         'hero': sk.get_hero(progress),
-        'background': sk.get_background(progress)
+        'background': sk.get_background(progress),
+        'racket': sk.get_racket(progress)
     })

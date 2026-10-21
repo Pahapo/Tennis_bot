@@ -15,11 +15,12 @@ class PlayerProgress(AsyncAttrs, Base):
     last_visit = Column(Date)                               # Дата, когда последний раз забрал ежедневную награду
     last_news_seen = Column(Integer, nullable=False)        # ID последней прочитанной новости
     skin_hero = Column(String(30))                          # Надетый герой (None — Новичок)
-    skin_background = Column(String(30))                    # Надетый фон (None — картинка лиги)
+    skin_background = Column(String(30))                    # Надетый фон (None — стандартный корт)
+    skin_racket = Column(String(30))                        # Надетая ракетка на главном экране (None — неоновая)
 
 
     # Конструктор __init__
-    def __init__(self, tg_user_id, season_year, gold=0, season_gold=0, last_season_gold=None, season_summary_seen=True, streak_days=0, best_streak=0, last_visit=None, last_news_seen=0, skin_hero=None, skin_background=None):
+    def __init__(self, tg_user_id, season_year, gold=0, season_gold=0, last_season_gold=None, season_summary_seen=True, streak_days=0, best_streak=0, last_visit=None, last_news_seen=0, skin_hero=None, skin_background=None, skin_racket=None):
         self.tg_user_id = tg_user_id
         self.season_year = season_year
         self.gold = gold
@@ -32,3 +33,4 @@ class PlayerProgress(AsyncAttrs, Base):
         self.last_news_seen = last_news_seen
         self.skin_hero = skin_hero
         self.skin_background = skin_background
+        self.skin_racket = skin_racket

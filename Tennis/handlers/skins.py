@@ -5,11 +5,12 @@ import handlers.gold as g
 from sqlalchemy import select
 from models.PlayerSkin import PlayerSkin
 
-# Скины как в Clash Royale: фон (арена) + герой на нём. Пока все покупаются за монеты 🪙.
-# Картинки: /static/img/skins/<id>.svg
+# Скины как в Clash Royale: фон (арена) + герой на нём + ракетка на главном экране. Покупаются за монеты 🪙.
+# Картинки: /static/img/skins/<id>.svg (у ракеток — картинка для магазина, на главном экране ракетка рисуется в CSS)
 
 DEFAULT_HERO = 'hero_novice'   # Герой по умолчанию — есть у всех бесплатно
 DEFAULT_BACKGROUND = None      # Фон по умолчанию — стандартный корт (bg_default.svg), с лигой не связан
+DEFAULT_RACKET = 'racket_neon' # Ракетка по умолчанию — неоновая, есть у всех бесплатно
 
 RARITY_NAMES = {
     'common': 'Обычный',
@@ -34,7 +35,12 @@ SKINS = [
     {'id': 'bg_snow', 'type': 'background', 'name': 'Снежный корт', 'rarity': 'rare', 'price': 400, 'min_league': None, 'months': None},
     {'id': 'bg_city', 'type': 'background', 'name': 'Ночной город', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': None},
     {'id': 'bg_space', 'type': 'background', 'name': 'Космос', 'rarity': 'legendary', 'price': 2000, 'min_league': 8, 'months': None},
-    {'id': 'bg_newyear', 'type': 'background', 'name': 'Новогодний корт', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': [12, 1]}
+    {'id': 'bg_newyear', 'type': 'background', 'name': 'Новогодний корт', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': [12, 1]},
+
+    {'id': 'racket_neon', 'type': 'racket', 'name': 'Карбон и неон', 'rarity': 'common', 'price': 0, 'min_league': None, 'months': None},
+    {'id': 'racket_teal', 'type': 'racket', 'name': 'Бирюза', 'rarity': 'common', 'price': 150, 'min_league': None, 'months': None},
+    {'id': 'racket_gold', 'type': 'racket', 'name': 'Про-тур', 'rarity': 'rare', 'price': 400, 'min_league': None, 'months': None},
+    {'id': 'racket_crystal', 'type': 'racket', 'name': 'Кристалл', 'rarity': 'epic', 'price': 900, 'min_league': None, 'months': None}
 ]
 
 
@@ -51,9 +57,9 @@ def is_on_sale(skin):  # Сезонный скин продаётся тольк
     return g.now_moscow().month in skin['months']
 
 
-async def get_owned_skins(user_id, session: AsyncSession):  # id купленных скинов (+ бесплатный герой)
+async def get_owned_skins(user_id, session: AsyncSession):  # id купленных скинов (+ бесплатные герой и ракетка)
     rows = (await session.scalars(select(PlayerSkin).where(PlayerSkin.tg_user_id == user_id))).all()
-    owned = [DEFAULT_HERO]
+    owned = [DEFAULT_HERO, DEFAULT_RACKET]
     for row in rows:
         owned.append(row.skin_id)
     return owned
@@ -69,6 +75,12 @@ def get_background(progress):  # Надетый фон (None — стандар�
     if progress.skin_background and find_skin(progress.skin_background):
         return progress.skin_background
     return DEFAULT_BACKGROUND
+
+
+def get_racket(progress):  # Надетая ракетка
+    if progress.skin_racket and find_skin(progress.skin_racket):
+        return progress.skin_racket
+    return DEFAULT_RACKET
 
 
 async def buy_skin(user_id, skin_id, session: AsyncSession):  # Покупка за монеты. Возвращает текст ошибки или None
@@ -93,6 +105,7 @@ async def buy_skin(user_id, skin_id, session: AsyncSession):  # Покупка �
         return 'Не хватает монет 🪙'
 
     session.add(PlayerSkin(tg_user_id = user_id, skin_id = skin_id, date = g.now_moscow()))
+    await session.flush()  # Сразу записываем покупку, чтобы скин можно было тут же надеть (autoflush выключен)
     return None
 
 
@@ -109,6 +122,8 @@ async def equip_skin(user_id, skin_id, session: AsyncSession):  # Надеть �
 
     if skin['type'] == 'hero':
         progress.skin_hero = skin_id
+    elif skin['type'] == 'racket':
+        progress.skin_racket = skin_id
     else:
         progress.skin_background = skin_id
     return None

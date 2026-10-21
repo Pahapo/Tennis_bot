@@ -77,6 +77,7 @@ async def api_skins(request):
             'skins': skins,
             'hero': sk.get_hero(progress),
             'background': sk.get_background(progress),
+            'racket': sk.get_racket(progress),
             'gold': progress.gold
         }
 

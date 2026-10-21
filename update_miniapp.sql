@@ -123,3 +123,7 @@ CREATE TABLE `market_listings` (
 -- Если цену не заполнить, приложение попробует найти её в описании ("... 25 руб.")
 ALTER TABLE `inventory`
   ADD COLUMN `price` float DEFAULT NULL;
+
+-- Ракетка на главном экране (скин из магазина). NULL — неоновая ракетка по умолчанию
+ALTER TABLE `player_progress`
+  ADD COLUMN `skin_racket` varchar(30) DEFAULT NULL;

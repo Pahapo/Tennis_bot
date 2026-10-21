@@ -232,3 +232,6 @@ CREATE TABLE `market_listings` (
 
 ALTER TABLE `inventory`
   ADD COLUMN `price` float DEFAULT NULL;
+
+ALTER TABLE `player_progress`
+  ADD COLUMN `skin_racket` varchar(30) DEFAULT NULL;

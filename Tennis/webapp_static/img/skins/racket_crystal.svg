@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120">
+  <!-- Ракетка «racket_crystal» для карточки в магазине. На главном экране та же ракетка рисуется в CSS -->
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0e0ff"/><stop offset=".45" stop-color="#a66bff"/><stop offset="1" stop-color="#4b1f8a"/></linearGradient>
+    <pattern id="strings" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M0 .5H9M.5 0V9" stroke="#f3e8ff" stroke-width="1"/></pattern>
+    <pattern id="grip" width="7" height="12" patternUnits="userSpaceOnUse" patternTransform="skewX(-30)"><rect width="7" height="12" fill="#ffffff"/><rect x="5.5" width="1.5" height="12" fill="#c9b2ef"/></pattern>
+    
+  </defs>
+  <!-- Горло -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M116 41Q132 50 148 55M116 79Q132 70 148 65" stroke="#24104a" stroke-width="9"/>
+    <path d="M116 41Q132 50 148 55M116 79Q132 70 148 65" stroke="url(#rim)" stroke-width="4.5"/>
+  </g>
+  <!-- Рукоятка: переход, кольцо, обмотка, торец -->
+  <rect x="146" y="53.5" width="48" height="13" rx="4" fill="#24104a"/>
+  <rect x="148" y="55.5" width="44" height="9" rx="2.5" fill="url(#grip)"/>
+  <rect x="148" y="55.5" width="7" height="9" fill="#a66bff"/>
+  <rect x="155" y="55.5" width="3.5" height="9" fill="#ffc83d"/>
+  <rect x="187" y="55.5" width="5" height="9" rx="2" fill="#ffc83d"/>
+  <rect x="148" y="55.5" width="44" height="3" fill="#ffffff" opacity=".25"/>
+  <!-- Голова: струны, обод, блик, отверстия для струн -->
+  <ellipse cx="64" cy="60" rx="50" ry="42" fill="#14213d"/>
+  <ellipse cx="64" cy="60" rx="50" ry="42" fill="url(#strings)" opacity=".3"/>
+  <g>
+    <ellipse cx="64" cy="60" rx="54" ry="46" fill="none" stroke="#24104a" stroke-width="10"/>
+    <ellipse cx="64" cy="60" rx="54" ry="46" fill="none" stroke="url(#rim)" stroke-width="6"/>
+  </g>
+  <ellipse cx="64" cy="60" rx="54" ry="46" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" pathLength="100" stroke-dasharray="16 84" stroke-dashoffset="-56" opacity=".9"/>
+  <ellipse cx="64" cy="60" rx="54" ry="46" fill="none" stroke="#ffc83d" stroke-width="2" stroke-linecap="round" pathLength="100" stroke-dasharray="0 2.5"/>
+</svg>

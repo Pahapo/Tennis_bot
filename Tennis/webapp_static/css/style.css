@@ -907,6 +907,10 @@ button {
     object-fit: cover;
 }
 
+.skin-image.racket {
+    padding: 6px;
+}
+
 .skin-name {
     font-weight: 800;
     font-size: 14px;
@@ -1050,24 +1054,89 @@ button {
     gap: 12px;
 }
 
-/* Флаг (вымпел) со скином */
-.banner {
+/* Ракетка со скином (фон + герой из магазина) вместо флага.
+   Цвета ракетки — переменные ниже, их меняет скин ракетки (data-racket у .home-top) */
+.home-top {
+    position: relative;
+    --rim1: #4a5f8f;
+    --rim2: #1f2d4f;
+    --rim3: #0a1226;
+    --outline: #050a18;
+    --grommet: #4fe3ff;
+    --highlight: rgba(79, 227, 255, 0.9);
+    --strings: #4fe3ff;
+    --strings-opacity: 0.28;
+    --shaft: #1f2d4f;
+    --collar: #4fe3ff;
+    --cap: #4fe3ff;
+    --grip: repeating-linear-gradient(-62deg, #1a2238 0 7px, #4fe3ff 7px 8px, #1a2238 8px 9px);
+}
+
+.home-top[data-racket=racket_teal] {
+    --rim1: #c9fff8;
+    --rim2: #3fd6cb;
+    --rim3: #0e6f7a;
+    --outline: #0d1730;
+    --grommet: #0d1730;
+    --highlight: rgba(255, 255, 255, 0.95);
+    --strings: #e8fffd;
+    --strings-opacity: 0.3;
+    --shaft: #3fd6cb;
+    --collar: #ffffff;
+    --cap: #3fd6cb;
+    --grip: repeating-linear-gradient(-62deg, #1c1c1c 0 7px, #3fd6cb 7px 8px, #1c1c1c 8px 9px);
+}
+
+.home-top[data-racket=racket_gold] {
+    --rim1: #fff1b8;
+    --rim2: #ffc83d;
+    --rim3: #b5651d;
+    --outline: #3d1f00;
+    --grommet: #7a4a00;
+    --highlight: rgba(255, 255, 255, 0.9);
+    --strings: #ffffff;
+    --strings-opacity: 0.35;
+    --shaft: #ffc83d;
+    --collar: #7a4a00;
+    --cap: #ffc83d;
+    --grip: repeating-linear-gradient(-62deg, #262626 0 7px, #0f0f0f 7px 9px);
+}
+
+.home-top[data-racket=racket_crystal] {
+    --rim1: #f0e0ff;
+    --rim2: #a66bff;
+    --rim3: #4b1f8a;
+    --outline: #24104a;
+    --grommet: #ffc83d;
+    --highlight: rgba(255, 255, 255, 0.9);
+    --strings: #f3e8ff;
+    --strings-opacity: 0.3;
+    --shaft: #a66bff;
+    --collar: #ffc83d;
+    --cap: #ffc83d;
+    --grip: repeating-linear-gradient(-62deg, #ffffff 0 7px, #d9c7f5 7px 9px);
+}
+
+/* Голова ракетки. Высота 144 px: рукоятка ровно посередине между кнопкой профиля и наградой */
+.racket {
+    position: relative;
     display: block;
     width: 100%;
-    padding: 4px;
+    height: 144px;
+    padding: 0;
     border: none;
-    background: var(--gold);
-    clip-path: polygon(0 0, 100% 0, 80% 50%, 100% 100%, 0 100%);
+    background: none;
 }
 
-.banner-flag {
-    position: relative;
-    aspect-ratio: 16 / 9;
+.racket-scene {
+    position: absolute;
+    inset: calc(5% + 5px) calc(4% + 5px);
+    z-index: 1;
+    border-radius: 50%;
     overflow: hidden;
-    clip-path: polygon(0 0, 100% 0, 80% 50%, 100% 100%, 0 100%);
 }
 
-.banner-bg {
+.racket-scene .banner-bg {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -1075,12 +1144,82 @@ button {
     object-fit: cover;
 }
 
-.banner-hero {
+.racket-scene .banner-hero {
     position: absolute;
-    left: 32%;
-    bottom: 2%;
-    height: 92%;
+    left: 50%;
+    bottom: 4%;
+    height: 84%;
     transform: translateX(-50%);
+}
+
+.racket-frame {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+/* Неоновое свечение — только у неоновой ракетки */
+.home-top[data-racket=racket_neon] .racket-frame {
+    filter: drop-shadow(0 0 5px rgba(79, 227, 255, 0.65));
+}
+
+.racket-throat {
+    position: absolute;
+    left: calc(100% - 12px);
+    top: 0;
+    width: 48px;
+    height: 144px;
+    overflow: visible;
+}
+
+/* Рукоятка: от горла до правого края кнопок */
+.racket-grip {
+    position: absolute;
+    left: calc(54% + 34px);
+    right: 3px;
+    top: 66px;
+    z-index: 1;
+    height: 12px;
+    border-radius: 3px 6px 6px 3px;
+    box-shadow: 0 0 0 3px var(--outline), 0 4px 0 rgba(0, 0, 0, 0.3);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.35)),
+        linear-gradient(90deg, var(--shaft) 0 14px, var(--collar) 14px 20px, transparent 20px),
+        var(--grip);
+    pointer-events: none;
+}
+
+.home-top[data-racket=racket_neon] .racket-grip {
+    box-shadow: 0 0 0 3px var(--outline), 0 0 8px rgba(79, 227, 255, 0.6);
+}
+
+.racket-grip::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 8px;
+    height: 100%;
+    border-radius: 0 6px 6px 0;
+    background: var(--cap);
+}
+
+/* Между кнопкой профиля и наградой проходит рукоятка: по 7 px сверху и снизу */
+.home-right {
+    gap: 32px;
+}
+
+.home-icons {
+    position: relative;
+    z-index: 2;
+}
+
+.daily-btn {
+    z-index: 2;
 }
 
 .name-plate {

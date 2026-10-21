@@ -1544,6 +1544,9 @@ function fillScenes() {
         document.getElementById(prefix + '-bg').src = background;
         document.getElementById(prefix + '-hero').src = hero;
     }
+
+    // Цвета ракетки на главном экране берутся из CSS по названию скина
+    document.querySelector('.home-top').dataset.racket = profile.racket;
 }
 
 
@@ -1555,7 +1558,7 @@ function skinCard(skin) {
     const box = document.createElement('div');
     box.className = 'card skin-card';
 
-    const equipped = skin.id === skinsData.hero || skin.id === skinsData.background;
+    const equipped = skin.id === skinsData.hero || skin.id === skinsData.background || skin.id === skinsData.racket;
     if (equipped) {
         box.classList.add('equipped');
     }
@@ -1564,6 +1567,9 @@ function skinCard(skin) {
     image.className = 'skin-image';
     if (skin.type === 'background') {
         image.classList.add('background');
+    }
+    if (skin.type === 'racket') {
+        image.classList.add('racket');
     }
     image.src = '/static/img/skins/' + skin.id + '.svg';
     image.alt = skin.name;
@@ -1659,14 +1665,18 @@ function defaultBackgroundCard() {
 function fillSkins() {
     const heroes = document.getElementById('skins-heroes');
     const backgrounds = document.getElementById('skins-backgrounds');
+    const rackets = document.getElementById('skins-rackets');
     heroes.innerHTML = '';
     backgrounds.innerHTML = '';
+    rackets.innerHTML = '';
 
     backgrounds.appendChild(defaultBackgroundCard());
 
     for (const skin of skinsData.skins) {
         if (skin.type === 'hero') {
             heroes.appendChild(skinCard(skin));
+        } else if (skin.type === 'racket') {
+            rackets.appendChild(skinCard(skin));
         } else {
             backgrounds.appendChild(skinCard(skin));
         }
