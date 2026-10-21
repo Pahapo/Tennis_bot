@@ -313,10 +313,10 @@ function fillLeague() {
     document.getElementById('league-name').textContent = 'Лига ' + number + ': ' + current.name;
 
     // Арена на главном экране
-    // На главном — без обложки и рамки. Картинку опускаем вниз на её собственную высоту
+    // На главном — без обложки и рамки. Картинку опускаем вниз на её собственную высоту минус 40 px
     const arenaImage = document.getElementById('home-arena-img');
     arenaImage.onload = function () {
-        document.getElementById('home-arena').style.marginTop = arenaImage.offsetHeight + 'px';
+        document.getElementById('home-arena').style.marginTop = (arenaImage.offsetHeight - 40) + 'px';
     };
     arenaImage.src = leagueImage(number);
     document.getElementById('home-league-name').textContent = 'ЛИГА ' + number + ': ' + current.name;
