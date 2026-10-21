@@ -9,7 +9,7 @@ from models.PlayerSkin import PlayerSkin
 # Картинки: /static/img/skins/<id>.svg
 
 DEFAULT_HERO = 'hero_novice'   # Герой по умолчанию — есть у всех бесплатно
-DEFAULT_BACKGROUND = None      # Фон по умолчанию — картинка текущей лиги
+DEFAULT_BACKGROUND = None      # Фон по умолчанию — стандартный корт (bg_default.svg), с лигой не связан
 
 RARITY_NAMES = {
     'common': 'Обычный',
@@ -65,7 +65,7 @@ def get_hero(progress):  # Надетый герой
     return DEFAULT_HERO
 
 
-def get_background(progress):  # Надетый фон (None — картинка текущей лиги)
+def get_background(progress):  # Надетый фон (None — стандартный фон)
     if progress.skin_background and find_skin(progress.skin_background):
         return progress.skin_background
     return DEFAULT_BACKGROUND
@@ -96,10 +96,10 @@ async def buy_skin(user_id, skin_id, session: AsyncSession):  # Покупка �
     return None
 
 
-async def equip_skin(user_id, skin_id, session: AsyncSession):  # Надеть скин. skin_id = 'league' — вернуть фон лиги
+async def equip_skin(user_id, skin_id, session: AsyncSession):  # Надеть скин. skin_id = 'default' — вернуть стандартный фон
     progress = await g.get_progress(user_id, session)
 
-    if skin_id == 'league':
+    if skin_id == 'default':
         progress.skin_background = None
         return None
 

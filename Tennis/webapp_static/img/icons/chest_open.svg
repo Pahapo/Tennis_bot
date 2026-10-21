@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="45%" r="50%">
+      <stop offset="0" stop-color="#fff6c8"/>
+      <stop offset=".55" stop-color="#ffc83d" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#ffc83d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Сияние сокровищ -->
+  <circle cx="32" cy="26" r="30" fill="url(#glow)"/>
+  <!-- Открытая крышка -->
+  <path d="M10 29L14 6H50L54 29Z" fill="#7a3d0f" stroke="#3d1f00" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M21 6V29M43 6V29" stroke="#ffc83d" stroke-width="4"/>
+  <!-- Сокровища: монеты и кристалл -->
+  <ellipse cx="32" cy="30" rx="22" ry="5" fill="#ffc83d" stroke="#7a4a00" stroke-width="2.5"/>
+  <circle cx="22" cy="25" r="5.5" fill="#ffd95e" stroke="#7a4a00" stroke-width="2"/>
+  <circle cx="33" cy="21" r="5.5" fill="#ffd95e" stroke="#7a4a00" stroke-width="2"/>
+  <circle cx="30" cy="27" r="5.5" fill="#ffd95e" stroke="#7a4a00" stroke-width="2"/>
+  <path d="M40 22l3.5-5h7l3.5 5-7 8z" fill="#b07cff" stroke="#3d1a6e" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M43.5 17l3.5 5 3.5-5M40 22h14" fill="none" stroke="#3d1a6e" stroke-width="1.2"/>
+  <!-- Сундук -->
+  <path d="M8 31h48v23a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4z" fill="#b5651d" stroke="#3d1f00" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M18 31v27M46 31v27" stroke="#ffc83d" stroke-width="5"/>
+  <path d="M18 31v27M46 31v27" stroke="#7a4a00" stroke-width="1.5" opacity=".6"/>
+  <rect x="26" y="33" width="12" height="11" rx="3" fill="#ffc83d" stroke="#7a4a00" stroke-width="2.5"/>
+  <circle cx="32" cy="38" r="2" fill="#7a4a00"/>
+  <!-- Искры -->
+  <g fill="#ffffff">
+    <path d="M7 8l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/>
+    <path d="M57 10l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z"/>
+    <path d="M58 34l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/>
+  </g>
+</svg>

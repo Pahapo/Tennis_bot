@@ -6,7 +6,8 @@ tg.setHeaderColor('#0d1730');
 tg.setBackgroundColor('#14213d');
 
 let currentScreen = 'home';      // Главный экран (центральная кнопка)
-let previousScreen = 'home';     // Куда вернуться по кнопке "Назад"
+let previousScreen = 'home';
+const DEFAULT_BACKGROUND = 'bg_default';  // Стандартный фон для флага, профиля и магазина     // Куда вернуться по кнопке "Назад"
 let profile = null;
 
 
@@ -409,11 +410,14 @@ function fillLeague() {
 
 // Красный кружок на подарке, если награду ещё не забрали
 function fillDaily() {
-    const dot = document.getElementById('daily-dot');
+    const button = document.getElementById('daily-fab');
+    const chest = document.getElementById('daily-chest');
     if (profile.daily_available) {
-        dot.classList.remove('hidden');
+        button.classList.add('daily-ready');
+        chest.src = '/static/img/icons/chest_open.svg';
     } else {
-        dot.classList.add('hidden');
+        button.classList.remove('daily-ready');
+        chest.src = '/static/img/icons/chest.svg';
     }
 }
 
@@ -1524,19 +1528,15 @@ function openFromLink() {
 
 // ---------- Сцена: фон + герой ----------
 
-function backgroundUrl(background, league) {  // Свой фон или картинка текущей лиги
+function backgroundUrl(background) {  // Купленный фон или стандартный (фон не зависит от лиги)
     if (background) {
         return '/static/img/skins/' + background + '.svg';
     }
-    // Фон лиги для флага со скином: обложка, если есть (сам корт без фона смотрится пусто)
-    if (leagueCover(league)) {
-        return leagueCover(league);
-    }
-    return leagueImage(league);
+    return '/static/img/skins/' + DEFAULT_BACKGROUND + '.svg';
 }
 
 function fillScenes() {
-    const background = backgroundUrl(profile.background, profile.league);
+    const background = backgroundUrl(profile.background);
     const hero = '/static/img/skins/' + profile.hero + '.svg';
 
     const prefixes = ['home-scene', 'profile-scene', 'shop-scene'];
@@ -1614,8 +1614,8 @@ function skinCard(skin) {
     return box;
 }
 
-// Карточка "фон текущей лиги" — бесплатный фон по умолчанию
-function leagueBackgroundCard() {
+// Карточка "стандартный фон" — бесплатный фон по умолчанию
+function defaultBackgroundCard() {
     const box = document.createElement('div');
     box.className = 'card skin-card';
     const equipped = skinsData.background === null;
@@ -1625,13 +1625,13 @@ function leagueBackgroundCard() {
 
     const image = document.createElement('img');
     image.className = 'skin-image background';
-    image.src = backgroundUrl(null, profile.league);
+    image.src = backgroundUrl(null);
     image.alt = '';
     box.appendChild(image);
 
     const name = document.createElement('div');
     name.className = 'skin-name';
-    name.textContent = 'Фон моей лиги';
+    name.textContent = 'Стандартный корт';
     box.appendChild(name);
 
     const rarity = document.createElement('div');
@@ -1648,7 +1648,7 @@ function leagueBackgroundCard() {
     } else {
         button.textContent = 'Надеть';
         button.addEventListener('click', function () {
-            equipSkin('league');
+            equipSkin('default');
         });
     }
     box.appendChild(button);
@@ -1662,7 +1662,7 @@ function fillSkins() {
     heroes.innerHTML = '';
     backgrounds.innerHTML = '';
 
-    backgrounds.appendChild(leagueBackgroundCard());
+    backgrounds.appendChild(defaultBackgroundCard());
 
     for (const skin of skinsData.skins) {
         if (skin.type === 'hero') {

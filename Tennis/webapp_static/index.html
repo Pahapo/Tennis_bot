@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=13">
+    <link rel="stylesheet" href="/static/css/style.css?v=14">
 </head>
 <body>
 
@@ -43,7 +43,7 @@
 
             <div class="card">
                 <div class="scene" id="profile-scene">
-                    <img class="scene-bg" id="profile-scene-bg" src="/static/img/locations/1.svg" alt="">
+                    <img class="scene-bg" id="profile-scene-bg" src="/static/img/skins/bg_default.svg" alt="">
                     <img class="scene-hero" id="profile-scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
                 </div>
                 <button class="btn btn-wide scene-button" id="btn-change-skin" type="button">🎨 Сменить скин</button>
@@ -130,7 +130,7 @@
                     <!-- Флаг со скином (фон + герой из магазина) -->
                     <button class="banner" id="home-banner" type="button">
                         <div class="banner-flag">
-                            <img class="banner-bg" id="home-scene-bg" src="/static/img/locations/1.svg" alt="">
+                            <img class="banner-bg" id="home-scene-bg" src="/static/img/skins/bg_default.svg" alt="">
                             <img class="banner-hero" id="home-scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
                         </div>
                     </button>
@@ -153,10 +153,10 @@
                             <span class="dot hidden" id="home-news-dot"></span>
                         </button>
                     </div>
+                    <!-- Есть награда: открытый сундук и сияние. Нет: закрытый сундук -->
                     <button class="daily-btn" id="daily-fab" type="button">
-                        <img src="/static/img/icons/chest.svg" alt="">
+                        <img id="daily-chest" src="/static/img/icons/chest.svg" alt="">
                         <span>Ежедневная награда</span>
-                        <span class="dot hidden" id="daily-dot"></span>
                     </button>
                 </div>
             </div>
@@ -250,7 +250,7 @@
             <div id="shop-skins">
                 <div class="card">
                     <div class="scene" id="shop-scene">
-                        <img class="scene-bg" id="shop-scene-bg" src="/static/img/locations/1.svg" alt="">
+                        <img class="scene-bg" id="shop-scene-bg" src="/static/img/skins/bg_default.svg" alt="">
                         <img class="scene-hero" id="shop-scene-hero" src="/static/img/skins/hero_novice.svg" alt="">
                     </div>
                 </div>
@@ -503,6 +503,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=13"></script>
+    <script src="/static/js/app.js?v=14"></script>
 </body>
 </html>

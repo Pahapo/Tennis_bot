@@ -103,7 +103,7 @@ async def api_skins_buy(request):
     return web.json_response({'ok': True})
 
 
-# POST /api/skins/equip — надеть купленный скин: {skin_id} ('league' — вернуть фон лиги)
+# POST /api/skins/equip — надеть купленный скин: {skin_id} ('default' — вернуть стандартный фон)
 async def api_skins_equip(request):
     tg_user = get_tg_user(request)
 

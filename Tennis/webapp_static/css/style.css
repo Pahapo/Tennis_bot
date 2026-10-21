@@ -1428,3 +1428,44 @@ body::before {
 #screen-arena .back-btn {
     margin-bottom: 12px;
 }
+
+/* Ежедневная награда готова: открытый сундук, золотое сияние и блик */
+.daily-btn.daily-ready {
+    overflow: hidden;
+    border-color: #fff3c4;
+    background: linear-gradient(135deg, #ffe27a, #ffb300 55%, #ff8f00);
+    color: #5a2d00;
+    text-shadow: 0 1px 0 #fff3c4;
+    animation: treasure-glow 1.6s ease-in-out infinite;
+}
+
+.daily-btn.daily-ready img {
+    animation: chest-bounce 1.6s ease-in-out infinite;
+}
+
+.daily-btn.daily-ready::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+    transform: skewX(-20deg);
+    animation: treasure-shine 2.4s ease-in-out infinite;
+}
+
+@keyframes treasure-glow {
+    0%, 100% { box-shadow: 0 4px 0 #b9770e, 0 0 8px 2px rgba(255, 214, 90, 0.6); }
+    50% { box-shadow: 0 4px 0 #b9770e, 0 0 22px 7px rgba(255, 230, 120, 1); }
+}
+
+@keyframes chest-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-2px) scale(1.08); }
+}
+
+@keyframes treasure-shine {
+    0% { left: -60%; }
+    60%, 100% { left: 130%; }
+}
