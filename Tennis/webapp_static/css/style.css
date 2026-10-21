@@ -1139,24 +1139,26 @@ button {
     position: relative;
     display: flex;
     align-items: center;
+    justify-content: center;  /* Свободное место поровну слева и справа — отступы одинаковые */
     gap: 6px;
     width: 100%;
-    padding: 6px 8px;
+    padding: 8px;
     border: 3px solid var(--gold-dark);
     border-radius: 14px;
     background: #f39c12;
     box-shadow: 0 4px 0 #b9770e;
     color: #fff;
     font-weight: 900;
-    font-size: 12px;
+    font-size: min(12px, 2.8vw);  /* На узких телефонах шрифт меньше, чтобы текст не упирался в край */
+    line-height: 1.2;
     text-transform: uppercase;
     text-align: left;
     text-shadow: 0 1px 0 #7a4a00;
 }
 
 .daily-btn img {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
 }
 
