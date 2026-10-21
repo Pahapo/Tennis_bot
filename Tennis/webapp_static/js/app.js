@@ -284,17 +284,36 @@ function setupReferralButtons() {
 
 // ---------- Лиги ----------
 
+// Картинка лиги (N.webp или N.svg) и её обложка (fN.webp или null) — их присылает сервер
+function leagueImage(number) {
+    return profile.leagues[number - 1].image;
+}
+
+function leagueCover(number) {
+    return profile.leagues[number - 1].cover;
+}
+
+// Блок с обложкой: обложка — фоном блока, корт — картинкой поверх
+function fillLeagueCover(box, picture, number) {
+    picture.src = leagueImage(number);
+    if (leagueCover(number)) {
+        box.style.backgroundImage = 'url(' + leagueCover(number) + ')';
+    } else {
+        box.style.backgroundImage = 'none';
+    }
+}
+
 function fillLeague() {
     const leagues = profile.leagues;
     const number = profile.league;          // Текущая лига (1-10)
     const current = leagues[number - 1];
 
     fillScenes();
-    document.getElementById('league-picture').src = '/static/img/locations/' + number + '.svg';
+    fillLeagueCover(document.getElementById('league-cover'), document.getElementById('league-picture'), number);
     document.getElementById('league-name').textContent = 'Лига ' + number + ': ' + current.name;
 
     // Арена на главном экране
-    document.getElementById('home-arena-img').src = '/static/img/locations/' + number + '.svg';
+    document.getElementById('home-arena-img').src = leagueImage(number);  // На главном — без обложки и рамки
     document.getElementById('home-league-name').textContent = 'ЛИГА ' + number + ': ' + current.name;
     if (number === leagues.length) {
         document.getElementById('home-progress').textContent = profile.season_gold + ' 🪙';
@@ -337,11 +356,14 @@ function fillLeague() {
             card.classList.add('current');
         }
 
+        const cover = document.createElement('div');
+        cover.className = 'league-cover';
         const picture = document.createElement('img');
-        picture.className = 'location-picture';
-        picture.src = '/static/img/locations/' + leagueNumber + '.svg';
         picture.alt = leagues[i].name;
-        card.appendChild(picture);
+        picture.loading = 'lazy';  // Грузим, только когда игрок долистал до этой лиги
+        cover.appendChild(picture);
+        fillLeagueCover(cover, picture, leagueNumber);
+        card.appendChild(cover);
 
         if (locked) {
             const lock = document.createElement('img');
@@ -544,7 +566,7 @@ function showSeasonSummary() {
 
     const league = profile.leagues[summary.league - 1];
     document.getElementById('season-title').textContent = 'Итоги ' + summary.year + ' года 🎉';
-    document.getElementById('season-picture').src = '/static/img/locations/' + summary.league + '.svg';
+    document.getElementById('season-picture').src = leagueImage(summary.league);
     document.getElementById('season-league').textContent = 'Лига ' + summary.league + ': ' + league.name;
     document.getElementById('season-text').textContent = 'За год ты заработал(-а) ' + summary.gold + ' 🪙. Лиги обнулились — монеты и скины остались с тобой. Вперёд за новой вершиной!';
 
@@ -1489,7 +1511,11 @@ function backgroundUrl(background, league) {  // Свой фон или карт
     if (background) {
         return '/static/img/skins/' + background + '.svg';
     }
-    return '/static/img/locations/' + league + '.svg';
+    // Фон лиги для флага со скином: обложка, если есть (сам корт без фона смотрится пусто)
+    if (leagueCover(league)) {
+        return leagueCover(league);
+    }
+    return leagueImage(league);
 }
 
 function fillScenes() {
@@ -1582,7 +1608,7 @@ function leagueBackgroundCard() {
 
     const image = document.createElement('img');
     image.className = 'skin-image background';
-    image.src = '/static/img/locations/' + profile.league + '.svg';
+    image.src = backgroundUrl(null, profile.league);
     image.alt = '';
     box.appendChild(image);
 

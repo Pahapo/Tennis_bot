@@ -1,3 +1,4 @@
+import os
 from aiohttp import web
 
 import handlers.referrals as r
@@ -14,6 +15,27 @@ from models.Tournament import Tournament
 from models.TournamentPlayers import TournamentPlayers
 from models.Referrals import Referrals
 from models.PendingReferral import PendingReferral
+
+
+# Картинки лиг: N.webp (если есть) или N.svg, и обложка fN.webp (если есть)
+LOCATIONS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webapp_static', 'img', 'locations')
+
+
+def leagues_with_images():  # Лиги для фронта: название, порог, картинка и обложка
+    result = []
+    for i in range(len(g.LEAGUES)):
+        number = i + 1
+
+        image = f'/static/img/locations/{number}.svg'
+        if os.path.exists(os.path.join(LOCATIONS_DIR, f'{number}.webp')):
+            image = f'/static/img/locations/{number}.webp'
+
+        cover = None
+        if os.path.exists(os.path.join(LOCATIONS_DIR, f'f{number}.webp')):
+            cover = f'/static/img/locations/f{number}.webp'
+
+        result.append({'name': g.LEAGUES[i]['name'], 'from': g.LEAGUES[i]['from'], 'image': image, 'cover': cover})
+    return result
 
 
 # GET /api/me — данные профиля игрока
@@ -102,7 +124,7 @@ async def api_me(request):
         'gold': progress.gold,
         'season_gold': progress.season_gold,
         'league': g.get_league(progress.season_gold),
-        'leagues': g.LEAGUES,
+        'leagues': leagues_with_images(),
         'streak': progress.streak_days,
         'best_streak': progress.best_streak,
         'season_summary': season_summary,

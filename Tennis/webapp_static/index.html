@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=8">
+    <link rel="stylesheet" href="/static/css/style.css?v=9">
 </head>
 <body>
 
@@ -216,7 +216,9 @@
             <h2 class="screen-title">Лиги</h2>
 
             <div class="card league-current">
-                <img class="league-picture" id="league-picture" src="/static/img/locations/1.svg" alt="">
+                <div class="league-cover" id="league-cover">
+                    <img id="league-picture" src="/static/img/locations/1.svg" alt="">
+                </div>
                 <div class="league-name" id="league-name"></div>
                 <div class="progress">
                     <div class="progress-fill" id="league-progress"></div>
@@ -504,6 +506,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=7"></script>
+    <script src="/static/js/app.js?v=8"></script>
 </body>
 </html>
