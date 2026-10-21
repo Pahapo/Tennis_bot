@@ -17,8 +17,17 @@ from models.Referrals import Referrals
 from models.PendingReferral import PendingReferral
 
 
-# Картинки лиг: N.webp (если есть) или N.svg, и обложка fN.webp (если есть)
+# Картинки лиг: cN (корт лиги) и fN (обложка-фон лиги) в формате webp, png или jpg.
+# Если картинки cN нет — берём нарисованную N.svg, если нет fN — обложки не будет
 LOCATIONS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webapp_static', 'img', 'locations')
+IMAGE_TYPES = ['webp', 'png', 'jpg', 'jpeg']
+
+
+def find_location_image(name):  # Ссылка на картинку name.webp / .png / .jpg или None
+    for image_type in IMAGE_TYPES:
+        if os.path.exists(os.path.join(LOCATIONS_DIR, f'{name}.{image_type}')):
+            return f'/static/img/locations/{name}.{image_type}'
+    return None
 
 
 def leagues_with_images():  # Лиги для фронта: название, порог, картинка и обложка
@@ -26,13 +35,11 @@ def leagues_with_images():  # Лиги для фронта: название, п
     for i in range(len(g.LEAGUES)):
         number = i + 1
 
-        image = f'/static/img/locations/{number}.svg'
-        if os.path.exists(os.path.join(LOCATIONS_DIR, f'{number}.webp')):
-            image = f'/static/img/locations/{number}.webp'
+        image = find_location_image(f'c{number}')
+        if image == None:
+            image = f'/static/img/locations/{number}.svg'
 
-        cover = None
-        if os.path.exists(os.path.join(LOCATIONS_DIR, f'f{number}.webp')):
-            cover = f'/static/img/locations/f{number}.webp'
+        cover = find_location_image(f'f{number}')
 
         result.append({'name': g.LEAGUES[i]['name'], 'from': g.LEAGUES[i]['from'], 'image': image, 'cover': cover})
     return result

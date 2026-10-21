@@ -229,3 +229,6 @@ CREATE TABLE `market_listings` (
   KEY `market_listings_user` (`tg_user_id`),
   KEY `market_listings_status` (`status`, `expires`)
 );
+
+ALTER TABLE `inventory`
+  ADD COLUMN `price` float DEFAULT NULL;

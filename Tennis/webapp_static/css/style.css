@@ -1397,6 +1397,11 @@ body::before {
     font-size: 13px;
 }
 
-#market-category-back {
+/* Кнопка "← Назад" на странице лиг и в категории товаров клуба */
+.back-btn {
     margin-bottom: 4px;
+}
+
+#screen-arena .back-btn {
+    margin-bottom: 12px;
 }

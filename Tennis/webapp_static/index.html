@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=11">
+    <link rel="stylesheet" href="/static/css/style.css?v=12">
 </head>
 <body>
 
@@ -92,7 +92,6 @@
 
         <!-- Турнир -->
         <section class="screen hidden" id="screen-tournament">
-            <h2 class="screen-title">Турнир</h2>
             <div class="segmented segmented-grid" id="tournament-tabs">
                 <button class="segment active" data-tournament="list" type="button">Запись на турнир</button>
                 <button class="segment" data-tournament="tables" type="button">Турнирные таблицы</button>
@@ -108,7 +107,6 @@
 
         <!-- Соперник -->
         <section class="screen hidden" id="screen-opponent">
-            <h2 class="screen-title">Соперник</h2>
             <div class="segmented" id="opponent-tabs">
                 <button class="segment active" data-opponent="search" type="button">Найти игру</button>
                 <button class="segment" data-opponent="requests" type="button">Мои заявки</button>
@@ -122,7 +120,6 @@
 
         <!-- Новости (рассылки админа) -->
         <section class="screen hidden" id="screen-news">
-            <h2 class="screen-title">Новости</h2>
             <div id="news-list"></div>
         </section>
 
@@ -213,7 +210,7 @@
 
         <!-- Список лиг (открывается с главного экрана по арене) -->
         <section class="screen hidden" id="screen-arena">
-            <h2 class="screen-title">Лиги</h2>
+            <button class="btn back-btn" id="arena-back" type="button">← Назад</button>
 
             <div class="card league-current">
                 <div class="league-cover" id="league-cover">
@@ -233,7 +230,6 @@
 
         <!-- Бронь корта -->
         <section class="screen hidden" id="screen-booking">
-            <h2 class="screen-title">Бронь корта</h2>
             <div class="card">
                 <div class="card-title">Бронирование кортов</div>
                 <div class="muted">• Бронь любого корта на 5 дней вперёд<br>• Бронирование зависит от вашей скорости<br>• До 2 броней в неделю</div>
@@ -245,7 +241,6 @@
 
         <!-- Магазин -->
         <section class="screen hidden" id="screen-shop">
-            <h2 class="screen-title">Магазин</h2>
             <div class="segmented" id="shop-tabs">
                 <button class="segment active" data-shop="skins" type="button">Скины</button>
                 <button class="segment" data-shop="market" type="button">Барахолка</button>
@@ -280,7 +275,7 @@
 
                 <!-- Товары одной категории клуба (открывается по нажатию на категорию) -->
                 <div class="hidden" id="market-category">
-                    <button class="btn" id="market-category-back" type="button">← Назад</button>
+                    <button class="btn back-btn" id="market-category-back" type="button">← Назад</button>
                     <div class="section-title" id="market-category-title"></div>
                     <div id="market-category-items"></div>
                 </div>
@@ -506,6 +501,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=11"></script>
+    <script src="/static/js/app.js?v=12"></script>
 </body>
 </html>

@@ -118,3 +118,8 @@ CREATE TABLE `market_listings` (
   KEY `market_listings_user` (`tg_user_id`),
   KEY `market_listings_status` (`status`, `expires`)
 );
+
+-- Цена товара клуба в бел.руб. (показывается в приложении оранжевым, как у объявлений).
+-- Если цену не заполнить, приложение попробует найти её в описании ("... 25 руб.")
+ALTER TABLE `inventory`
+  ADD COLUMN `price` float DEFAULT NULL;

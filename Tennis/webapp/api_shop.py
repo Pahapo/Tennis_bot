@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import timedelta
 from aiohttp import web
 
@@ -20,6 +21,14 @@ MAX_PHOTO_SIZE = 10 * 1024 * 1024  # 10 МБ на фото
 
 # Товары клуба: первая цифра в названии фото — категория (как в боте: 1.1, 2.1, 3.2 ...)
 CLUB_CATEGORIES = {'1': 'Теннисные мячи 🎾', '2': 'Виброгаситель ⚡️', '3': 'Намотка 💫'}
+MANAGER_LINK = 'https://t.me/sup_MM'  # Менеджер клуба: ему пишут, чтобы купить товар клуба
+
+
+def find_price(text):  # Цена из описания товара: "Банка 3 шт. — 25 руб." -> 25.0 (или None)
+    found = re.search(r'(\d+(?:[.,]\d+)?)\s*(?:бел\.?\s*)?руб', text)
+    if found == None:
+        return None
+    return float(found.group(1).replace(',', '.'))
 
 
 # ---------- Скины ----------
@@ -179,9 +188,15 @@ async def api_market(request):
             if item.photo and os.path.exists(os.path.join(INVENTORY_DIR, item.photo + '.jpg')):
                 photo = '/inventory_img/' + item.photo + '.jpg'
 
+            description = ta.clean_html(item.description)
+
+            price = item.price
+            if price == None:
+                price = find_price(description)
+
             for category in club:
                 if category['key'] == key:
-                    category['items'].append({'id': item.inventory_id, 'photo': photo, 'description': ta.clean_html(item.description)})
+                    category['items'].append({'id': item.inventory_id, 'photo': photo, 'description': description, 'price': price})
 
         # Объявления игроков в продаже (сначала новые)
         listings = []
@@ -201,6 +216,7 @@ async def api_market(request):
 
     return web.json_response({
         'club': club,
+        'manager_link': MANAGER_LINK,
         'listings': listings,
         'mine': mine,
         'categories': mk.CATEGORIES,

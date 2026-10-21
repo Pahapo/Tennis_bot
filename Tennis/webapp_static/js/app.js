@@ -1757,6 +1757,13 @@ function clubItemCard(item) {
     title.textContent = lines[0];
     box.appendChild(title);
 
+    if (item.price !== null) {
+        const price = document.createElement('div');
+        price.className = 'listing-price';
+        price.textContent = item.price + ' бел.руб.';
+        box.appendChild(price);
+    }
+
     const rest = lines.slice(1).join('\n').trim();
     if (rest) {
         const description = document.createElement('div');
@@ -1764,6 +1771,15 @@ function clubItemCard(item) {
         description.textContent = rest;
         box.appendChild(description);
     }
+
+    const button = document.createElement('button');
+    button.className = 'btn btn-gold btn-wide tournament-card-button';
+    button.type = 'button';
+    button.textContent = '✉️ Написать менеджеру';
+    button.addEventListener('click', function () {
+        tg.openTelegramLink(marketData.manager_link);
+    });
+    box.appendChild(button);
 
     return box;
 }
@@ -2034,6 +2050,11 @@ function setupMarket() {
     });
     document.getElementById('listing-submit').addEventListener('click', submitListing);
     document.getElementById('market-category-back').addEventListener('click', closeClubCategory);
+
+    // Кнопка "Назад" на странице лиг — туда, откуда пришли (как кнопка Назад в Telegram)
+    document.getElementById('arena-back').addEventListener('click', function () {
+        showScreen(previousScreen);
+    });
 
     // Вкладки "Объявления игроков" / "Мои объявления"
     const tabs = document.querySelectorAll('#market-tabs .segment');
