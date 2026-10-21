@@ -102,6 +102,11 @@ function showScreen(name) {
         tg.BackButton.hide();
     }
 
+    // При возврате на главный экран проверяем, не появилась ли игра, по которой нужен счёт
+    if (name === 'home' && profile && currentScreen !== 'home') {
+        loadPending();
+    }
+
     currentScreen = name;
     window.scrollTo(0, 0);
 }
@@ -1335,14 +1340,21 @@ let pendingGames = [];
 
 async function loadPending() {
     const result = await apiGet('/api/score/pending');
+    if (result.status !== 200) {
+        return;
+    }
     pendingGames = result.data;
 
+    // Кнопка "0:0" видна, только когда есть игры, по которым нужно выставить счёт
+    const fab = document.getElementById('score-fab');
     const badge = document.getElementById('score-badge');
     if (pendingGames.length > 0) {
         badge.textContent = pendingGames.length;
         badge.classList.remove('hidden');
+        fab.classList.remove('fab-off');
     } else {
         badge.classList.add('hidden');
+        fab.classList.add('fab-off');
     }
 }
 

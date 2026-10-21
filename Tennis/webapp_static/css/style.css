@@ -1222,26 +1222,31 @@ button {
     font-weight: 800;
 }
 
-/* Быстрые кнопки: турнир и соперник */
+/* Быстрые кнопки: турнир и соперник, между ними медальон VS */
 .home-actions {
+    position: relative;
     display: flex;
-    width: 64%;
+    gap: 30px;
+    width: 76%;
     margin: 16px auto 0;
-    border: 3px solid var(--gold);
-    border-radius: 14px;
-    overflow: hidden;
-    background: var(--bg-dark);
 }
 
 .home-action {
     flex: 1;
     padding: 10px;
-    border: none;
-    background: none;
+    border: 3px solid var(--gold);
+    border-radius: 14px;
+    box-shadow: 0 4px 0 #000;
 }
 
-.home-action + .home-action {
-    border-left: 3px solid var(--gold);
+/* Турнир — золотой, соперник — сине-красный, как ракетки на иконке */
+.home-action[data-go=tournament] {
+    background: linear-gradient(135deg, #ffc83d, #b5651d);
+}
+
+.home-action[data-go=opponent] {
+    background: linear-gradient(135deg, #2e86de, #c0392b);
+    border-color: #a9d4ff;
 }
 
 .home-action img {
@@ -1250,7 +1255,25 @@ button {
 }
 
 .home-action:active {
-    background: var(--card);
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #000;
+    filter: brightness(0.9);
+}
+
+/* Кнопка счёта спрятана, но её место остаётся — арена и кнопки не сдвигаются */
+.fab-off {
+    visibility: hidden;
+}
+
+.home-vs {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 62px;
+    height: 62px;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 3px 0 #000);
+    pointer-events: none;
 }
 
 /* Регистрация: сказка */
