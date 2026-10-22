@@ -294,7 +294,7 @@ function setupReferralButtons() {
 
 // ---------- Лиги ----------
 
-// Картинка лиги (N.webp или N.svg) и её обложка (fN.webp или null) — их присылает сервер
+// Картинка лиги (leagueN или N.svg) и её обложка (fN или null) — их присылает сервер
 function leagueImage(number) {
     return profile.leagues[number - 1].image;
 }

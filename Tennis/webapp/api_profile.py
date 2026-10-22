@@ -1,5 +1,4 @@
 import os
-from urllib.parse import quote
 from aiohttp import web
 
 import handlers.referrals as r
@@ -19,27 +18,16 @@ from models.Referrals import Referrals
 from models.PendingReferral import PendingReferral
 
 
-# Картинки лиг: cN (корт лиги) и fN (обложка-фон лиги) в формате webp, png или jpg.
-# Если картинки cN нет — берём нарисованную N.svg, если нет fN — обложки не будет
+# Картинки лиг: leagueN (корт лиги) и fN (обложка-фон лиги) в формате webp, png или jpg.
+# Если картинки leagueN нет — берём нарисованную N.svg, если нет fN — обложки не будет
 LOCATIONS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webapp_static', 'img', 'locations')
 IMAGE_TYPES = ['webp', 'png', 'jpg', 'jpeg']
 
 
-def normalize_image_name(file_name):  # "С2 .WEBP" -> "c2.webp": русская «с» как латинская, без пробелов и заглавных
-    name = file_name.lower().replace(' ', '')
-    name = name.replace('с', 'c')  # Первая «с» здесь русская, вторая — латинская
-    return name
-
-
 def find_location_image(name):  # Ссылка на картинку name.webp / .png / .jpg или None
-    files = {}
-    for file_name in os.listdir(LOCATIONS_DIR):
-        files[normalize_image_name(file_name)] = file_name
-
     for image_type in IMAGE_TYPES:
-        file_name = files.get(f'{name}.{image_type}')
-        if file_name:
-            return '/static/img/locations/' + quote(file_name)
+        if os.path.exists(os.path.join(LOCATIONS_DIR, f'{name}.{image_type}')):
+            return f'/static/img/locations/{name}.{image_type}'
     return None
 
 
@@ -48,7 +36,7 @@ def print_league_images():  # При запуске пишем в консоль
     missing = []
     for i in range(len(g.LEAGUES)):
         number = i + 1
-        for prefix in ['c', 'f']:
+        for prefix in ['league', 'f']:
             if find_location_image(f'{prefix}{number}'):
                 found.append(f'{prefix}{number}')
             else:
@@ -64,7 +52,7 @@ def leagues_with_images():  # Лиги для фронта: название, п
     for i in range(len(g.LEAGUES)):
         number = i + 1
 
-        image = find_location_image(f'c{number}')
+        image = find_location_image(f'league{number}')
         if image == None:
             image = f'/static/img/locations/{number}.svg'
 
