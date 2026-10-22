@@ -470,6 +470,23 @@ async function reloadProfile() {
 let achievementQueue = [];   // Окна о новых достижениях, которые ещё нужно показать
 let achievementShown = [];   // id достижений, окна о которых уже в очереди или показаны
 
+// Иконка достижения: у лиг — картинка корта этой лиги, у остальных — эмодзи
+function fillAchievementIcon(box, achievement) {
+    box.innerHTML = '';
+    if (achievement.id.startsWith('league_')) {
+        const number = Number(achievement.id.split('_')[1]);
+        const picture = document.createElement('img');
+        picture.className = 'achievement-league-picture';
+        picture.src = leagueImage(number);
+        picture.alt = '';
+        box.appendChild(picture);
+        box.classList.add('has-picture');
+    } else {
+        box.textContent = achievement.icon;
+        box.classList.remove('has-picture');
+    }
+}
+
 // Новые достижения из /api/me — показываем окна по одному
 function showNewAchievements() {
     for (const achievement of profile.new_achievements) {
@@ -491,7 +508,7 @@ function showNextAchievement() {
     }
     const achievement = achievementQueue[0];
 
-    document.getElementById('achievement-icon').textContent = achievement.icon;
+    fillAchievementIcon(document.getElementById('achievement-icon'), achievement);
     document.getElementById('achievement-title').textContent = achievement.title;
     document.getElementById('achievement-praise').textContent = achievement.praise;
 
@@ -547,7 +564,7 @@ async function loadAchievements() {
 
             const icon = document.createElement('div');
             icon.className = 'achievement-badge-icon';
-            icon.textContent = item.icon;
+            fillAchievementIcon(icon, item);
             badge.appendChild(icon);
 
             const name = document.createElement('div');
@@ -555,26 +572,17 @@ async function loadAchievements() {
             name.textContent = item.title;
             badge.appendChild(name);
 
-            // Полученное — дата, остальное — прогресс
-            const info = document.createElement('div');
-            info.className = 'achievement-badge-info';
-            if (item.earned) {
-                info.textContent = '✅ ' + item.date;
-            } else {
+            // Полученное — просто золотое, у остального — прогресс
+            if (!item.earned) {
+                const info = document.createElement('div');
+                info.className = 'achievement-badge-info';
                 info.textContent = item.progress;
-            }
-            badge.appendChild(info);
-
-            if (item.percent !== null) {
-                const percent = document.createElement('div');
-                percent.className = 'achievement-badge-info';
-                percent.textContent = 'Достигли ' + item.percent + '% игроков';
-                badge.appendChild(percent);
+                badge.appendChild(info);
             }
 
             // По нажатию — что нужно сделать
             badge.addEventListener('click', function () {
-                tg.showAlert(item.icon + ' ' + item.title + '\n\n' + item.goal + (item.earned ? '\n\nПолучено ' + item.date : '\n\n' + item.progress));
+                tg.showAlert(item.title + '\n\n' + item.goal + (item.earned ? '\n\nВыполнено 🎉' : '\n\n' + item.progress));
             });
 
             grid.appendChild(badge);

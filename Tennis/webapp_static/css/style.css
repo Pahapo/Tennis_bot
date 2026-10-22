@@ -1744,3 +1744,21 @@ body::before {
 .error-button {
     margin-top: 14px;
 }
+
+/* Достижения лиг: вместо эмодзи — картинка корта лиги */
+.achievement-league-picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.achievement-badge-icon.has-picture {
+    height: 32px;
+    margin: 0 4px;
+}
+
+.achievement-icon .achievement-league-picture {
+    width: 62px;
+    height: 62px;
+}

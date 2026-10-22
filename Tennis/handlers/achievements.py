@@ -23,7 +23,7 @@ GROUPS = [
     {'id': 'games', 'name': '🎾 Игры с соперником'},
     {'id': 'tournaments', 'name': '🏆 Турниры'},
     {'id': 'streak', 'name': '🔥 Дни подряд в приложении'},
-    {'id': 'leagues', 'name': '🏟 Лиги'},
+    {'id': 'leagues', 'name': '🏅 Лиги'},
     {'id': 'skins', 'name': '🛍 Коллекция скинов'}
 ]
 
@@ -80,10 +80,10 @@ for need, title, done, praise in STREAK:
 for i in range(len(g.LEAGUES)):
     number = i + 1
     name = g.LEAGUES[i]['name']
-    praise = f'Ты достиг(-ла) лиги «{name}»! Новая локация открыта — здесь соперники сильнее, а победы слаще 🏟'
+    praise = f'Ты достиг(-ла) лиги «{name}»! Новая локация открыта — здесь соперники сильнее, а победы слаще 🏅'
     if number == 1:
-        praise = f'Добро пожаловать на «{name}»! Здесь начинается путь каждого чемпиона — впереди ещё 9 лиг 🏟'
-    ACHIEVEMENTS.append({'id': f'league_{number}', 'group': 'leagues', 'icon': '🏟', 'title': f'Лига {number}: {name}', 'goal': f'Достичь лиги «{name}»',
+        praise = f'Добро пожаловать на «{name}»! Здесь начинается путь каждого чемпиона — впереди ещё 9 лиг 🏅'
+    ACHIEVEMENTS.append({'id': f'league_{number}', 'group': 'leagues', 'icon': '🏅', 'title': f'Лига {number}: {name}', 'goal': f'Достичь лиги «{name}»',
                          'done': f'Достигнута лига «{name}»', 'praise': praise, 'stat': 'league', 'need': number})
 
 # --- Коллекция скинов (бесплатные герой и ракетка тоже считаются) ---
@@ -94,7 +94,7 @@ ACHIEVEMENTS.append({'id': 'skins_all_hero', 'group': 'skins', 'icon': '🦸', '
                      'done': 'Собраны все герои', 'praise': 'Невероятно! У тебя собраны все герои — настоящая звёздная команда в одних руках 🌟',
                      'stat': 'hero_owned', 'need': count_skins('hero')})
 ACHIEVEMENTS.append({'id': 'skins_all_background', 'group': 'skins', 'icon': '🖼', 'title': 'Коллекционер арен', 'goal': 'Собрать все фоны',
-                     'done': 'Собраны все фоны', 'praise': 'Все арены мира теперь твои! Выбирай любую — ты везде как дома 🏟',
+                     'done': 'Собраны все фоны', 'praise': 'Все арены мира теперь твои! Выбирай любую — ты везде как дома 🌍',
                      'stat': 'background_owned', 'need': count_skins('background')})
 ACHIEVEMENTS.append({'id': 'skins_all_racket', 'group': 'skins', 'icon': '🎾', 'title': 'Оружейная мастера', 'goal': 'Собрать все ракетки',
                      'done': 'Собраны все ракетки', 'praise': 'Полная оружейная! С такой коллекцией ракеток ты готов(-а) к любому сопернику 💪',
@@ -268,7 +268,6 @@ def progress_text(achievement, stats):  # "12 / 20" — сколько уже с
 
 async def get_list(user_id, session: AsyncSession):  # Все достижения по группам для профиля
     stats = await get_stats(user_id, session)
-    percents = await league_percents(session)
 
     dates = {}
     for row in (await session.scalars(select(Achievement).where(Achievement.tg_user_id == user_id))).all():
@@ -288,11 +287,8 @@ async def get_list(user_id, session: AsyncSession):  # Все достижени
                 'goal': achievement['goal'],
                 'earned': achievement['id'] in dates,
                 'date': dates.get(achievement['id']),
-                'progress': progress_text(achievement, stats),
-                'percent': None
+                'progress': progress_text(achievement, stats)
             }
-            if group['id'] == 'leagues':
-                item['percent'] = percents[achievement['need'] - 1]
             items.append(item)
 
         groups.append({'name': group['name'], 'items': items})
