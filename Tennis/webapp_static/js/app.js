@@ -572,8 +572,8 @@ async function loadAchievements() {
             name.textContent = item.title;
             badge.appendChild(name);
 
-            // Полученное — просто золотое, у остального — прогресс
-            if (!item.earned) {
+            // Полученное — просто золотое, у остального — прогресс (у лиг его нет)
+            if (!item.earned && item.progress) {
                 const info = document.createElement('div');
                 info.className = 'achievement-badge-info';
                 info.textContent = item.progress;
@@ -582,7 +582,13 @@ async function loadAchievements() {
 
             // По нажатию — что нужно сделать
             badge.addEventListener('click', function () {
-                tg.showAlert(item.title + '\n\n' + item.goal + (item.earned ? '\n\nВыполнено 🎉' : '\n\n' + item.progress));
+                let text = item.title + '\n\n' + item.goal;
+                if (item.earned) {
+                    text += '\n\nВыполнено 🎉';
+                } else if (item.progress) {
+                    text += '\n\n' + item.progress;
+                }
+                tg.showAlert(text);
             });
 
             grid.appendChild(badge);

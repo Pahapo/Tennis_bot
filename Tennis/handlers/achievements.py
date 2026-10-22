@@ -260,7 +260,7 @@ async def mark_seen(user_id, achievement_id, session: AsyncSession):  # Игро
 def progress_text(achievement, stats):  # "12 / 20" — сколько уже сделано
     value = stats[achievement['stat']]
     if achievement['group'] == 'leagues':
-        return f'Сейчас: лига {value}'
+        return ''  # У лиг прогресс не пишем — текущая лига видна на главном экране
     if achievement['group'] == 'streak':
         return f'{min(value, achievement["need"])} / {achievement["need"]} дн.'
     return f'{min(value, achievement["need"])} / {achievement["need"]}'
