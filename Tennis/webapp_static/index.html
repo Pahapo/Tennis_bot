@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tennis</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/static/css/style.css?v=17">
+    <link rel="stylesheet" href="/static/css/style.css?v=18">
 </head>
 <body>
 
@@ -66,6 +66,12 @@
                     <div class="card-title"><span id="profile-streak">0</span> дн. подряд</div>
                     <div class="muted">Заходи каждый день: +1 🪙, а за 7, 30, 100, 200 и 365 дней — бонус. Лучшая серия: <b id="profile-best-streak">0</b></div>
                 </div>
+            </div>
+
+            <!-- Достижения: полученные — золотые, остальные — серые с прогрессом -->
+            <div class="card">
+                <div class="card-title">Достижения <span class="achievements-count" id="achievements-count"></span></div>
+                <div id="achievements-list"></div>
             </div>
 
             <div class="card">
@@ -227,30 +233,6 @@
             </div>
         </section>
 
-        <!-- Регистрация нового игрока: сказка и анкета -->
-        <section class="screen hidden" id="screen-register">
-            <div class="story hidden" id="register-story">
-                <div class="story-text" id="story-text"></div>
-                <button class="btn" id="story-skip" type="button">Пропустить</button>
-            </div>
-
-            <div class="hidden" id="register-form">
-                <h2 class="screen-title">Давай знакомиться!</h2>
-                <div class="card">
-                    <label class="field">
-                        <span>Полное Имя и Фамилия</span>
-                        <input type="text" id="register-name" maxlength="64">
-                    </label>
-                    <label class="field">
-                        <span>Твой уровень игры</span>
-                        <div class="muted register-questions">Ответь на несколько вопросов:<br>1. Сколько лет/месяцев в теннисе?<br>2. Был ли опыт каких-то турниров до этого? (если играл только в Raketo, укажи сколько матчей и какой рейтинг)<br>3. Занимался ли когда-то с тренером?<br>4. Играл ли против кого-то из наших игроков, если да — то как сыграли?</div>
-                        <textarea id="register-skill" maxlength="300" rows="5"></textarea>
-                    </label>
-                    <button class="btn btn-gold btn-wide" id="register-submit" type="button">Начать приключение 🚀</button>
-                </div>
-            </div>
-        </section>
-
         <!-- Список лиг (открывается с главного экрана по арене) -->
         <section class="screen hidden" id="screen-arena">
             <button class="btn back-btn" id="arena-back" type="button">← Назад</button>
@@ -332,6 +314,7 @@
             <div class="card center">
                 <div class="card-title" id="error-title"></div>
                 <div class="muted" id="error-text"></div>
+                <button class="btn btn-gold btn-wide error-button hidden" id="error-button" type="button">Вернуться в бота</button>
             </div>
         </section>
 
@@ -515,6 +498,35 @@
         </div>
     </div>
 
+    <!-- Окно: новое достижение -->
+    <div class="modal hidden" id="achievement-modal">
+        <div class="modal-box achievement-box">
+            <div class="achievement-label">Новое достижение!</div>
+            <div class="achievement-medal">
+                <div class="achievement-rays"></div>
+                <div class="achievement-icon" id="achievement-icon"></div>
+            </div>
+            <div class="modal-title" id="achievement-title"></div>
+            <div class="achievement-praise" id="achievement-praise"></div>
+            <div class="achievement-percent hidden" id="achievement-percent"></div>
+            <button class="btn btn-gold btn-wide" id="achievement-ok" type="button">Понятно!</button>
+        </div>
+    </div>
+
+    <!-- Окно: ежедневная награда на сегодня уже получена -->
+    <div class="modal hidden" id="daily-done-modal">
+        <div class="modal-box">
+            <img class="modal-picture" src="/static/img/icons/chest.svg" alt="">
+            <div class="modal-title">Награда уже у тебя! 🎁</div>
+            <div class="reward-lines">
+                <div>Сегодняшнюю награду ты уже забрал(-а)</div>
+                <div class="plus" id="daily-done-streak"></div>
+                <div>Возвращайся завтра — сундук снова откроется, а серия станет длиннее!</div>
+            </div>
+            <button class="btn btn-gold" id="daily-done-ok" type="button">Понятно!</button>
+        </div>
+    </div>
+
     <!-- Окно: итоги прошлого года с салютом -->
     <div class="modal hidden" id="season-modal">
         <canvas class="fireworks" id="fireworks"></canvas>
@@ -546,6 +558,6 @@
         </button>
     </nav>
 
-    <script src="/static/js/app.js?v=17"></script>
+    <script src="/static/js/app.js?v=18"></script>
 </body>
 </html>

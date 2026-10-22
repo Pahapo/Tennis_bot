@@ -2,12 +2,12 @@ import os
 from aiohttp import web
 from config.config import WEBAPP_PORT
 
-from webapp.api_profile import api_me
+from webapp.api_profile import api_me, print_league_images
 from webapp.api_gold import api_visit, api_gold_history, api_season_seen
-from webapp.api_register import api_register
 from webapp.api_shop import api_skins, api_skins_buy, api_skins_equip, api_market, api_market_create, api_market_action, INVENTORY_DIR
 import handlers.market_app as mk
 from webapp.api_news import api_news, api_news_seen, NEWS_DIR
+from webapp.api_achievements import api_achievements, api_achievements_seen
 from webapp.api_tournament import api_tournaments, api_tournaments_pay, api_tournaments_score
 from webapp.api_match import api_matches_search, api_matches_mine, api_matches_create, api_matches_delete, api_matches_apply, api_score_pending, api_score_submit
 
@@ -27,7 +27,6 @@ async def start_webapp(bot):
 
     app.router.add_get('/', index)
     app.router.add_get('/api/me', api_me)
-    app.router.add_post('/api/register', api_register)
     app.router.add_post('/api/visit', api_visit)
     app.router.add_get('/api/gold_history', api_gold_history)
     app.router.add_post('/api/season_seen', api_season_seen)
@@ -54,6 +53,9 @@ async def start_webapp(bot):
     app.router.add_get('/api/news', api_news)
     app.router.add_post('/api/news_seen', api_news_seen)
 
+    app.router.add_get('/api/achievements', api_achievements)
+    app.router.add_post('/api/achievements/seen', api_achievements_seen)
+
     app.router.add_static('/static/', STATIC_DIR)
 
     os.makedirs(NEWS_DIR, exist_ok=True)
@@ -70,3 +72,4 @@ async def start_webapp(bot):
     await site.start()
 
     print(f"Mini App запущен на порту {WEBAPP_PORT}")
+    print_league_images()

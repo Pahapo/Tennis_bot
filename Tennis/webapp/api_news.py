@@ -11,15 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.User import User
 from models.News import News
 
-# Папка с фото новостей (туда их сохраняет рассылка в handlers/send_messages.py)
+# Папка с фото новостей (раньше туда сохранялись рассылки)
 NEWS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'img', 'news')
 NEWS_LIMIT = 30  # Сколько последних новостей показываем
 
 
-async def get_visible_news(user, session: AsyncSession):  # Новости для игрока: общие и для его дивизиона
-    news_list = (await session.scalars(select(News).where(
-        (News.division == None) | (News.division == user.division_level)
-    ).order_by(News.id_news.desc()).limit(NEWS_LIMIT))).all()
+async def get_visible_news(user, session: AsyncSession):  # Новости игрока: только личные (о его достижениях)
+    # Рассылки админа в приложение больше не попадают — они приходят только в бота
+    news_list = (await session.scalars(select(News).where(News.tg_user_id == user.tg_user_id).order_by(News.id_news.desc()).limit(NEWS_LIMIT))).all()
     return news_list
 
 

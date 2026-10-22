@@ -1,9 +1,11 @@
 import os
+from urllib.parse import quote
 from aiohttp import web
 
 import handlers.referrals as r
 import handlers.gold as g
 import handlers.skins as sk
+import handlers.achievements as ach
 from webapp.auth import get_tg_user
 from webapp.api_news import count_unread_news
 
@@ -23,11 +25,38 @@ LOCATIONS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'webapp
 IMAGE_TYPES = ['webp', 'png', 'jpg', 'jpeg']
 
 
+def normalize_image_name(file_name):  # "С2 .WEBP" -> "c2.webp": русская «с» как латинская, без пробелов и заглавных
+    name = file_name.lower().replace(' ', '')
+    name = name.replace('с', 'c')  # Первая «с» здесь русская, вторая — латинская
+    return name
+
+
 def find_location_image(name):  # Ссылка на картинку name.webp / .png / .jpg или None
+    files = {}
+    for file_name in os.listdir(LOCATIONS_DIR):
+        files[normalize_image_name(file_name)] = file_name
+
     for image_type in IMAGE_TYPES:
-        if os.path.exists(os.path.join(LOCATIONS_DIR, f'{name}.{image_type}')):
-            return f'/static/img/locations/{name}.{image_type}'
+        file_name = files.get(f'{name}.{image_type}')
+        if file_name:
+            return '/static/img/locations/' + quote(file_name)
     return None
+
+
+def print_league_images():  # При запуске пишем в консоль, какие картинки лиг найдены
+    found = []
+    missing = []
+    for i in range(len(g.LEAGUES)):
+        number = i + 1
+        for prefix in ['c', 'f']:
+            if find_location_image(f'{prefix}{number}'):
+                found.append(f'{prefix}{number}')
+            else:
+                missing.append(f'{prefix}{number}')
+
+    print(f"🖼 Картинки лиг в {LOCATIONS_DIR}")
+    print(f"   найдены: {', '.join(found) or 'нет'}")
+    print(f"   нет (будет старая картинка или без обложки): {', '.join(missing) or 'все на месте'}")
 
 
 def leagues_with_images():  # Лиги для фронта: название, порог, картинка и обложка
@@ -91,6 +120,10 @@ async def api_me(request):
         # Монеты, лига и серия
         progress = await g.get_progress(user_id, session)
 
+        # Новые достижения: выдаём при каждом открытии приложения и после действий в нём
+        await ach.check_achievements(user_id, session)
+        new_achievements = await ach.get_unseen(user_id, session)
+
         # Ежедневную награду игрок забирает сам — кнопкой на главном экране
         daily_available = progress.last_visit != g.now_moscow().date()
 
@@ -139,5 +172,6 @@ async def api_me(request):
         'unread_news': unread_news,
         'hero': sk.get_hero(progress),
         'background': sk.get_background(progress),
-        'racket': sk.get_racket(progress)
+        'racket': sk.get_racket(progress),
+        'new_achievements': new_achievements
     })

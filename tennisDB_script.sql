@@ -235,3 +235,16 @@ ALTER TABLE `inventory`
 
 ALTER TABLE `player_progress`
   ADD COLUMN `skin_racket` varchar(30) DEFAULT NULL;
+
+ALTER TABLE `news`
+  ADD COLUMN `tg_user_id` bigint DEFAULT NULL;
+
+CREATE TABLE `achievements` (
+  `id_achievement` int NOT NULL AUTO_INCREMENT,
+  `tg_user_id` bigint NOT NULL,
+  `achievement` varchar(30) NOT NULL,
+  `date` datetime NOT NULL,
+  `seen` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id_achievement`),
+  UNIQUE KEY `achievements_unique` (`tg_user_id`, `achievement`)
+);

@@ -132,6 +132,10 @@ function setupNavigation() {
     });
 
     document.getElementById('daily-fab').addEventListener('click', claimDaily);
+    document.getElementById('achievement-ok').addEventListener('click', closeAchievement);
+    document.getElementById('daily-done-ok').addEventListener('click', function () {
+        document.getElementById('daily-done-modal').classList.add('hidden');
+    });
 
     // Кнопки главного экрана
     document.getElementById('home-avatar-btn').addEventListener('click', function () {
@@ -426,7 +430,9 @@ async function claimDaily() {
     tg.HapticFeedback.selectionChanged();
 
     if (!profile.daily_available) {
-        tg.showAlert('Сегодня награда уже получена 🎁 Приходите завтра! Серия: ' + profile.streak + ' дн. подряд 🔥');
+        // Награда уже получена — окно в стиле приложения вместо системного
+        document.getElementById('daily-done-streak').textContent = 'Серия: ' + profile.streak + ' дн. подряд 🔥';
+        document.getElementById('daily-done-modal').classList.remove('hidden');
         return;
     }
 
@@ -453,6 +459,129 @@ async function reloadProfile() {
 
     const history = await apiGet('/api/gold_history');
     fillHistory(history.data);
+
+    showNewAchievements();
+    await loadAchievements();
+}
+
+
+// ---------- Достижения ----------
+
+let achievementQueue = [];   // Окна о новых достижениях, которые ещё нужно показать
+let achievementShown = [];   // id достижений, окна о которых уже в очереди или показаны
+
+// Новые достижения из /api/me — показываем окна по одному
+function showNewAchievements() {
+    for (const achievement of profile.new_achievements) {
+        if (!achievementShown.includes(achievement.id)) {
+            achievementShown.push(achievement.id);
+            achievementQueue.push(achievement);
+        }
+    }
+
+    const modal = document.getElementById('achievement-modal');
+    if (modal.classList.contains('hidden')) {
+        showNextAchievement();
+    }
+}
+
+function showNextAchievement() {
+    if (achievementQueue.length === 0) {
+        return;
+    }
+    const achievement = achievementQueue[0];
+
+    document.getElementById('achievement-icon').textContent = achievement.icon;
+    document.getElementById('achievement-title').textContent = achievement.title;
+    document.getElementById('achievement-praise').textContent = achievement.praise;
+
+    // У лиг — какой % игроков клуба достиг этой лиги
+    const percent = document.getElementById('achievement-percent');
+    if (achievement.percent !== null) {
+        percent.textContent = 'Этой лиги достигли ' + achievement.percent + '% игроков клуба — ты в их числе!';
+        percent.classList.remove('hidden');
+    } else {
+        percent.classList.add('hidden');
+    }
+
+    document.getElementById('achievement-modal').classList.remove('hidden');
+    tg.HapticFeedback.notificationOccurred('success');
+}
+
+async function closeAchievement() {
+    const achievement = achievementQueue.shift();
+    document.getElementById('achievement-modal').classList.add('hidden');
+    await apiPost('/api/achievements/seen', { id: achievement.id });
+
+    // Следующее окно — с небольшой паузой, чтобы было видно смену
+    setTimeout(showNextAchievement, 250);
+}
+
+// Раздел "Достижения" в профиле
+async function loadAchievements() {
+    const result = await apiGet('/api/achievements');
+    if (result.status !== 200) {
+        return;
+    }
+
+    document.getElementById('achievements-count').textContent = result.data.earned + ' / ' + result.data.total;
+
+    const list = document.getElementById('achievements-list');
+    list.innerHTML = '';
+
+    for (const group of result.data.groups) {
+        const title = document.createElement('div');
+        title.className = 'achievements-group';
+        title.textContent = group.name;
+        list.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'achievements-grid';
+
+        for (const item of group.items) {
+            const badge = document.createElement('div');
+            badge.className = 'achievement-badge';
+            if (item.earned) {
+                badge.classList.add('earned');
+            }
+
+            const icon = document.createElement('div');
+            icon.className = 'achievement-badge-icon';
+            icon.textContent = item.icon;
+            badge.appendChild(icon);
+
+            const name = document.createElement('div');
+            name.className = 'achievement-badge-title';
+            name.textContent = item.title;
+            badge.appendChild(name);
+
+            // Полученное — дата, остальное — прогресс
+            const info = document.createElement('div');
+            info.className = 'achievement-badge-info';
+            if (item.earned) {
+                info.textContent = '✅ ' + item.date;
+            } else {
+                info.textContent = item.progress;
+            }
+            badge.appendChild(info);
+
+            if (item.percent !== null) {
+                const percent = document.createElement('div');
+                percent.className = 'achievement-badge-info';
+                percent.textContent = 'Достигли ' + item.percent + '% игроков';
+                badge.appendChild(percent);
+            }
+
+            // По нажатию — что нужно сделать
+            badge.addEventListener('click', function () {
+                tg.showAlert(item.icon + ' ' + item.title + '\n\n' + item.goal + (item.earned ? '\n\nПолучено ' + item.date : '\n\n' + item.progress));
+            });
+
+            grid.appendChild(badge);
+        }
+
+        list.appendChild(grid);
+    }
 }
 
 
@@ -483,7 +612,7 @@ async function openNews() {
     if (result.data.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty';
-        empty.textContent = 'Новостей пока нет';
+        empty.textContent = 'Здесь появятся новости о твоих достижениях 🏅';
         list.appendChild(empty);
     }
 
@@ -593,6 +722,7 @@ function showSeasonSummary() {
         modal.classList.add('hidden');
         stopFireworks();
         await apiPost('/api/season_seen');
+        showNewAchievements();  // Окна достижений — после итогов года
     };
 }
 
@@ -2106,92 +2236,6 @@ function setupMarket() {
 }
 
 
-// ---------- Регистрация нового игрока ----------
-
-// Сказка — та же, что раньше была в чате (текст и пауза в секундах)
-const STORY = [
-    ['Привет! 👋', 2],
-    ['Давай я расскажу тебе 1 историю... 🎾', 2.5],
-    ['Где-то в далёком-придалёком королевстве 👑', 2.5],
-    ['Среди замков и драконов 🐉', 1.9],
-    ['Основался легендарный теннисный клуб! 🛡️', 2.5],
-    ['Только самые смелые выходили на корт ⚡️', 2.5],
-    ['Их ждали великие дуэли, турниры и таинственные награды...', 3],
-    ['Хочешь очутиться в далёком-придалёком королевстве? 👑', 2.8],
-    ['Сразиться с соперниками?!', 2],
-    ['Выиграть турнир?! 🏆', 2],
-    ['Стать теннисным лордом?! 👑', 2.1],
-    ['Пора начинать наше приключение! 🚀', 2.3],
-    ['Корт ждёт героя, готового вписать своё имя в историю! 🎾', 3]
-];
-
-let storyTimer = null;
-
-function startRegistration() {
-    showScreen('register');
-    document.querySelector('.tabbar').classList.add('hidden');
-    document.querySelector('.topbar').classList.add('hidden');
-
-    // Имя из Telegram — в первую строку сказки
-    const tgUser = tg.initDataUnsafe.user;
-    if (tgUser && tgUser.first_name) {
-        STORY[0][0] = 'Привет, ' + tgUser.first_name + '! 👋';
-    }
-
-    document.getElementById('register-story').classList.remove('hidden');
-    showStoryLine(0);
-}
-
-function showStoryLine(index) {
-    if (index >= STORY.length) {
-        finishStory();
-        return;
-    }
-
-    // Пересоздаём элемент, чтобы анимация появления запускалась каждый раз
-    const old = document.getElementById('story-text');
-    const text = document.createElement('div');
-    text.className = 'story-text';
-    text.id = 'story-text';
-    text.textContent = STORY[index][0];
-    old.replaceWith(text);
-
-    storyTimer = setTimeout(function () {
-        showStoryLine(index + 1);
-    }, STORY[index][1] * 1000);
-}
-
-function finishStory() {
-    clearTimeout(storyTimer);
-    document.getElementById('register-story').classList.add('hidden');
-    document.getElementById('register-form').classList.remove('hidden');
-}
-
-async function submitRegistration() {
-    const body = {
-        name: document.getElementById('register-name').value,
-        skill: document.getElementById('register-skill').value
-    };
-
-    const button = document.getElementById('register-submit');
-    button.disabled = true;
-    const result = await apiPost('/api/register', body);
-    button.disabled = false;
-
-    if (handleError(result)) {
-        return;
-    }
-
-    tg.HapticFeedback.notificationOccurred('success');
-    window.location.reload();  // Открываем приложение уже зарегистрированным
-}
-
-function setupRegistration() {
-    document.getElementById('story-skip').addEventListener('click', finishStory);
-    document.getElementById('register-submit').addEventListener('click', submitRegistration);
-}
-
-
 // ---------- Остальные экраны ----------
 
 function setupBooking() {
@@ -2221,6 +2265,17 @@ function setupShop() {
     }
 }
 
+// Игрок ещё не зарегистрирован: регистрация проходит только в боте, без неё приложение не работает
+function showNotRegistered() {
+    showError('Сначала заверши регистрацию 👋', 'Регистрация проходит в боте: вернись в чат, нажми /start и ответь на пару вопросов. После этого приложение откроется');
+    document.querySelector('.topbar').classList.add('hidden');  // Монет и профиля ещё нет
+    const button = document.getElementById('error-button');
+    button.classList.remove('hidden');
+    button.addEventListener('click', function () {
+        tg.close();  // Закрываем приложение — игрок возвращается в чат с ботом
+    });
+}
+
 function showError(title, text) {
     document.getElementById('topbar-name').textContent = '';
     document.getElementById('error-title').textContent = title;
@@ -2244,7 +2299,6 @@ async function start() {
     setupScore();
     setupTournament();
     setupMarket();
-    setupRegistration();
 
     if (!tg.initData) {
         showError('Откройте приложение в Telegram', 'Приложение работает только внутри Telegram — нажмите кнопку «Приложение» в боте');
@@ -2255,7 +2309,7 @@ async function start() {
         const result = await apiGet('/api/me');
 
         if (result.status === 404) {
-            startRegistration();  // Новый игрок — сказка и анкета
+            showNotRegistered();  // Регистрация — только в боте
             return;
         }
         if (result.status !== 200) {
@@ -2277,10 +2331,15 @@ async function start() {
         await loadTournaments();
         await loadSkins();
         await loadMarket();
+        await loadAchievements();
         showScreen('home');  // Приложение открывается на главном экране
 
-        // Итоги прошлого года (если есть) и экран из ссылки бота
-        showSeasonSummary();
+        // Итоги прошлого года (если есть), потом окна новых достижений, и экран из ссылки бота
+        if (profile.season_summary) {
+            showSeasonSummary();
+        } else {
+            showNewAchievements();
+        }
         openFromLink();
     } catch (error) {
         showError('Нет связи с сервером', 'Проверьте интернет и попробуйте ещё раз');

@@ -1438,36 +1438,6 @@ button {
     pointer-events: none;
 }
 
-/* Регистрация: сказка */
-.story {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-    min-height: 60vh;
-    text-align: center;
-}
-
-.story-text {
-    font-size: 22px;
-    font-weight: 800;
-    line-height: 1.4;
-    padding: 0 8px;
-    text-shadow: 0 2px 0 #000;
-    animation: story-in 0.5s;
-}
-
-@keyframes story-in {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.register-questions {
-    margin-bottom: 8px;
-    font-size: 13px;
-}
-
 /* Товары клуба — с такими же отступами, как карточки игроков */
 .club-row {
     margin: 0;
@@ -1488,12 +1458,6 @@ button {
 /* Валюты в шапке главного экрана — справа */
 .topbar.topbar-home .topbar-name + .currency {
     margin-left: auto;
-}
-
-/* Кнопка "Пропустить" — обычного размера */
-.story .btn {
-    flex: 0 0 auto;
-    padding: 10px 28px;
 }
 
 /* Фон приложения: теннисный корт. Отдельный слой (::before), чтобы фон стоял на месте и на iPhone,
@@ -1630,4 +1594,153 @@ body::before {
 @keyframes treasure-shine {
     0% { left: -60%; }
     60%, 100% { left: 130%; }
+}
+
+/* Картинка в окне (сундук, значок достижения) */
+.modal-picture {
+    display: block;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 8px;
+}
+
+/* ---------- Достижения ---------- */
+
+.achievements-count {
+    color: var(--gold);
+}
+
+.achievements-group {
+    margin: 12px 0 6px;
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+/* Не полученное — серое, с прогрессом */
+.achievement-badge {
+    padding: 8px 4px;
+    border: 2px solid var(--card-border);
+    border-radius: 12px;
+    background: var(--bg-dark);
+    text-align: center;
+    opacity: 0.55;
+}
+
+.achievement-badge .achievement-badge-icon {
+    filter: grayscale(1);
+}
+
+/* Полученное — золотое */
+.achievement-badge.earned {
+    border-color: var(--gold);
+    background: linear-gradient(160deg, #3a2a05, var(--bg-dark) 75%);
+    box-shadow: 0 0 8px rgba(255, 200, 61, 0.35);
+    opacity: 1;
+}
+
+.achievement-badge.earned .achievement-badge-icon {
+    filter: none;
+}
+
+.achievement-badge-icon {
+    font-size: 26px;
+}
+
+.achievement-badge-title {
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.achievement-badge-info {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* Окно нового достижения: медаль с вращающимися лучами */
+.achievement-box {
+    text-align: center;
+}
+
+.achievement-label {
+    color: var(--gold);
+    font-weight: 900;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.achievement-medal {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 8px auto 4px;
+}
+
+.achievement-rays {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgba(255, 200, 61, 0.55) 0 12deg, transparent 12deg 30deg);
+    -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%);
+    mask: radial-gradient(circle, #000 30%, transparent 70%);
+    animation: achievement-spin 8s linear infinite;
+}
+
+.achievement-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    border: 4px solid var(--gold);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3a4f86, var(--bg-dark));
+    box-shadow: 0 0 18px rgba(255, 200, 61, 0.7);
+    font-size: 40px;
+    transform: translate(-50%, -50%);
+    animation: achievement-pop 0.5s ease-out;
+}
+
+.achievement-praise {
+    margin-bottom: 10px;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.achievement-percent {
+    margin-bottom: 12px;
+    padding: 8px;
+    border-radius: 10px;
+    background: var(--bg-dark);
+    color: var(--gold);
+    font-weight: 800;
+    font-size: 14px;
+}
+
+@keyframes achievement-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes achievement-pop {
+    0% { transform: translate(-50%, -50%) scale(0.3); }
+    70% { transform: translate(-50%, -50%) scale(1.12); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Кнопка на экране ошибки ("Вернуться в бота") */
+.error-button {
+    margin-top: 14px;
 }

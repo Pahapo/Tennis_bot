@@ -1,5 +1,4 @@
 import os
-import shutil
 import ssl
 import aiohttp
 import certifi
@@ -17,12 +16,10 @@ import keywords.kw_send_message as kb
 import keywords.kw_any as ka
 import handlers.classes as cl
 import handlers.functions as f
-import handlers.gold as g
 
 from config.db_utils import get_db_readonly, get_db
 from sqlalchemy import select
 from models.User import User
-from models.News import News
 
 
 router = Router()
@@ -271,12 +268,6 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
         else:
             await callback.message.answer("Пользователей ещё нет 📂, добавь хотя бы одного для теста!", reply_markup=ka.exit)
 
-        # Сохраняем рассылку как новость для Mini App (до удаления фото)
-        try:
-            await save_news(message_text_send, save_path, message_link, send_division)
-        except Exception as e:
-            print(f"⚠️ Не удалось сохранить рассылку в новости: {e}")
-
         # Проверяем, существует ли фото, и удаляем её
         if os.path.exists(save_path):
             os.remove(save_path)
@@ -285,38 +276,6 @@ async def send(callback: CallbackQuery, state:FSMContext, bot):
         await callback.message.answer('Функция недоступна! Вы не администратор! ❌', reply_markup=ka.exit)
         await f.start_message(callback, bot)
     await state.clear()
-
-
-# Папка с фото новостей (их показывает Mini App)
-NEWS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'img', 'news')
-
-
-async def save_news(text, photo_path, link, send_division):  # Рассылка админа -> новость в приложении
-    async with get_db() as session:  # Используем контекстный менеджер
-
-        news = News(date = g.now_moscow(), text = text)
-
-        # Кнопка-ссылка ("Текст - https://...")
-        if link:
-            parts = link.split(" - ")
-            if len(parts) == 2:
-                news.link_text = parts[0]
-                news.link_url = parts[1]
-
-        # Рассылка для одного дивизиона — новость видят только игроки этого дивизиона
-        if send_division and send_division != "all":
-            news.division = int(send_division)
-
-        session.add(news)
-        await session.flush()  # Чтобы получить id_news
-
-        if os.path.exists(photo_path):
-            os.makedirs(NEWS_DIR, exist_ok=True)
-            file_name = f"news_{news.id_news}.jpg"
-            shutil.copy(photo_path, os.path.join(NEWS_DIR, file_name))
-            news.photo = file_name
-
-    print("✅ Рассылка сохранена в новости Mini App")
 
 
 async def create_callback_message_keyboard(text_message, callback_message):

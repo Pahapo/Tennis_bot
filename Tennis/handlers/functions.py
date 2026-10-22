@@ -40,6 +40,7 @@ MOSCOW_TZ = pytz.timezone("Europe/Moscow")
 adm_start_t = "<b>Привет Хозяин!</b> 👋\n\nКак день?\nКак настроение?\n\nПротестируй весь мой функционал, чтобы я работал идеально! 👇"
 m_edit_start_t = "Мы рады приветствовать тебя в команде нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основные задачи:</b>\n\n✅ Распределение игроков по парам;\n✅ Анализ дивизиона для игроков;\n✅ Выдача банов\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Мир – Новости</b>"
 edit_start_t = "Мы рады приветствовать тебя в команде нашего теннисного бота! Ваша роль крайне важна — благодаря вам турниры будут проходить гладко, а участники получат отличный игровой опыт.\n\n<b>Основная задача:</b>\n\n✅ Создание и контроль турниров\n\n🙋‍♂️ Если возникнут вопросы — пиши нам @sup_MM\n\n🔥 <b>Желаем ярких турниров и честной игры!</b>\n\n<b>С уважением, Минск Мир – Новости</b>"
+app_choice_t = "🎾 <b>Теннисное приложение ЖК «Минск Мир»</b>\n\nЭто приложение для поиска соперников и участия в турнирах на кортах ЖК «Минск Мир». Оно поможет обрести новые знакомства и вовлечёт тебя в мир тенниса в игровой тематике: лиги, герои, достижения и ежедневные награды 🏆\n\nВыбирай, как тебе удобнее 👇"
 all_players_start_t = f"<b>Увлекаешься теннисом?</b> Давай расскажу, чем я 🤖 буду полезен тебе в ЖК \"Минск Мир\" 👇\n\n✅ Регистрация на турнир;\n✅ Поиск соперника;\n✅ Бронирование корта;\n✅ Приобретение инвентаря\n\n💎 Следи за телеграмм каналом <b><a href='{CHANNEL}'>Минск-Мир - Новости</a>!</b> ⚡️ Здесь ты найдёшь актуальные новости, анонсы ярких мероприятий и обзоры заведений в Минск Мире!\n\n🙋‍♂️ Поддержка @sup_MM"
 
 
@@ -50,11 +51,6 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
 
         if not user:
             print(f"🙋‍♂️ Новый пользователь!")
-
-            # Регистрация (сказка и анкета) теперь проходит в приложении
-            if WEBAPP_URL:
-                await message.answer(f"Привет <b>{user_name}</b>! 👋\n\nЯ - 🤖 Бот по теннису, провожу турниры и помогаю найти соперников в Минск Мире!\n\nНажми кнопку ниже — там тебя ждёт обновлённое приложение, которое наша команда создала в виде игры. Быстрее заходи, чтобы протестировать первым! 🎾", parse_mode=ParseMode.HTML, reply_markup=app_keyboard())
-                return
 
             # СКАЗКА (~30 секунд)
 
@@ -112,6 +108,9 @@ async def save_user(user_id, user_name, user_link, message, state:FSMContext): #
                 await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{m_edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.main_edit_btn)
             elif user_id in EDITOR:
                 await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
+            elif WEBAPP_URL:
+                # Игрок выбирает: новое приложение или старый дизайн бота
+                await message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{app_choice_t}", parse_mode=ParseMode.HTML, reply_markup=app_choice_keyboard())
             else:
                 keyboard = await create_tournament_table_keyboard_user(user_id)
                 await message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", parse_mode=ParseMode.HTML, link_preview_options=options, reply_markup=keyboard)
@@ -181,6 +180,9 @@ async def register_skill(message: Message, state:FSMContext, bot):
         await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{m_edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.main_edit_btn)
     elif user_id in EDITOR:
         await message.answer(f"<b>Уважаемый {user_name}!</b> 👋\n\n{edit_start_t}", parse_mode=ParseMode.HTML, reply_markup=kb.edit_btn)
+    elif WEBAPP_URL:
+        # После регистрации — рассказываем о приложении и даём выбрать дизайн
+        await message.answer(f"<b>Регистрация завершена!</b> 🎉\n\n{app_choice_t}", parse_mode=ParseMode.HTML, reply_markup=app_choice_keyboard())
     else:
         keyboard = await create_tournament_table_keyboard_user(user_id)
         await message.answer(f"<b>Привет {user_name}!</b> 👋\n\n{all_players_start_t}", link_preview_options=options, disable_web_page_preview=True, parse_mode=ParseMode.HTML, reply_markup=keyboard)
@@ -253,18 +255,15 @@ async def start_message(callback: Optional[CallbackQuery] = None, message: Optio
 
 # Вывод кнопок для user
 
-def app_keyboard():  # Кнопка "Открыть приложение" (голубая — если Telegram поддерживает цвет кнопок)
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text = '🎾 Открыть приложение', web_app=WebAppInfo(url=WEBAPP_URL), style='primary')]])
+def app_choice_keyboard():  # Выбор: новое приложение (голубая кнопка) или старый дизайн бота (главное меню как раньше)
+    buttons = [
+        [InlineKeyboardButton(text = '🎾 Открыть приложение', web_app=WebAppInfo(url=WEBAPP_URL), style='primary')],
+        [InlineKeyboardButton(text = 'Старый дизайн', callback_data='start_message')]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 async def create_tournament_table_keyboard_user(user_id):
-    # Игроки пользуются приложением — в чате одна кнопка (действия главного редактора остаются в чате)
-    if WEBAPP_URL:
-        buttons = [[InlineKeyboardButton(text = '🎾 Открыть приложение', web_app=WebAppInfo(url=WEBAPP_URL), style='primary')]]
-        if user_id in MAIN_EDITOR:
-            buttons.append([InlineKeyboardButton(text = 'Установить дивизион 🥇', callback_data='set_division')])
-        return InlineKeyboardMarkup(inline_keyboard=buttons)
-
     async with get_db_readonly() as session:  # Используем контекстный менеджер
         last_tournament = (await session.scalars(select(TournamentPlayers).where(TournamentPlayers.id_tg_user == user_id).order_by(TournamentPlayers.id_tournament_players.desc()))).first()
 
