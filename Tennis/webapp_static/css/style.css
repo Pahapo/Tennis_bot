@@ -1623,8 +1623,12 @@ body::before {
     gap: 8px;
 }
 
-/* Не полученное — серое, с прогрессом */
+/* Не полученное — серое, с прогрессом. Содержимое — по центру карточки */
 .achievement-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     padding: 8px 4px;
     border: 2px solid var(--card-border);
     border-radius: 12px;
@@ -1754,6 +1758,7 @@ body::before {
 }
 
 .achievement-badge-icon.has-picture {
+    align-self: stretch;
     height: 32px;
     margin: 0 4px;
 }
