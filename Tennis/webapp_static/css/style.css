@@ -460,7 +460,14 @@ button {
     align-items: center;
 }
 
+.location-name {
+    gap: 8px;
+}
+
+/* Цена "от 2750 🪙" — всегда в одну строку, монета не переносится */
 .location-from {
+    flex-shrink: 0;
+    white-space: nowrap;
     font-size: 13px;
     color: var(--muted);
 }
